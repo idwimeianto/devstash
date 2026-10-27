@@ -22,16 +22,16 @@
 
 Developers keep their essentials scattered across too many places:
 
-| Resource | Where it usually lives |
-| --- | --- |
-| Code snippets | VS Code, Notion |
-| AI prompts | Chat histories |
-| Context files | Buried in project folders |
-| Useful links | Browser bookmarks |
-| Docs | Random folders |
-| Commands | `.txt` files |
-| Project templates | GitHub Gists |
-| Terminal commands | Bash history |
+| Resource          | Where it usually lives    |
+| ----------------- | ------------------------- |
+| Code snippets     | VS Code, Notion           |
+| AI prompts        | Chat histories            |
+| Context files     | Buried in project folders |
+| Useful links      | Browser bookmarks         |
+| Docs              | Random folders            |
+| Commands          | `.txt` files              |
+| Project templates | GitHub Gists              |
+| Terminal commands | Bash history              |
 
 **Result:** constant context switching, lost knowledge, and inconsistent workflows.
 
@@ -41,12 +41,12 @@ Developers keep their essentials scattered across too many places:
 
 ## 2. Target Users
 
-| Persona | Needs |
-| --- | --- |
-| **Everyday Developer** | Fast way to grab snippets, prompts, commands, and links |
-| **AI-first Developer** | Saves prompts, contexts, workflows, and system messages |
-| **Content Creator / Educator** | Stores code blocks, explanations, and course notes |
-| **Full-stack Builder** | Collects patterns, boilerplates, and API examples |
+| Persona                        | Needs                                                   |
+| ------------------------------ | ------------------------------------------------------- |
+| **Everyday Developer**         | Fast way to grab snippets, prompts, commands, and links |
+| **AI-first Developer**         | Saves prompts, contexts, workflows, and system messages |
+| **Content Creator / Educator** | Stores code blocks, explanations, and course notes      |
+| **Full-stack Builder**         | Collects patterns, boilerplates, and API examples       |
 
 ---
 
@@ -56,15 +56,15 @@ Developers keep their essentials scattered across too many places:
 
 Every item has a **type**. DevStash ships with a fixed set of **system types** (cannot be edited or deleted). Users will be able to create **custom types** later (Pro).
 
-| Type | Content Kind | Plan | Color | Icon (Lucide) |
-| --- | --- | --- | --- | --- |
-| Snippet | Text | Free | `#3b82f6` 🔵 | `Code` |
-| Prompt | Text | Free | `#8b5cf6` 🟣 | `Sparkles` |
-| Note | Text | Free | `#fde047` 🟡 | `StickyNote` |
-| Command | Text | Free | `#f97316` 🟠 | `Terminal` |
-| Link | URL | Free | `#10b981` 🟢 | `Link` |
-| File | File | **Pro** | `#6b7280` ⚪ | `File` |
-| Image | File | **Pro** | `#ec4899` 🩷 | `Image` |
+| Type    | Content Kind | Plan    | Color        | Icon (Lucide) |
+| ------- | ------------ | ------- | ------------ | ------------- |
+| Snippet | Text         | Free    | `#3b82f6` 🔵 | `Code`        |
+| Prompt  | Text         | Free    | `#8b5cf6` 🟣 | `Sparkles`    |
+| Note    | Text         | Free    | `#fde047` 🟡 | `StickyNote`  |
+| Command | Text         | Free    | `#f97316` 🟠 | `Terminal`    |
+| Link    | URL          | Free    | `#10b981` 🟢 | `Link`        |
+| File    | File         | **Pro** | `#6b7280` ⚪ | `File`        |
+| Image   | File         | **Pro** | `#ec4899` 🩷 | `Image`       |
 
 - **Content kinds:** `TEXT` (snippet, prompt, note, command), `URL` (link), `FILE` (file, image)
 - **Type routes:** `/items/snippets`, `/items/prompts`, `/items/links`, etc.
@@ -74,16 +74,16 @@ Every item has a **type**. DevStash ships with a fixed set of **system types** (
 
 - Users create collections that can hold items of **any type**.
 - An item can belong to **multiple collections** (many-to-many).
-  - e.g. a React snippet can live in both *React Patterns* and *Interview Prep*.
+  - e.g. a React snippet can live in both _React Patterns_ and _Interview Prep_.
 
 Example collections:
 
-| Collection | Typical contents |
-| --- | --- |
-| React Patterns | Snippets, notes |
-| Context Files | Files |
-| Python Snippets | Snippets |
-| Prototype Prompts | Prompts |
+| Collection        | Typical contents |
+| ----------------- | ---------------- |
+| React Patterns    | Snippets, notes  |
+| Context Files     | Files            |
+| Python Snippets   | Snippets         |
+| Prototype Prompts | Prompts          |
 
 ### C. Search
 
@@ -114,12 +114,12 @@ Search across:
 
 ### F. AI Features (Pro)
 
-| Feature | Description |
-| --- | --- |
-| Auto-tag suggestions | Suggest tags based on item content |
-| Summaries | Generate a short summary of an item |
-| Explain This Code | Plain-language explanation of a snippet |
-| Prompt Optimizer | Rewrite prompts to be clearer and more effective |
+| Feature              | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| Auto-tag suggestions | Suggest tags based on item content               |
+| Summaries            | Generate a short summary of an item              |
+| Explain This Code    | Plain-language explanation of a snippet          |
+| Prompt Optimizer     | Rewrite prompts to be clearer and more effective |
 
 ---
 
@@ -394,13 +394,13 @@ model Tag {
 ```ts
 // prisma/seed.ts
 const systemTypes = [
-  { name: "snippet", icon: "Code",       color: "#3b82f6" },
-  { name: "prompt",  icon: "Sparkles",   color: "#8b5cf6" },
-  { name: "note",    icon: "StickyNote", color: "#fde047" },
-  { name: "command", icon: "Terminal",   color: "#f97316" },
-  { name: "link",    icon: "Link",       color: "#10b981" },
-  { name: "file",    icon: "File",       color: "#6b7280" },
-  { name: "image",   icon: "Image",      color: "#ec4899" },
+  { name: "snippet", icon: "Code", color: "#3b82f6" },
+  { name: "prompt", icon: "Sparkles", color: "#8b5cf6" },
+  { name: "note", icon: "StickyNote", color: "#fde047" },
+  { name: "command", icon: "Terminal", color: "#f97316" },
+  { name: "link", icon: "Link", color: "#10b981" },
+  { name: "file", icon: "File", color: "#6b7280" },
+  { name: "image", icon: "Image", color: "#ec4899" },
 ];
 ```
 
@@ -415,20 +415,20 @@ const systemTypes = [
 
 ## 5. Tech Stack
 
-| Layer | Choice | Docs |
-| --- | --- | --- |
-| Framework | Next.js 16 / React 19 | [nextjs.org/docs](https://nextjs.org/docs) |
-| Language | TypeScript | [typescriptlang.org](https://www.typescriptlang.org/docs/) |
-| Database | Neon (serverless PostgreSQL) | [neon.com/docs](https://neon.com/docs) |
-| ORM | Prisma 7 | [prisma.io/docs](https://www.prisma.io/docs) |
-| Auth | Auth.js (NextAuth v5) — email/password + GitHub | [authjs.dev](https://authjs.dev) |
-| File storage | Cloudflare R2 | [developers.cloudflare.com/r2](https://developers.cloudflare.com/r2/) |
-| AI | OpenAI `gpt-5-nano` | [platform.openai.com/docs](https://platform.openai.com/docs) |
-| Styling | Tailwind CSS v4 | [tailwindcss.com/docs](https://tailwindcss.com/docs) |
-| Components | shadcn/ui | [ui.shadcn.com](https://ui.shadcn.com) |
-| Icons | Lucide | [lucide.dev](https://lucide.dev) |
-| Payments | Stripe | [docs.stripe.com](https://docs.stripe.com) |
-| Caching | Redis *(maybe)* | — |
+| Layer        | Choice                                          | Docs                                                                  |
+| ------------ | ----------------------------------------------- | --------------------------------------------------------------------- |
+| Framework    | Next.js 16 / React 19                           | [nextjs.org/docs](https://nextjs.org/docs)                            |
+| Language     | TypeScript                                      | [typescriptlang.org](https://www.typescriptlang.org/docs/)            |
+| Database     | Neon (serverless PostgreSQL)                    | [neon.com/docs](https://neon.com/docs)                                |
+| ORM          | Prisma 7                                        | [prisma.io/docs](https://www.prisma.io/docs)                          |
+| Auth         | Auth.js (NextAuth v5) — email/password + GitHub | [authjs.dev](https://authjs.dev)                                      |
+| File storage | Cloudflare R2                                   | [developers.cloudflare.com/r2](https://developers.cloudflare.com/r2/) |
+| AI           | OpenAI `gpt-5-nano`                             | [platform.openai.com/docs](https://platform.openai.com/docs)          |
+| Styling      | Tailwind CSS v4                                 | [tailwindcss.com/docs](https://tailwindcss.com/docs)                  |
+| Components   | shadcn/ui                                       | [ui.shadcn.com](https://ui.shadcn.com)                                |
+| Icons        | Lucide                                          | [lucide.dev](https://lucide.dev)                                      |
+| Payments     | Stripe                                          | [docs.stripe.com](https://docs.stripe.com)                            |
+| Caching      | Redis _(maybe)_                                 | —                                                                     |
 
 ### Architecture
 
@@ -453,21 +453,21 @@ flowchart LR
 
 Freemium model.
 
-| Feature | Free | Pro |
-| --- | :---: | :---: |
-| **Price** | $0 | **$8/month** or **$72/year** (25% off) |
-| Items | 50 total | Unlimited |
-| Collections | 3 | Unlimited |
-| System types | All except File & Image | All |
-| File & image uploads | ❌ | ✅ |
-| Custom types | ❌ | ✅ *(coming later)* |
-| Search | Basic | Basic |
-| AI auto-tagging | ❌ | ✅ |
-| AI summaries | ❌ | ✅ |
-| AI code explanation | ❌ | ✅ |
-| AI prompt optimizer | ❌ | ✅ |
-| Export data (JSON / ZIP) | ❌ | ✅ |
-| Priority support | ❌ | ✅ |
+| Feature                  |          Free           |                  Pro                   |
+| ------------------------ | :---------------------: | :------------------------------------: |
+| **Price**                |           $0            | **$8/month** or **$72/year** (25% off) |
+| Items                    |        50 total         |               Unlimited                |
+| Collections              |            3            |               Unlimited                |
+| System types             | All except File & Image |                  All                   |
+| File & image uploads     |           ❌            |                   ✅                   |
+| Custom types             |           ❌            |          ✅ _(coming later)_           |
+| Search                   |          Basic          |                 Basic                  |
+| AI auto-tagging          |           ❌            |                   ✅                   |
+| AI summaries             |           ❌            |                   ✅                   |
+| AI code explanation      |           ❌            |                   ✅                   |
+| AI prompt optimizer      |           ❌            |                   ✅                   |
+| Export data (JSON / ZIP) |           ❌            |                   ✅                   |
+| Priority support         |           ❌            |                   ✅                   |
 
 > 🛠️ **During development:** build the Pro foundation (`isPro` flag, limits, gating helpers), but **all users can access every feature**. Keep gating in one place (e.g. a `canUse(feature, user)` helper) so it can be switched on later with a single change.
 
@@ -483,6 +483,13 @@ Freemium model.
 - Subtle borders and shadows
 - Syntax highlighting for code blocks
 - Inspiration: [Notion](https://www.notion.so), [Linear](https://linear.app), [Raycast](https://www.raycast.com)
+
+### Screenshots
+
+Refer to the screenshots below as a base for the dashboard UI. It does not have to be exact. Use it as a reference:
+
+- @context/screenshots/dashboard-ui-main.png
+- @context/screenshots/dashboard-ui-drawer.png
 
 ### Layout
 
@@ -511,8 +518,8 @@ Freemium model.
 
 - **Sidebar:** item types (linking to `/items/<type>`) and latest collections.
 - **Main:** grid of collection cards, then item cards.
-  - **Collection cards** — *background color* based on the item type they contain most of (falls back to `defaultType` when empty).
-  - **Item cards** — *border color* based on their type.
+  - **Collection cards** — _background color_ based on the item type they contain most of (falls back to `defaultType` when empty).
+  - **Item cards** — _border color_ based on their type.
 - **Item drawer:** individual items open in a quick-access side drawer for viewing and editing.
 
 ### Responsive
@@ -531,18 +538,18 @@ Freemium model.
 
 ## 8. Routes
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Marketing / landing page |
-| `/sign-in`, `/sign-up` | Authentication |
-| `/dashboard` | Collections grid + recent / pinned items |
-| `/items/[type]` | All items of a type (e.g. `/items/snippets`) |
-| `/collections` | All collections |
-| `/collections/[id]` | Items in a single collection |
-| `/favorites` | Favorited items and collections |
-| `/settings` | Profile, billing, export |
+| Route                  | Purpose                                      |
+| ---------------------- | -------------------------------------------- |
+| `/`                    | Marketing / landing page                     |
+| `/sign-in`, `/sign-up` | Authentication                               |
+| `/dashboard`           | Collections grid + recent / pinned items     |
+| `/items/[type]`        | All items of a type (e.g. `/items/snippets`) |
+| `/collections`         | All collections                              |
+| `/collections/[id]`    | Items in a single collection                 |
+| `/favorites`           | Favorited items and collections              |
+| `/settings`            | Profile, billing, export                     |
 
-*(Proposed — adjust as needed.)*
+_(Proposed — adjust as needed.)_
 
 ---
 
