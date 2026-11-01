@@ -1,30 +1,18 @@
 # Current Feature
 
-**Codebase Quick Wins 2** — low-risk fixes from the second code-scanner audit. No schema changes, no new routes, no query rewrites.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- **Dashboard error boundary** — add `src/app/dashboard/error.tsx` (client component) with a short message and a "Try again" button that calls `reset()`, so a failed Neon query no longer shows the default Next.js error page.
-- **Limit pinned items** — add `take` with a named `PINNED_ITEMS_LIMIT` constant to `getPinnedItems` in `src/lib/db/items.ts`.
-- **Atomic seed** — in `prisma/seed.ts`, wrap the demo user's `deleteMany` calls and the collection/item creates in `prisma.$transaction`, so a failure partway doesn't leave partial data.
-- **Seed production guard** — make `prisma/seed.ts` exit with a clear error when `NODE_ENV === "production"`.
-- **Seed type lookup** — replace the `typeIds.get(item.type)!` non-null assertion in `prisma/seed.ts` with a check that throws a clear error naming the unknown type.
-- **Shared bcrypt rounds** — export `BCRYPT_ROUNDS` from one place (`prisma/seed-data.ts`) and use it in `prisma/seed.ts` and `scripts/test-db.ts` instead of the hardcoded `12`.
-- **`getItemTypeDisplay` accepts `null`** — so callers (`CollectionCard.tsx`, `SidebarCollections.tsx`) can drop their `?? ""` fallbacks.
-- **Consistent class names** — use `cn()` in place of template-string classNames in `CollectionCard.tsx` and `ItemCard.tsx`.
-- **`ItemCard` cursor** — remove `cursor-pointer` from `ItemCard` until the item drawer makes it clickable.
-- **Boilerplate** — remove the leftover `/* config options here */` comment in `next.config.ts`.
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- Out of scope: `bcryptjs` stays in dependencies; `src/lib/dashboard.ts` and `src/lib/mock-data.ts` are left as is.
-- Deferred, since they're higher risk or need decisions: collection query rewrites and the sidebar `take` (High #2), `DIRECT_URL` for migrations, the partial unique index for system types (needs a migration), the `[userId, createdAt]` indexes, missing `/items/[type]` and `/collections` routes, using the DB `icon`/`color` columns, the shared collection helper, splitting `SidebarCollections.tsx`, a DB-backed sidebar user, cross-user integrity checks (do this in the write actions), the `/` → `/dashboard` redirect, and skeleton magic numbers.
-- Manual check: the local `.env.production` should not point at the production database.
-- Verify with `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `npm run db:seed` followed by `npm run db:test`.
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -41,3 +29,4 @@ In Progress
 - **Stats & Sidebar** — sidebar item types and collections now come from the Neon database via Prisma instead of mock data (main area stats already did); `getItemTypesWithCounts` in `src/lib/db/items.ts` (system types plus the user's custom types with the user's item count, in the existing sidebar order) and `getSidebarCollections` in `src/lib/db/collections.ts` (favorites plus the 5 newest non-favorite collections, with item count and main type falling back to the default type), with types in `src/types/items.ts` and `src/types/collections.ts`; `SidebarTypes` and `SidebarCollections` load their lists in async server components wrapped in `<Suspense>`; favorites keep the folder and star icons, recent collections show a colored circle for their most-used type (new `bgColor` class in `item-type-display.ts`); empty Favorites / Recent lists are hidden; "View all collections" link to `/collections`; deterministic `SidebarListSkeleton` replaces shadcn's `SidebarMenuSkeleton`, whose `Math.random()` broke prerendering; seed collections accept an optional `isFavorite` flag, with React Patterns and AI Workflows marked as favorites; `SidebarUser` still uses mock data. (Completed)
 - **Add Pro Badge to Sidebar** — subtle uppercase "PRO" badge (shadcn `Badge`, outline variant, small muted text) next to the File and Image types in the sidebar Types list, hidden when the sidebar is collapsed to icons; Pro types defined once in `PRO_ITEM_TYPES` with an `isProItemType()` helper in `src/lib/item-type-display.ts`; display only, no gating. (Completed)
 - **Codebase Quick Wins** — low-risk fix from the code-scanner audit: `getCurrentUserId()` in `src/lib/db/users.ts` is wrapped in React's `cache()`, so the demo-user lookup runs once per request instead of once in each of the 6 dashboard server components; `connection()` and the `NO_USER_ID` fallback unchanged; other audit findings (collection query rewrites, `[userId, createdAt]` indexes, shared collection helper, splitting `SidebarCollections.tsx`, DB-backed sidebar user) deferred, and `mock-data.ts` / `dashboard.ts` left as is. (Completed)
+- **Codebase Quick Wins 2** — low-risk fixes from the second code-scanner audit: `src/app/dashboard/error.tsx` error boundary with a "Try again" button (this Next.js version passes `retry`, not `reset`; it wraps the page content only, so sidebar queries in the layout are not covered); `getPinnedItems` capped by `PINNED_ITEMS_LIMIT` (10); `prisma/seed.ts` recreates the demo user's collections and items in one `$transaction` (30s timeout), refuses to run when `NODE_ENV` is production, and throws a clear error on an unknown seed type via `getTypeId()`; `BCRYPT_ROUNDS` exported from `prisma/seed-data.ts` and shared with `scripts/test-db.ts`; `getItemTypeDisplay()` accepts `null`, dropping the `?? ""` fallbacks; `CollectionCard` and `ItemCard` compose classes with `cn()`; removed `cursor-pointer` from `ItemCard`; removed the boilerplate comment in `next.config.ts`; `bcryptjs`, `dashboard.ts` and `mock-data.ts` left as is; collection query rewrites, `DIRECT_URL`, the system-type unique index, `[userId, createdAt]` indexes, missing routes, DB icon/color, the shared collection helper, splitting `SidebarCollections.tsx`, a DB-backed sidebar user and cross-user integrity checks deferred. (Completed)
