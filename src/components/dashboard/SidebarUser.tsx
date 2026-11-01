@@ -1,41 +1,45 @@
-import { Settings } from "lucide-react";
+import { connection } from "next/server";
+import { Suspense } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { CURRENT_USER } from "@/lib/mock-data";
+import { auth } from "@/auth";
+import { SidebarUserMenu } from "@/components/dashboard/SidebarUserMenu";
+import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part.charAt(0))
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+async function SidebarUserContent() {
+  // NextAuth calls crypto.getRandomValues(), which can't run during prerendering.
+  await connection();
+  const session = await auth();
+  if (!session?.user) return null;
+
+  const { name, email, image } = session.user;
+  return (
+    <SidebarUserMenu
+      user={{ name: name ?? null, email: email ?? null, image: image ?? null }}
+    />
+  );
 }
 
+function SidebarUserSkeleton() {
+  return (
+    <div className="flex h-12 items-center gap-2 p-2">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="grid flex-1 gap-1.5 group-data-[collapsible=icon]:hidden">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-32" />
+      </div>
+    </div>
+  );
+}
+
+// Reading the session is request-time data, so it streams in behind a boundary.
 export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton size="lg" tooltip={CURRENT_USER.name}>
-          <Avatar className="size-8">
-            {CURRENT_USER.image && (
-              <AvatarImage src={CURRENT_USER.image} alt={CURRENT_USER.name} />
-            )}
-            <AvatarFallback>{getInitials(CURRENT_USER.name)}</AvatarFallback>
-          </Avatar>
-          <div className="grid flex-1 text-left leading-tight">
-            <span className="truncate font-medium">{CURRENT_USER.name}</span>
-            <span className="truncate text-xs text-muted-foreground">
-              {CURRENT_USER.email}
-            </span>
-          </div>
-          <Settings className="ml-auto text-muted-foreground" />
-        </SidebarMenuButton>
+        <Suspense fallback={<SidebarUserSkeleton />}>
+          <SidebarUserContent />
+        </Suspense>
       </SidebarMenuItem>
     </SidebarMenu>
   );

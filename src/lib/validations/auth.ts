@@ -1,10 +1,14 @@
 import { z } from "zod";
 
-const email = z.string().trim().toLowerCase().pipe(z.email());
+const email = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email("Enter a valid email address"));
 
 export const signInSchema = z.object({
   email,
-  password: z.string().min(1),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const registerSchema = z

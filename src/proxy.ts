@@ -5,14 +5,26 @@ import authConfig from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
+const AUTH_PAGES = ["/sign-in", "/register"];
+
 export const proxy = auth((req) => {
+  const { pathname, search, origin } = req.nextUrl;
+
+  // Signed-in users have no reason to see the sign-in or register pages.
+  if (AUTH_PAGES.includes(pathname)) {
+    if (req.auth) {
+      return NextResponse.redirect(new URL("/dashboard", origin));
+    }
+    return;
+  }
+
   if (!req.auth) {
-    const signInUrl = new URL("/api/auth/signin", req.nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
+    const signInUrl = new URL("/sign-in", origin);
+    signInUrl.searchParams.set("callbackUrl", pathname + search);
     return NextResponse.redirect(signInUrl);
   }
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/sign-in", "/register"],
 };

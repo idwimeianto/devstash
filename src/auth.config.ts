@@ -14,6 +14,7 @@ export default {
     GitHub,
     Credentials({ credentials: CREDENTIALS_FIELDS, authorize: () => null }),
   ],
+  pages: { signIn: "/sign-in" },
   callbacks: {
     jwt({ token, user }) {
       if (user?.id) {

@@ -127,4 +127,8 @@
   html {
     @apply font-sans;
     }
+  /* Edge's built-in reveal icon would duplicate our show-password toggle. */
+  input::-ms-reveal {
+    display: none;
+    }
 }

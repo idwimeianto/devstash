@@ -1,18 +1,47 @@
-# Current Feature
+# Current Feature: Auth Phase 3 — Sign In, Register & Sign Out UI
 
-<!-- Feature name and short description -->
+Replace the NextAuth default pages with custom sign-in and register pages, and show the signed-in user (avatar, name, sign out) at the bottom of the sidebar.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- **Sign in page (`/sign-in`)**
+  - Email and password fields
+  - "Sign in with GitHub" button
+  - Link to the register page
+  - Form validation and error display
+- **Register page (`/register`)**
+  - Name, email, password and confirm password fields
+  - Form validation (passwords match, email format)
+  - Submits to `POST /api/auth/register`
+  - Redirects to `/sign-in` on success
+- **Bottom of sidebar** (replaces the mock `CURRENT_USER` in `src/components/dashboard/SidebarUser.tsx`)
+  - User avatar: GitHub image, or initials fallback
+  - User name
+  - Dropdown (opening upward) on avatar click with a "Sign out" item
+  - Link to `/profile`
+- **Reusable avatar component** handling both the image and the initials case (e.g. "Brad Traversy" → "BT")
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- NextAuth pages config should point sign-in at `/sign-in`, and `src/proxy.ts` currently redirects to `/api/auth/signin`, so both need updating.
+- The spec says `/register`; the project overview's route table says `/sign-up`. Following the spec.
+- Spec conflict to resolve at start: clicking the avatar opens the dropdown, but "clicking on the icon should go to `/profile`". Likely approach: dropdown holds a "Profile" link and "Sign out". `/profile` doesn't exist yet.
+- The testing list says "avatar shows in top bar", but the requirements put it in the sidebar. Following the requirements (sidebar).
+- `SidebarUser` has a local `getInitials()` to move into the reusable avatar component; shadcn `avatar` is installed, `dropdown-menu` isn't yet.
+- Reuse `registerSchema` / `signInSchema` from `src/lib/validations/auth.ts` for client-side validation.
+- Dashboard data still comes from the seeded demo user via `getCurrentUserId()`; switching it to the session isn't in this spec.
+- Testing:
+  1. Go to `/sign-in` — custom page renders
+  2. Sign in with GitHub — flow works
+  3. Sign in with email/password — flow works
+  4. Avatar shows (GitHub image or initials)
+  5. Click avatar — dropdown appears
+  6. Click "Sign out" — signed out and redirected
+  7. Go to `/register`, create an account — redirected to sign-in
 
 ## History
 
