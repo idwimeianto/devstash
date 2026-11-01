@@ -3,6 +3,7 @@ import { Pin, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
+import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/types/items";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
@@ -22,13 +23,19 @@ export function ItemCard({ item }: ItemCardProps) {
 
   return (
     <Card
-      className={`cursor-pointer border-l-4 transition-colors hover:ring-foreground/25 ${borderColor}`}
+      className={cn(
+        "border-l-4 transition-colors hover:ring-foreground/25",
+        borderColor
+      )}
     >
       <CardContent className="flex items-start gap-4">
         <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${bgTint}`}
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-lg",
+            bgTint
+          )}
         >
-          <Icon className={`size-5 ${textColor}`} />
+          <Icon className={cn("size-5", textColor)} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

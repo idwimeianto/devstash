@@ -80,8 +80,8 @@ const FALLBACK_DISPLAY: ItemTypeDisplay = {
   bgTint: "bg-muted",
 };
 
-export function getItemTypeDisplay(typeName: string): ItemTypeDisplay {
-  return ITEM_TYPE_DISPLAY[typeName] ?? FALLBACK_DISPLAY;
+export function getItemTypeDisplay(typeName: string | null): ItemTypeDisplay {
+  return (typeName && ITEM_TYPE_DISPLAY[typeName]) || FALLBACK_DISPLAY;
 }
 
 export function isProItemType(typeName: string): boolean {

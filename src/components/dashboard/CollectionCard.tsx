@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
+import { cn } from "@/lib/utils";
 import type { CollectionSummary } from "@/types/collections";
 
 interface CollectionCardProps {
@@ -10,14 +11,16 @@ interface CollectionCardProps {
 }
 
 export function CollectionCard({ collection }: CollectionCardProps) {
-  const { borderColor, bgTint } = getItemTypeDisplay(
-    collection.mainTypeName ?? ""
-  );
+  const { borderColor, bgTint } = getItemTypeDisplay(collection.mainTypeName);
 
   return (
     <Link href={`/collections/${collection.id}`} className="group/collection">
       <Card
-        className={`h-full border-l-4 transition-colors group-hover/collection:ring-foreground/25 ${borderColor} ${bgTint}`}
+        className={cn(
+          "h-full border-l-4 transition-colors group-hover/collection:ring-foreground/25",
+          borderColor,
+          bgTint
+        )}
       >
         <CardContent className="flex h-full flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -40,7 +43,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
               return (
                 <Icon
                   key={type.id}
-                  className={`size-4 ${textColor}`}
+                  className={cn("size-4", textColor)}
                   aria-label={type.name}
                 />
               );

@@ -2,15 +2,23 @@ import "dotenv/config";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import {
+  BCRYPT_ROUNDS,
   DEMO_USER,
   SEED_COLLECTIONS,
   SYSTEM_TYPES,
   type SeedItem,
 } from "./seed-data";
 
-const BCRYPT_ROUNDS = 12;
+// The seed wipes the demo user's data and sets a known password.
+if (process.env.NODE_ENV === "production") {
+  console.error("Refusing to seed: NODE_ENV is production.");
+  process.exit(1);
+}
+
+// Nested creates over a remote connection can outlast the 5s default.
+const TRANSACTION_TIMEOUT_MS = 30_000;
 
 const prisma = new PrismaClient({
   adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }),
@@ -67,24 +75,34 @@ function toItemData(item: SeedItem, userId: string, typeId: string) {
   };
 }
 
+function getTypeId(typeIds: Map<string, string>, typeName: string): string {
+  const typeId = typeIds.get(typeName);
+  if (!typeId) throw new Error(`Unknown item type in seed data: "${typeName}"`);
+  return typeId;
+}
+
 // Recreates the demo user's collections and items so re-running the seed
 // always leaves the same data. Join rows cascade when items/collections go.
-async function seedCollections(userId: string, typeIds: Map<string, string>) {
-  await prisma.item.deleteMany({ where: { userId } });
-  await prisma.collection.deleteMany({ where: { userId } });
+async function seedCollections(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  typeIds: Map<string, string>
+) {
+  await tx.item.deleteMany({ where: { userId } });
+  await tx.collection.deleteMany({ where: { userId } });
 
   for (const collection of SEED_COLLECTIONS) {
-    await prisma.collection.create({
+    await tx.collection.create({
       data: {
         name: collection.name,
         description: collection.description,
         isFavorite: collection.isFavorite ?? false,
         userId,
-        defaultTypeId: typeIds.get(collection.defaultType),
+        defaultTypeId: getTypeId(typeIds, collection.defaultType),
         items: {
           create: collection.items.map((item) => ({
             item: {
-              create: toItemData(item, userId, typeIds.get(item.type)!),
+              create: toItemData(item, userId, getTypeId(typeIds, item.type)),
             },
           })),
         },
@@ -96,7 +114,9 @@ async function seedCollections(userId: string, typeIds: Map<string, string>) {
 async function main() {
   const typeIds = await seedSystemTypes();
   const user = await seedDemoUser();
-  await seedCollections(user.id, typeIds);
+  await prisma.$transaction((tx) => seedCollections(tx, user.id, typeIds), {
+    timeout: TRANSACTION_TIMEOUT_MS,
+  });
 
   const itemCount = SEED_COLLECTIONS.reduce((n, c) => n + c.items.length, 0);
   console.log(

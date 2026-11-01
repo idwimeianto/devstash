@@ -35,7 +35,7 @@ interface TypeDotProps {
 
 // Colored circle for the collection's most-used item type.
 function TypeDot({ typeName }: TypeDotProps) {
-  const { bgColor } = getItemTypeDisplay(typeName ?? "");
+  const { bgColor } = getItemTypeDisplay(typeName);
   return (
     <span className="flex size-4 shrink-0 items-center justify-center">
       <span className={cn("size-2.5 rounded-full", bgColor)} />

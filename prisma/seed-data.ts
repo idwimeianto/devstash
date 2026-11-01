@@ -6,6 +6,8 @@ export const DEMO_USER = {
   password: "12345678",
 };
 
+export const BCRYPT_ROUNDS = 12;
+
 export const SYSTEM_TYPES = [
   { name: "snippet", icon: "Code", color: "#3b82f6" },
   { name: "prompt", icon: "Sparkles", color: "#8b5cf6" },

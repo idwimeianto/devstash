@@ -1,18 +1,30 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+**Codebase Quick Wins 2** — low-risk fixes from the second code-scanner audit. No schema changes, no new routes, no query rewrites.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- **Dashboard error boundary** — add `src/app/dashboard/error.tsx` (client component) with a short message and a "Try again" button that calls `reset()`, so a failed Neon query no longer shows the default Next.js error page.
+- **Limit pinned items** — add `take` with a named `PINNED_ITEMS_LIMIT` constant to `getPinnedItems` in `src/lib/db/items.ts`.
+- **Atomic seed** — in `prisma/seed.ts`, wrap the demo user's `deleteMany` calls and the collection/item creates in `prisma.$transaction`, so a failure partway doesn't leave partial data.
+- **Seed production guard** — make `prisma/seed.ts` exit with a clear error when `NODE_ENV === "production"`.
+- **Seed type lookup** — replace the `typeIds.get(item.type)!` non-null assertion in `prisma/seed.ts` with a check that throws a clear error naming the unknown type.
+- **Shared bcrypt rounds** — export `BCRYPT_ROUNDS` from one place (`prisma/seed-data.ts`) and use it in `prisma/seed.ts` and `scripts/test-db.ts` instead of the hardcoded `12`.
+- **`getItemTypeDisplay` accepts `null`** — so callers (`CollectionCard.tsx`, `SidebarCollections.tsx`) can drop their `?? ""` fallbacks.
+- **Consistent class names** — use `cn()` in place of template-string classNames in `CollectionCard.tsx` and `ItemCard.tsx`.
+- **`ItemCard` cursor** — remove `cursor-pointer` from `ItemCard` until the item drawer makes it clickable.
+- **Boilerplate** — remove the leftover `/* config options here */` comment in `next.config.ts`.
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Out of scope: `bcryptjs` stays in dependencies; `src/lib/dashboard.ts` and `src/lib/mock-data.ts` are left as is.
+- Deferred, since they're higher risk or need decisions: collection query rewrites and the sidebar `take` (High #2), `DIRECT_URL` for migrations, the partial unique index for system types (needs a migration), the `[userId, createdAt]` indexes, missing `/items/[type]` and `/collections` routes, using the DB `icon`/`color` columns, the shared collection helper, splitting `SidebarCollections.tsx`, a DB-backed sidebar user, cross-user integrity checks (do this in the write actions), the `/` → `/dashboard` redirect, and skeleton magic numbers.
+- Manual check: the local `.env.production` should not point at the production database.
+- Verify with `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `npm run db:seed` followed by `npm run db:test`.
 
 ## History
 

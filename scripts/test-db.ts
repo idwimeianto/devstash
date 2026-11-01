@@ -6,6 +6,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 
 import {
+  BCRYPT_ROUNDS,
   DEMO_USER,
   SEED_COLLECTIONS,
   SYSTEM_TYPES,
@@ -113,10 +114,10 @@ async function checkDemoUser(user: DemoUser) {
   check("demo user is not Pro", !user.isPro);
   check("demo user email is verified", user.emailVerified !== null);
   check(
-    "demo password matches and uses 12 bcrypt rounds",
+    `demo password matches and uses ${BCRYPT_ROUNDS} bcrypt rounds`,
     user.password !== null &&
       (await bcrypt.compare(DEMO_USER.password, user.password)) &&
-      bcrypt.getRounds(user.password) === 12
+      bcrypt.getRounds(user.password) === BCRYPT_ROUNDS
   );
 }
 

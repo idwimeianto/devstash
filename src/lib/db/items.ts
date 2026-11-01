@@ -7,6 +7,7 @@ import type {
 } from "@/types/items";
 
 const RECENT_ITEMS_LIMIT = 10;
+const PINNED_ITEMS_LIMIT = 10;
 
 // Sidebar order for the system types; any other type follows, by name.
 const SYSTEM_TYPE_ORDER = [
@@ -63,6 +64,7 @@ export async function getPinnedItems(userId: string): Promise<ItemSummary[]> {
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },
     orderBy: RECENT_ORDER,
+    take: PINNED_ITEMS_LIMIT,
     select: ITEM_SUMMARY_SELECT,
   });
   return items.map(toItemSummary);
