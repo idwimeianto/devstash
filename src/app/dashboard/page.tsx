@@ -1,17 +1,19 @@
 import { Clock, Pin } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { ItemCard } from "@/components/dashboard/ItemCard";
-import { StatsCards } from "@/components/dashboard/StatsCards";
 import {
-  getPinnedItems,
-  getRecentCollections,
-  getRecentItems,
-} from "@/lib/dashboard";
+  RecentCollections,
+  RecentCollectionsSkeleton,
+} from "@/components/dashboard/RecentCollections";
+import {
+  StatsCards,
+  StatsCardsSkeleton,
+} from "@/components/dashboard/StatsCards";
+import { getPinnedItems, getRecentItems } from "@/lib/dashboard";
 
 export default function DashboardPage() {
-  const collections = getRecentCollections();
   const pinnedItems = getPinnedItems();
   const recentItems = getRecentItems();
 
@@ -22,7 +24,9 @@ export default function DashboardPage() {
         <p className="mt-1 text-muted-foreground">Your developer knowledge hub</p>
       </header>
 
-      <StatsCards />
+      <Suspense fallback={<StatsCardsSkeleton />}>
+        <StatsCards />
+      </Suspense>
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -34,11 +38,9 @@ export default function DashboardPage() {
             View all
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {collections.map((collection) => (
-            <CollectionCard key={collection.id} collection={collection} />
-          ))}
-        </div>
+        <Suspense fallback={<RecentCollectionsSkeleton />}>
+          <RecentCollections />
+        </Suspense>
       </section>
 
       {pinnedItems.length > 0 && (

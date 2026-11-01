@@ -2,24 +2,17 @@ import { Star } from "lucide-react";
 import Link from "next/link";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  getCollectionItems,
-  getCollectionMainType,
-  getCollectionTypeIds,
-  getItemType,
-} from "@/lib/dashboard";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
-import type { Collection } from "@/lib/mock-data";
+import type { CollectionSummary } from "@/types/collections";
 
 interface CollectionCardProps {
-  collection: Collection;
+  collection: CollectionSummary;
 }
 
 export function CollectionCard({ collection }: CollectionCardProps) {
-  const mainType = getCollectionMainType(collection);
-  const { borderColor, bgTint } = getItemTypeDisplay(mainType?.name ?? "");
-  const itemCount = getCollectionItems(collection.id).length;
-  const typeIds = getCollectionTypeIds(collection.id);
+  const { borderColor, bgTint } = getItemTypeDisplay(
+    collection.mainTypeName ?? ""
+  );
 
   return (
     <Link href={`/collections/${collection.id}`} className="group/collection">
@@ -34,7 +27,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
             )}
           </div>
           <p className="text-muted-foreground">
-            {itemCount} {itemCount === 1 ? "item" : "items"}
+            {collection.itemCount} {collection.itemCount === 1 ? "item" : "items"}
           </p>
           {collection.description && (
             <p className="mt-2 line-clamp-2 text-muted-foreground">
@@ -42,12 +35,15 @@ export function CollectionCard({ collection }: CollectionCardProps) {
             </p>
           )}
           <div className="mt-auto flex gap-2 pt-3">
-            {typeIds.map((typeId) => {
-              const type = getItemType(typeId);
-              const { icon: Icon, textColor } = getItemTypeDisplay(
-                type?.name ?? ""
+            {collection.types.map((type) => {
+              const { icon: Icon, textColor } = getItemTypeDisplay(type.name);
+              return (
+                <Icon
+                  key={type.id}
+                  className={`size-4 ${textColor}`}
+                  aria-label={type.name}
+                />
               );
-              return <Icon key={typeId} className={`size-4 ${textColor}`} />;
             })}
           </div>
         </CardContent>
