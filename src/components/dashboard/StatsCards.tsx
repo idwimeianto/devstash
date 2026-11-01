@@ -2,8 +2,8 @@ import { FolderHeart, Folders, Heart, Layers, type LucideIcon } from "lucide-rea
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getItemStats } from "@/lib/dashboard";
 import { getCollectionStats } from "@/lib/db/collections";
+import { getItemStats } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
 
 const GRID_CLASSES = "grid grid-cols-2 gap-4 lg:grid-cols-4";
@@ -32,9 +32,10 @@ function StatCard({ label, value, icon: Icon }: StatCardProps) {
 
 export async function StatsCards() {
   const userId = await getCurrentUserId();
-  const collectionStats = await getCollectionStats(userId);
-  // Item stats still come from mock data until items move to the database.
-  const itemStats = getItemStats();
+  const [collectionStats, itemStats] = await Promise.all([
+    getCollectionStats(userId),
+    getItemStats(userId),
+  ]);
 
   return (
     <div className={GRID_CLASSES}>

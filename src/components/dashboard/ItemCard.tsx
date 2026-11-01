@@ -2,9 +2,8 @@ import { Pin, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getItemType } from "@/lib/dashboard";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
-import type { Item } from "@/lib/mock-data";
+import type { ItemSummary } from "@/types/items";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -13,15 +12,13 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
 });
 
 interface ItemCardProps {
-  item: Item;
+  item: ItemSummary;
 }
 
 export function ItemCard({ item }: ItemCardProps) {
-  const type = getItemType(item.typeId);
   const { icon: Icon, textColor, borderColor, bgTint } = getItemTypeDisplay(
-    type?.name ?? ""
+    item.typeName
   );
-  const date = DATE_FORMAT.format(new Date(item.lastUsedAt ?? item.createdAt));
 
   return (
     <Card
@@ -59,10 +56,10 @@ export function ItemCard({ item }: ItemCardProps) {
           )}
         </div>
         <time
-          dateTime={item.lastUsedAt ?? item.createdAt}
+          dateTime={item.date.toISOString()}
           className="shrink-0 text-xs text-muted-foreground"
         >
-          {date}
+          {DATE_FORMAT.format(item.date)}
         </time>
       </CardContent>
     </Card>

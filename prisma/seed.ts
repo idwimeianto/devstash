@@ -61,6 +61,7 @@ function toItemData(item: SeedItem, userId: string, typeId: string) {
     content: item.content ?? null,
     language: item.language ?? null,
     url: item.url ?? null,
+    isPinned: item.isPinned ?? false,
     userId,
     typeId,
   };

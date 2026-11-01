@@ -25,6 +25,7 @@ export interface SeedItem {
   content?: string;
   language?: string;
   url?: string;
+  isPinned?: boolean;
 }
 
 export interface SeedCollection {
@@ -198,6 +199,7 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
         description: "Debounce a value and persist state to localStorage",
         content: USE_DEBOUNCE,
         language: "typescript",
+        isPinned: true,
       },
       {
         type: "snippet",
@@ -225,6 +227,7 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
         title: "Code Review",
         description: "Thorough PR review covering bugs, security and performance",
         content: CODE_REVIEW_PROMPT,
+        isPinned: true,
       },
       {
         type: "prompt",

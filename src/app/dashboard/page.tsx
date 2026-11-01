@@ -1,22 +1,22 @@
-import { Clock, Pin } from "lucide-react";
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { ItemCard } from "@/components/dashboard/ItemCard";
+import { PinnedItems } from "@/components/dashboard/PinnedItems";
 import {
   RecentCollections,
   RecentCollectionsSkeleton,
 } from "@/components/dashboard/RecentCollections";
 import {
+  RecentItems,
+  RecentItemsSkeleton,
+} from "@/components/dashboard/RecentItems";
+import {
   StatsCards,
   StatsCardsSkeleton,
 } from "@/components/dashboard/StatsCards";
-import { getPinnedItems, getRecentItems } from "@/lib/dashboard";
 
 export default function DashboardPage() {
-  const pinnedItems = getPinnedItems();
-  const recentItems = getRecentItems();
-
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
       <header>
@@ -43,30 +43,19 @@ export default function DashboardPage() {
         </Suspense>
       </section>
 
-      {pinnedItems.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="flex items-center gap-2 text-muted-foreground">
-            <Pin className="size-4" />
-            Pinned
-          </h2>
-          <div className="flex flex-col gap-3">
-            {pinnedItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* No fallback: the section only exists when there are pinned items. */}
+      <Suspense>
+        <PinnedItems />
+      </Suspense>
 
       <section className="flex flex-col gap-4">
         <h2 className="flex items-center gap-2 text-muted-foreground">
           <Clock className="size-4" />
           Recent Items
         </h2>
-        <div className="flex flex-col gap-3">
-          {recentItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
-          ))}
-        </div>
+        <Suspense fallback={<RecentItemsSkeleton />}>
+          <RecentItems />
+        </Suspense>
       </section>
     </div>
   );
