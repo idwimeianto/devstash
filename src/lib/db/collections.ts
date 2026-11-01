@@ -3,9 +3,12 @@ import type {
   CollectionStats,
   CollectionSummary,
   CollectionTypeSummary,
+  SidebarCollection,
+  SidebarCollections,
 } from "@/types/collections";
 
 const RECENT_COLLECTIONS_LIMIT = 6;
+const SIDEBAR_RECENT_LIMIT = 5;
 
 const TYPE_SELECT = { id: true, name: true, icon: true, color: true } as const;
 
@@ -52,6 +55,44 @@ export async function getRecentCollections(
       mainTypeName: types[0]?.name ?? collection.defaultType?.name ?? null,
     };
   });
+}
+
+export async function getSidebarCollections(
+  userId: string
+): Promise<SidebarCollections> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      isFavorite: true,
+      defaultType: { select: { name: true } },
+      items: { select: { item: { select: { type: { select: TYPE_SELECT } } } } },
+    },
+  });
+
+  const toSidebarCollection = (
+    collection: (typeof collections)[number]
+  ): SidebarCollection => {
+    const types = rankTypes(collection.items.map(({ item }) => item.type));
+    return {
+      id: collection.id,
+      name: collection.name,
+      itemCount: collection.items.length,
+      mainTypeName: types[0]?.name ?? collection.defaultType?.name ?? null,
+    };
+  };
+
+  return {
+    favorites: collections
+      .filter((collection) => collection.isFavorite)
+      .map(toSidebarCollection),
+    recent: collections
+      .filter((collection) => !collection.isFavorite)
+      .slice(0, SIDEBAR_RECENT_LIMIT)
+      .map(toSidebarCollection),
+  };
 }
 
 export async function getCollectionStats(

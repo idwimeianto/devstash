@@ -1,8 +1,28 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { ItemStats, ItemSummary } from "@/types/items";
+import type {
+  ItemStats,
+  ItemSummary,
+  ItemTypeWithCount,
+} from "@/types/items";
 
 const RECENT_ITEMS_LIMIT = 10;
+
+// Sidebar order for the system types; any other type follows, by name.
+const SYSTEM_TYPE_ORDER = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "file",
+  "image",
+  "link",
+];
+
+function typeRank(name: string): number {
+  const index = SYSTEM_TYPE_ORDER.indexOf(name);
+  return index === -1 ? SYSTEM_TYPE_ORDER.length : index;
+}
 
 const ITEM_SUMMARY_SELECT = {
   id: true,
@@ -59,6 +79,29 @@ export async function getRecentItems(
     select: ITEM_SUMMARY_SELECT,
   });
   return items.map(toItemSummary);
+}
+
+// System types plus the user's custom types, each with the user's item count.
+export async function getItemTypesWithCounts(
+  userId: string
+): Promise<ItemTypeWithCount[]> {
+  const types = await prisma.itemType.findMany({
+    where: { OR: [{ isSystem: true }, { userId }] },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      _count: { select: { items: { where: { userId } } } },
+    },
+  });
+
+  return types
+    .toSorted((a, b) => typeRank(a.name) - typeRank(b.name))
+    .map((type) => ({
+      id: type.id,
+      name: type.name,
+      itemCount: type._count.items,
+    }));
 }
 
 export async function getItemStats(userId: string): Promise<ItemStats> {

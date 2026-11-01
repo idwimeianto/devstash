@@ -78,6 +78,7 @@ async function seedCollections(userId: string, typeIds: Map<string, string>) {
       data: {
         name: collection.name,
         description: collection.description,
+        isFavorite: collection.isFavorite ?? false,
         userId,
         defaultTypeId: typeIds.get(collection.defaultType),
         items: {

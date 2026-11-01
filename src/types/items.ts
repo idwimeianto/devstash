@@ -10,6 +10,12 @@ export interface ItemSummary {
   date: Date;
 }
 
+export interface ItemTypeWithCount {
+  id: string;
+  name: string;
+  itemCount: number;
+}
+
 export interface ItemStats {
   items: number;
   favoriteItems: number;

@@ -32,6 +32,7 @@ export interface SeedCollection {
   name: string;
   description: string;
   defaultType: SeedTypeName;
+  isFavorite?: boolean;
   items: SeedItem[];
 }
 
@@ -192,6 +193,7 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
     name: "React Patterns",
     description: "Reusable React patterns and hooks",
     defaultType: "snippet",
+    isFavorite: true,
     items: [
       {
         type: "snippet",
@@ -221,6 +223,7 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
     name: "AI Workflows",
     description: "AI prompts and workflow automations",
     defaultType: "prompt",
+    isFavorite: true,
     items: [
       {
         type: "prompt",

@@ -17,6 +17,20 @@ export interface CollectionSummary {
   mainTypeName: string | null;
 }
 
+export interface SidebarCollection {
+  id: string;
+  name: string;
+  itemCount: number;
+  // Most-used type, falling back to the collection's default type when empty.
+  mainTypeName: string | null;
+}
+
+export interface SidebarCollections {
+  favorites: SidebarCollection[];
+  // Newest non-favorite collections.
+  recent: SidebarCollection[];
+}
+
 export interface CollectionStats {
   collections: number;
   favoriteCollections: number;
