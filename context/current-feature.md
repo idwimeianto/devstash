@@ -1,21 +1,18 @@
 # Current Feature
 
-**Codebase Quick Wins** — low-risk fix from the code-scanner audit: request-level caching for the current user lookup. No behavior or UI changes.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- **Cache `getCurrentUserId()`** — wrap it in React's `cache()` in `src/lib/db/users.ts` so the demo-user lookup runs once per request instead of once per server component (`SidebarTypes`, `SidebarCollections`, `StatsCards`, `RecentCollections`, `PinnedItems`, `RecentItems`). Keep the `connection()` call and the `NO_USER_ID` fallback.
-- `npx tsc --noEmit`, `npm run lint` and `npm run build` pass; `/dashboard` renders the same as before.
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- `src/lib/mock-data.ts` and `src/lib/dashboard.ts` stay as is.
-- Left out on purpose (more than a quick win): rewriting the collection queries with `_count` / `groupBy`, the `[userId, createdAt]` indexes (needs a migration), the shared collection select/helper, splitting `SidebarCollections.tsx`, and replacing the mock sidebar user with the DB user (better done with Auth.js).
-- Also left out: switching template-string class names to `cn()`, because template strings are the existing pattern across the dashboard components.
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -31,3 +28,4 @@ In Progress
 - **Dashboard Items** — dashboard Pinned / Recent Items and item stats now come from the Neon database via Prisma instead of mock data; `src/lib/db/items.ts` (`getPinnedItems`, `getRecentItems`: 10 most recent ordered by last used then created, `getItemStats`) with types in `src/types/items.ts`; async `PinnedItems` (renders nothing when there are no pinned items, no Suspense fallback) and `RecentItems` (skeleton fallback) server components wrapped in `<Suspense>`; `ItemCard` takes the database item shape with icon/border from the item type, tags and last-used/created date; `StatsCards` loads item and collection stats in parallel; seed items accept an optional `isPinned` flag, with the useDebounce & useLocalStorage snippet and the Code Review prompt pinned; `src/lib/dashboard.ts` is now unused and the sidebar still uses mock data. (Completed)
 - **Stats & Sidebar** — sidebar item types and collections now come from the Neon database via Prisma instead of mock data (main area stats already did); `getItemTypesWithCounts` in `src/lib/db/items.ts` (system types plus the user's custom types with the user's item count, in the existing sidebar order) and `getSidebarCollections` in `src/lib/db/collections.ts` (favorites plus the 5 newest non-favorite collections, with item count and main type falling back to the default type), with types in `src/types/items.ts` and `src/types/collections.ts`; `SidebarTypes` and `SidebarCollections` load their lists in async server components wrapped in `<Suspense>`; favorites keep the folder and star icons, recent collections show a colored circle for their most-used type (new `bgColor` class in `item-type-display.ts`); empty Favorites / Recent lists are hidden; "View all collections" link to `/collections`; deterministic `SidebarListSkeleton` replaces shadcn's `SidebarMenuSkeleton`, whose `Math.random()` broke prerendering; seed collections accept an optional `isFavorite` flag, with React Patterns and AI Workflows marked as favorites; `SidebarUser` still uses mock data. (Completed)
 - **Add Pro Badge to Sidebar** — subtle uppercase "PRO" badge (shadcn `Badge`, outline variant, small muted text) next to the File and Image types in the sidebar Types list, hidden when the sidebar is collapsed to icons; Pro types defined once in `PRO_ITEM_TYPES` with an `isProItemType()` helper in `src/lib/item-type-display.ts`; display only, no gating. (Completed)
+- **Codebase Quick Wins** — low-risk fix from the code-scanner audit: `getCurrentUserId()` in `src/lib/db/users.ts` is wrapped in React's `cache()`, so the demo-user lookup runs once per request instead of once in each of the 6 dashboard server components; `connection()` and the `NO_USER_ID` fallback unchanged; other audit findings (collection query rewrites, `[userId, createdAt]` indexes, shared collection helper, splitting `SidebarCollections.tsx`, DB-backed sidebar user) deferred, and `mock-data.ts` / `dashboard.ts` left as is. (Completed)
