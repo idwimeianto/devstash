@@ -12,9 +12,11 @@ interface StatCardProps {
   label: string;
   value: number;
   icon: LucideIcon;
+  // Icon text color and background tint classes.
+  iconColor: string;
 }
 
-function StatCard({ label, value, icon: Icon }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, iconColor }: StatCardProps) {
   return (
     <Card>
       <CardContent className="flex items-center justify-between gap-4">
@@ -22,7 +24,9 @@ function StatCard({ label, value, icon: Icon }: StatCardProps) {
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
         </div>
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <div
+          className={`flex size-10 items-center justify-center rounded-lg ${iconColor}`}
+        >
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -39,21 +43,29 @@ export async function StatsCards() {
 
   return (
     <div className={GRID_CLASSES}>
-      <StatCard label="Items" value={itemStats.items} icon={Layers} />
+      <StatCard
+        label="Items"
+        value={itemStats.items}
+        icon={Layers}
+        iconColor="bg-blue-500/10 text-blue-500"
+      />
       <StatCard
         label="Collections"
         value={collectionStats.collections}
         icon={Folders}
+        iconColor="bg-emerald-500/10 text-emerald-500"
       />
       <StatCard
         label="Favorite Items"
         value={itemStats.favoriteItems}
         icon={Heart}
+        iconColor="bg-rose-500/10 text-rose-500"
       />
       <StatCard
         label="Favorite Collections"
         value={collectionStats.favoriteCollections}
         icon={FolderHeart}
+        iconColor="bg-amber-500/10 text-amber-500"
       />
     </div>
   );
