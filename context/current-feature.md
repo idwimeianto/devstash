@@ -1,41 +1,18 @@
-# Current Feature: Auth Phase 2 — Credentials (Email/Password) Provider
+# Current Feature
 
-Add a Credentials provider for email/password sign-in, plus a registration API route.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- Use `bcryptjs` (already installed) for password hashing
-- `password` field on `User` (already in `prisma/schema.prisma` as `String?`, so no migration expected)
-- `src/auth.config.ts`: add a Credentials provider with an `authorize: () => null` placeholder (edge-safe)
-- `src/auth.ts`: override the Credentials provider with real bcrypt validation against the database
-- `POST /api/auth/register`:
-  - Accepts `name`, `email`, `password`, `confirmPassword`
-  - Validates that the passwords match
-  - Rejects an email that already exists
-  - Hashes the password with bcryptjs and creates the user
-  - Returns a success/error response
-- GitHub OAuth keeps working
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- Split pattern: `auth.config.ts` keeps the placeholder so the proxy (edge) never imports Prisma/bcrypt; `auth.ts` replaces it with the real `authorize`.
-- Validate request input with Zod (coding standards). Zod is not installed yet, so it needs adding.
-- Testing:
-  1. Register via curl:
-     ```bash
-     curl -X POST http://localhost:3000/api/auth/register \
-       -H "Content-Type: application/json" \
-       -d '{"name":"Test","email":"test@test.com","password":"password123","confirmPassword":"password123"}'
-     ```
-  2. Go to `/api/auth/signin`
-  3. Sign in with email/password
-  4. Verify redirect to `/dashboard`
-  5. Verify GitHub OAuth still works
-- Reference: https://authjs.dev/getting-started/authentication/credentials
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -54,3 +31,4 @@ In Progress
 - **Codebase Quick Wins** — low-risk fix from the code-scanner audit: `getCurrentUserId()` in `src/lib/db/users.ts` is wrapped in React's `cache()`, so the demo-user lookup runs once per request instead of once in each of the 6 dashboard server components; `connection()` and the `NO_USER_ID` fallback unchanged; other audit findings (collection query rewrites, `[userId, createdAt]` indexes, shared collection helper, splitting `SidebarCollections.tsx`, DB-backed sidebar user) deferred, and `mock-data.ts` / `dashboard.ts` left as is. (Completed)
 - **Codebase Quick Wins 2** — low-risk fixes from the second code-scanner audit: `src/app/dashboard/error.tsx` error boundary with a "Try again" button (this Next.js version passes `retry`, not `reset`; it wraps the page content only, so sidebar queries in the layout are not covered); `getPinnedItems` capped by `PINNED_ITEMS_LIMIT` (10); `prisma/seed.ts` recreates the demo user's collections and items in one `$transaction` (30s timeout), refuses to run when `NODE_ENV` is production, and throws a clear error on an unknown seed type via `getTypeId()`; `BCRYPT_ROUNDS` exported from `prisma/seed-data.ts` and shared with `scripts/test-db.ts`; `getItemTypeDisplay()` accepts `null`, dropping the `?? ""` fallbacks; `CollectionCard` and `ItemCard` compose classes with `cn()`; removed `cursor-pointer` from `ItemCard`; removed the boilerplate comment in `next.config.ts`; `bcryptjs`, `dashboard.ts` and `mock-data.ts` left as is; collection query rewrites, `DIRECT_URL`, the system-type unique index, `[userId, createdAt]` indexes, missing routes, DB icon/color, the shared collection helper, splitting `SidebarCollections.tsx`, a DB-backed sidebar user and cross-user integrity checks deferred. (Completed)
 - **Auth Phase 1 — NextAuth + GitHub Provider** — NextAuth v5 (`next-auth@5.0.0-beta.32`) with `@auth/prisma-adapter` 2.11.3 (its peer range stops at Prisma 6 but it type-checks against the Prisma 7 client); split config for edge compatibility: `src/auth.config.ts` (GitHub provider plus `jwt` / `session` callbacks that copy the user id into `session.user.id`, no adapter) and `src/auth.ts` (Prisma adapter on the shared `@/lib/prisma` client, `session: { strategy: "jwt" }`); `src/app/api/auth/[...nextauth]/route.ts` exports `GET` / `POST`; `src/proxy.ts` (`export const proxy = auth(...)`, matcher `/dashboard/:path*`) redirects signed-out users to NextAuth's default `/api/auth/signin` with a `callbackUrl`; `src/types/next-auth.d.ts` adds `user.id` to `Session`; existing Auth.js schema models already matched the adapter, so no migration; verified the redirect, the GitHub round trip and a new `github` Account row on the dev branch; the dashboard still shows the seeded demo user via `getCurrentUserId()`. (Completed)
+- **Auth Phase 2 — Credentials (Email/Password) Provider** — `src/auth.config.ts` adds a Credentials provider (email/password fields in `CREDENTIALS_FIELDS`) with an `authorize: () => null` placeholder so the proxy stays free of Prisma/bcrypt; `src/auth.ts` swaps it for the real `authorize` (Zod `signInSchema`, user lookup by email, bcrypt compare; OAuth-only users without a password are rejected); `POST /api/auth/register` (`src/app/api/auth/register/route.ts`) validates `name` / `email` / `password` / `confirmPassword` with Zod `registerSchema` (email trimmed and lowercased, password 8–72 characters, passwords must match), returns 409 for an existing email, 400 for invalid input, 201 with the new user, and 500 on other errors, using the `{ success, data, error }` shape; schemas in `src/lib/validations/auth.ts`; `BCRYPT_ROUNDS` (12) plus `hashPassword` / `verifyPassword` moved to `src/lib/password.ts`, with `prisma/seed-data.ts` re-exporting the constant; added `zod` 4.6.7; `User.password` already existed, so no migration; verified registration (201 / 409 / 400) with curl, a rejected wrong password, sign-in redirect to `/dashboard` and the user id in the session; registered `test@test.com` on the dev branch; GitHub OAuth left in the provider list but not re-tested by hand; deferred: mapping a concurrent duplicate-email `P2002` to 409, rate limiting, constant-time handling of unknown emails, and a custom sign-in page. (Completed)
