@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +9,8 @@ const DEMO_USER_EMAIL = "demo@devstash.io";
 const NO_USER_ID = "";
 
 // Temporary until Auth.js is in place: every request acts as the seeded demo user.
-export async function getCurrentUserId(): Promise<string> {
+// Cached per request so the dashboard's server components share one lookup.
+export const getCurrentUserId = cache(async (): Promise<string> => {
   // User data is per request; keep it (and the queries that depend on it) out of prerendering.
   await connection();
   const user = await prisma.user.findUnique({
@@ -16,4 +18,4 @@ export async function getCurrentUserId(): Promise<string> {
     select: { id: true },
   });
   return user?.id ?? NO_USER_ID;
-}
+});

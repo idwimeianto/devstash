@@ -1,18 +1,21 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+**Codebase Quick Wins** — low-risk fix from the code-scanner audit: request-level caching for the current user lookup. No behavior or UI changes.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- **Cache `getCurrentUserId()`** — wrap it in React's `cache()` in `src/lib/db/users.ts` so the demo-user lookup runs once per request instead of once per server component (`SidebarTypes`, `SidebarCollections`, `StatsCards`, `RecentCollections`, `PinnedItems`, `RecentItems`). Keep the `connection()` call and the `NO_USER_ID` fallback.
+- `npx tsc --noEmit`, `npm run lint` and `npm run build` pass; `/dashboard` renders the same as before.
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `src/lib/mock-data.ts` and `src/lib/dashboard.ts` stay as is.
+- Left out on purpose (more than a quick win): rewriting the collection queries with `_count` / `groupBy`, the `[userId, createdAt]` indexes (needs a migration), the shared collection select/helper, splitting `SidebarCollections.tsx`, and replacing the mock sidebar user with the DB user (better done with Auth.js).
+- Also left out: switching template-string class names to `cn()`, because template strings are the existing pattern across the dashboard components.
 
 ## History
 
