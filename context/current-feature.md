@@ -1,23 +1,18 @@
-# Current Feature: Add Pro Badge to Sidebar
+# Current Feature
 
-Add a PRO badge to the File and Image types in the sidebar.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- Show a PRO badge next to the File and Image types in the sidebar Types list
-- Use the shadcn/ui `badge` component
-- Keep the badge clean and subtle
-- Display the label as all-uppercase "PRO"
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- Spec: `context/features/add-pro-badge-sidebar.md`
-- File and Image are the Pro-only system types (see Monetization in `context/project-overview.md`); the badge is display only, no gating
-- shadcn `badge` is already installed (added in Dashboard UI Phase 3)
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -32,3 +27,4 @@ In Progress
 - **Dashboard Collections** — dashboard Recent Collections and collection stats now come from the Neon database via Prisma instead of mock data; `src/lib/db/collections.ts` (`getRecentCollections`: 6 newest with item count, types ranked by use and main type falling back to the default type; `getCollectionStats`) with types in `src/types/collections.ts`; temporary `getCurrentUserId()` in `src/lib/db/users.ts` resolves the seeded demo user until Auth.js (calls `connection()` so queries run at request time); async `RecentCollections` and `StatsCards` server components wrapped in `<Suspense>` with skeleton fallbacks (`/dashboard` is now partially prerendered); card border/tint from the most-used type and icons for all types; item stats, Pinned / Recent Items and the sidebar still use mock data; removed unused mock collection helpers from `src/lib/dashboard.ts`. (Completed)
 - **Dashboard Items** — dashboard Pinned / Recent Items and item stats now come from the Neon database via Prisma instead of mock data; `src/lib/db/items.ts` (`getPinnedItems`, `getRecentItems`: 10 most recent ordered by last used then created, `getItemStats`) with types in `src/types/items.ts`; async `PinnedItems` (renders nothing when there are no pinned items, no Suspense fallback) and `RecentItems` (skeleton fallback) server components wrapped in `<Suspense>`; `ItemCard` takes the database item shape with icon/border from the item type, tags and last-used/created date; `StatsCards` loads item and collection stats in parallel; seed items accept an optional `isPinned` flag, with the useDebounce & useLocalStorage snippet and the Code Review prompt pinned; `src/lib/dashboard.ts` is now unused and the sidebar still uses mock data. (Completed)
 - **Stats & Sidebar** — sidebar item types and collections now come from the Neon database via Prisma instead of mock data (main area stats already did); `getItemTypesWithCounts` in `src/lib/db/items.ts` (system types plus the user's custom types with the user's item count, in the existing sidebar order) and `getSidebarCollections` in `src/lib/db/collections.ts` (favorites plus the 5 newest non-favorite collections, with item count and main type falling back to the default type), with types in `src/types/items.ts` and `src/types/collections.ts`; `SidebarTypes` and `SidebarCollections` load their lists in async server components wrapped in `<Suspense>`; favorites keep the folder and star icons, recent collections show a colored circle for their most-used type (new `bgColor` class in `item-type-display.ts`); empty Favorites / Recent lists are hidden; "View all collections" link to `/collections`; deterministic `SidebarListSkeleton` replaces shadcn's `SidebarMenuSkeleton`, whose `Math.random()` broke prerendering; seed collections accept an optional `isFavorite` flag, with React Patterns and AI Workflows marked as favorites; `SidebarUser` still uses mock data. (Completed)
+- **Add Pro Badge to Sidebar** — subtle uppercase "PRO" badge (shadcn `Badge`, outline variant, small muted text) next to the File and Image types in the sidebar Types list, hidden when the sidebar is collapsed to icons; Pro types defined once in `PRO_ITEM_TYPES` with an `isProItemType()` helper in `src/lib/item-type-display.ts`; display only, no gating. (Completed)
