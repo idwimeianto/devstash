@@ -70,6 +70,8 @@ const ITEM_TYPE_DISPLAY: Record<string, ItemTypeDisplay> = {
   },
 };
 
+const PRO_ITEM_TYPES = new Set(["file", "image"]);
+
 const FALLBACK_DISPLAY: ItemTypeDisplay = {
   icon: File,
   textColor: "text-muted-foreground",
@@ -80,6 +82,10 @@ const FALLBACK_DISPLAY: ItemTypeDisplay = {
 
 export function getItemTypeDisplay(typeName: string): ItemTypeDisplay {
   return ITEM_TYPE_DISPLAY[typeName] ?? FALLBACK_DISPLAY;
+}
+
+export function isProItemType(typeName: string): boolean {
+  return PRO_ITEM_TYPES.has(typeName);
 }
 
 export function getItemTypeLabel(typeName: string): string {

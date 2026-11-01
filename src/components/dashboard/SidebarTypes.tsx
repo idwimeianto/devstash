@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { CollapsibleSidebarGroup } from "@/components/dashboard/CollapsibleSidebarGroup";
 import { SidebarListSkeleton } from "@/components/dashboard/SidebarListSkeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   SidebarMenu,
   SidebarMenuBadge,
@@ -15,6 +16,7 @@ import {
   getItemTypeDisplay,
   getItemTypeHref,
   getItemTypeLabel,
+  isProItemType,
 } from "@/lib/item-type-display";
 
 const SKELETON_COUNT = 7;
@@ -37,6 +39,14 @@ async function SidebarTypeList() {
             >
               <Icon className={textColor} />
               <span>{label}</span>
+              {isProItemType(type.name) && (
+                <Badge
+                  variant="outline"
+                  className="h-4 px-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground group-data-[collapsible=icon]:hidden"
+                >
+                  PRO
+                </Badge>
+              )}
             </SidebarMenuButton>
             <SidebarMenuBadge>{type.itemCount}</SidebarMenuBadge>
           </SidebarMenuItem>
