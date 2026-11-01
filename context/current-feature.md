@@ -1,47 +1,18 @@
-# Current Feature: Auth Phase 3 — Sign In, Register & Sign Out UI
+# Current Feature
 
-Replace the NextAuth default pages with custom sign-in and register pages, and show the signed-in user (avatar, name, sign out) at the bottom of the sidebar.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- **Sign in page (`/sign-in`)**
-  - Email and password fields
-  - "Sign in with GitHub" button
-  - Link to the register page
-  - Form validation and error display
-- **Register page (`/register`)**
-  - Name, email, password and confirm password fields
-  - Form validation (passwords match, email format)
-  - Submits to `POST /api/auth/register`
-  - Redirects to `/sign-in` on success
-- **Bottom of sidebar** (replaces the mock `CURRENT_USER` in `src/components/dashboard/SidebarUser.tsx`)
-  - User avatar: GitHub image, or initials fallback
-  - User name
-  - Dropdown (opening upward) on avatar click with a "Sign out" item
-  - Link to `/profile`
-- **Reusable avatar component** handling both the image and the initials case (e.g. "Brad Traversy" → "BT")
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- NextAuth pages config should point sign-in at `/sign-in`, and `src/proxy.ts` currently redirects to `/api/auth/signin`, so both need updating.
-- The spec says `/register`; the project overview's route table says `/sign-up`. Following the spec.
-- Spec conflict to resolve at start: clicking the avatar opens the dropdown, but "clicking on the icon should go to `/profile`". Likely approach: dropdown holds a "Profile" link and "Sign out". `/profile` doesn't exist yet.
-- The testing list says "avatar shows in top bar", but the requirements put it in the sidebar. Following the requirements (sidebar).
-- `SidebarUser` has a local `getInitials()` to move into the reusable avatar component; shadcn `avatar` is installed, `dropdown-menu` isn't yet.
-- Reuse `registerSchema` / `signInSchema` from `src/lib/validations/auth.ts` for client-side validation.
-- Dashboard data still comes from the seeded demo user via `getCurrentUserId()`; switching it to the session isn't in this spec.
-- Testing:
-  1. Go to `/sign-in` — custom page renders
-  2. Sign in with GitHub — flow works
-  3. Sign in with email/password — flow works
-  4. Avatar shows (GitHub image or initials)
-  5. Click avatar — dropdown appears
-  6. Click "Sign out" — signed out and redirected
-  7. Go to `/register`, create an account — redirected to sign-in
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -61,3 +32,4 @@ In Progress
 - **Codebase Quick Wins 2** — low-risk fixes from the second code-scanner audit: `src/app/dashboard/error.tsx` error boundary with a "Try again" button (this Next.js version passes `retry`, not `reset`; it wraps the page content only, so sidebar queries in the layout are not covered); `getPinnedItems` capped by `PINNED_ITEMS_LIMIT` (10); `prisma/seed.ts` recreates the demo user's collections and items in one `$transaction` (30s timeout), refuses to run when `NODE_ENV` is production, and throws a clear error on an unknown seed type via `getTypeId()`; `BCRYPT_ROUNDS` exported from `prisma/seed-data.ts` and shared with `scripts/test-db.ts`; `getItemTypeDisplay()` accepts `null`, dropping the `?? ""` fallbacks; `CollectionCard` and `ItemCard` compose classes with `cn()`; removed `cursor-pointer` from `ItemCard`; removed the boilerplate comment in `next.config.ts`; `bcryptjs`, `dashboard.ts` and `mock-data.ts` left as is; collection query rewrites, `DIRECT_URL`, the system-type unique index, `[userId, createdAt]` indexes, missing routes, DB icon/color, the shared collection helper, splitting `SidebarCollections.tsx`, a DB-backed sidebar user and cross-user integrity checks deferred. (Completed)
 - **Auth Phase 1 — NextAuth + GitHub Provider** — NextAuth v5 (`next-auth@5.0.0-beta.32`) with `@auth/prisma-adapter` 2.11.3 (its peer range stops at Prisma 6 but it type-checks against the Prisma 7 client); split config for edge compatibility: `src/auth.config.ts` (GitHub provider plus `jwt` / `session` callbacks that copy the user id into `session.user.id`, no adapter) and `src/auth.ts` (Prisma adapter on the shared `@/lib/prisma` client, `session: { strategy: "jwt" }`); `src/app/api/auth/[...nextauth]/route.ts` exports `GET` / `POST`; `src/proxy.ts` (`export const proxy = auth(...)`, matcher `/dashboard/:path*`) redirects signed-out users to NextAuth's default `/api/auth/signin` with a `callbackUrl`; `src/types/next-auth.d.ts` adds `user.id` to `Session`; existing Auth.js schema models already matched the adapter, so no migration; verified the redirect, the GitHub round trip and a new `github` Account row on the dev branch; the dashboard still shows the seeded demo user via `getCurrentUserId()`. (Completed)
 - **Auth Phase 2 — Credentials (Email/Password) Provider** — `src/auth.config.ts` adds a Credentials provider (email/password fields in `CREDENTIALS_FIELDS`) with an `authorize: () => null` placeholder so the proxy stays free of Prisma/bcrypt; `src/auth.ts` swaps it for the real `authorize` (Zod `signInSchema`, user lookup by email, bcrypt compare; OAuth-only users without a password are rejected); `POST /api/auth/register` (`src/app/api/auth/register/route.ts`) validates `name` / `email` / `password` / `confirmPassword` with Zod `registerSchema` (email trimmed and lowercased, password 8–72 characters, passwords must match), returns 409 for an existing email, 400 for invalid input, 201 with the new user, and 500 on other errors, using the `{ success, data, error }` shape; schemas in `src/lib/validations/auth.ts`; `BCRYPT_ROUNDS` (12) plus `hashPassword` / `verifyPassword` moved to `src/lib/password.ts`, with `prisma/seed-data.ts` re-exporting the constant; added `zod` 4.6.7; `User.password` already existed, so no migration; verified registration (201 / 409 / 400) with curl, a rejected wrong password, sign-in redirect to `/dashboard` and the user id in the session; registered `test@test.com` on the dev branch; GitHub OAuth left in the provider list but not re-tested by hand; deferred: mapping a concurrent duplicate-email `P2002` to 409, rate limiting, constant-time handling of unknown emails, and a custom sign-in page. (Completed)
+- **Auth Phase 3 — Sign In, Register & Sign Out UI** — custom `/sign-in` and `/register` pages in the `src/app/(auth)` route group (centered card layout with the DevStash logo) replace NextAuth's default pages; `pages: { signIn: "/sign-in" }` in `src/auth.config.ts`; `src/proxy.ts` sends signed-out `/dashboard` visitors to `/sign-in` with a relative `callbackUrl` and sends signed-in users from `/sign-in` and `/register` to `/dashboard`; server actions in `src/actions/auth.ts` (`signInWithCredentials` via `useActionState` with Zod field errors, "Invalid email or password", and the email kept after a failed attempt; `signInWithGitHub`; `signOutUser` redirecting to `/sign-in`) only redirect to same-site paths; `SignInForm` shows an "Account created" notice after registering and maps NextAuth `?error=` codes such as `OAuthAccountNotLinked`; `RegisterForm` validates with the shared `registerSchema` on the client, posts to `/api/auth/register`, shows server errors and redirects to `/sign-in?registered=1`; shared `FormField` (label, error text, `useId()` ids because Next.js keeps the previous page mounted but hidden, and a show/hide toggle on password fields) with Edge's `::-ms-reveal` icon hidden in `globals.css`; inline `GitHubIcon` SVG since lucide dropped brand icons; clearer Zod messages in `src/lib/validations/auth.ts`; reusable `UserAvatar` (`src/components/user/UserAvatar.tsx`, image or first/last initials, e.g. "Brad Traversy" → "BT"); `SidebarUser` reads the session in a `<Suspense>` boundary (with `connection()` first, since NextAuth calls `crypto.getRandomValues()`) and renders the client `SidebarUserMenu`: avatar, name, email and a settings icon, opening an upward menu with Profile (links to `/profile`, which doesn't exist yet) and Sign out; added shadcn `dropdown-menu` and `label`; types in `src/types/auth.ts`; verified validation errors, a wrong password, register → sign-in → dashboard, the avatar initials, the menu, sign out, both auth-page redirects and the GitHub button reaching GitHub's authorize page; registered `brad@test.com` on the dev branch; a full GitHub login not re-tested by hand; dashboard data still comes from the demo user and `CURRENT_USER` in `mock-data.ts` is now unused. (Completed)
