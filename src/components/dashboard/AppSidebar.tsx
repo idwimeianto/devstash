@@ -1,6 +1,10 @@
+import { LayoutDashboard } from "lucide-react";
+import Link from "next/link";
+
 import { SidebarCollections } from "@/components/dashboard/SidebarCollections";
 import { SidebarTypes } from "@/components/dashboard/SidebarTypes";
 import { SidebarUser } from "@/components/dashboard/SidebarUser";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -16,8 +20,20 @@ export function AppSidebar() {
       collapsible="icon"
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
     >
-      <SidebarHeader className="flex-row justify-end">
-        <SidebarTrigger />
+      <SidebarHeader className="flex-row items-center">
+        {/* Hidden when collapsed to icons, where only the toggle fits. */}
+        <Link
+          href="/dashboard"
+          className={buttonVariants({
+            variant: "ghost",
+            size: "sm",
+            className: "group-data-[collapsible=icon]:hidden",
+          })}
+        >
+          <LayoutDashboard />
+          Dashboard
+        </Link>
+        <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarTypes />
