@@ -1,18 +1,23 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+Vitest Setup — unit testing for server actions and utilities (no component tests).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Install Vitest as a dev dependency and add a `vitest.config.mts` (Node environment, `@/` path alias)
+- `npm test` (single run) and `npm run test:watch` scripts
+- Tests live next to the code they test as `*.test.ts` under `src/actions` and `src/lib`
+- First tests: a utility (`src/lib/rate-limit.ts` helpers) and a server action (`changePassword` in `src/actions/profile.ts`, with Prisma and auth mocked)
+- Update the workflow in `context/ai-interaction.md`, the commands in `CLAUDE.md` and add a Testing section to `context/coding-standards.md`
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Components are out of scope, so no jsdom, React Testing Library or `@vitejs/plugin-react`
+- Tests must not touch the database or external services (Neon, Resend, Upstash): mock them with `vi.mock`
 
 ## History
 

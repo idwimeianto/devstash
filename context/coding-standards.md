@@ -89,6 +89,16 @@ Example v4 configuration:
 - Return `{ success, data, error }` pattern from actions
 - Display user-friendly error messages via toast
 
+## Testing
+
+- Vitest for unit tests (`vitest.config.mts`, Node environment, `@/` alias works)
+- Test server actions (`src/actions`) and utilities (`src/lib`) only; no component tests
+- Put tests next to the file they test as `name.test.ts` (e.g. `src/lib/rate-limit.test.ts`)
+- Never hit real services in tests: mock Prisma, `@/auth`, Resend and Upstash with `vi.mock`
+- Cover the happy path plus validation, auth and error cases; skip trivial code
+- Mocks, spies and env stubs are reset after each test (`clearMocks`, `restoreMocks`, `unstubEnvs`)
+- `npm test` must pass before committing
+
 ## Code Quality
 
 - No commented-out code unless specified

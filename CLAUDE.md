@@ -24,8 +24,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint (flat config, `eslint-config-next` core-web-vitals + typescript)
 - `npx tsc --noEmit` — type-check
+- `npm test` — run the Vitest unit tests once
+- `npm run test:watch` — run Vitest in watch mode
+- `npx vitest run src/lib/rate-limit.test.ts` — run a single test file (add `-t "<name>"` for one test)
 
-No test framework is configured yet.
+Unit tests cover server actions and utilities only, not components (see Testing in `context/coding-standards.md`).
 
 ## Stack
 
