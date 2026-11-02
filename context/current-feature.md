@@ -1,18 +1,32 @@
-# Current Feature
+# Current Feature: Code Editor
 
-<!-- Feature name and short description -->
+A Monaco-based `CodeEditor` with a macOS-style window header for snippet and command content, in both view and edit modes (spec in `context/features/code-editor-spec.md`).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- A `CodeEditor` client component built on Monaco Editor with a dark theme
+- Used for the content of snippets and commands only, replacing:
+  - the read-only `<pre>` in the item drawer's view mode (`ItemContent` in `src/components/items/ItemDetailView.tsx`)
+  - the content `TextareaField` in the drawer's edit form (`ItemEditForm`) and the New Item dialog (`NewItemDialog`)
+- Prompts, notes and other types keep the current `<pre>` / `TextareaField`
+- Editor header with macOS window dots (red / yellow / green), the item's language and a quick copy button next to it
+- Read-only mode for display and an editable mode for the forms
+- Fluid height that grows with the content up to a 400px maximum, then scrolls, with a scrollbar styled to match the dark theme
+- Unit tests for any new utilities (e.g. mapping the item's free-text language to a Monaco language id)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- No editor library is installed yet; `@monaco-editor/react` is the usual React wrapper. By default it loads Monaco from the jsDelivr CDN at runtime; bundling the `monaco-editor` package locally instead is an option. Decided at `start`: bundle locally (no third-party requests, works offline and under a strict CSP)
+- Monaco touches `window`, so the component is client only (the wrapper renders a loading placeholder on the server); show a placeholder sized like the editor to avoid layout jumps
+- `language` is free text (seed data uses `typescript`, `bash`, `dockerfile`; users can type anything, e.g. `ts`, `sh`), so it needs mapping to Monaco's language ids with a plain-text fallback; the header shows the item's own language text
+- Fluid height: size the editor from Monaco's content height (`onDidContentSizeChange`) capped at 400px; the theme's scrollbar colors and Monaco's `scrollbar` options control its look
+- Copy uses the Clipboard API with a toast (sonner); the drawer action bar's own Copy button stays display only (out of scope)
+- In the forms the editor stays a controlled value (`content` state), with the label and error text wired like `TextareaField`
+- No server actions or database changes; no migration
 
 ## History
 

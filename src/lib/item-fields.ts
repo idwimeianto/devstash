@@ -18,6 +18,11 @@ export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" 
   return URL_TYPES.has(typeName) ? "URL" : "TEXT";
 }
 
+// Snippets and commands hold code, so their content gets the code editor.
+export function isCodeItemType(typeName: string): boolean {
+  return LANGUAGE_TYPES.has(typeName);
+}
+
 // Which type-specific fields an item of this type can edit; title, description and tags always can.
 export function getEditableItemFields(typeName: string): EditableItemFields {
   return {

@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { getEditableItemFields, getItemContentType, parseTags } from "@/lib/item-fields";
+import {
+  getEditableItemFields,
+  getItemContentType,
+  isCodeItemType,
+  parseTags,
+} from "@/lib/item-fields";
+
+describe("isCodeItemType", () => {
+  it("is true for snippets and commands only", () => {
+    expect(isCodeItemType("snippet")).toBe(true);
+    expect(isCodeItemType("command")).toBe(true);
+    for (const typeName of ["prompt", "note", "link", "file", "image", "recipe"]) {
+      expect(isCodeItemType(typeName)).toBe(false);
+    }
+  });
+});
 
 describe("getItemContentType", () => {
   it("stores links as URLs and the other creatable types as text", () => {

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { createItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
+import { CodeEditorField } from "@/components/items/CodeEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
 import {
   CREATABLE_ITEM_TYPES,
   getEditableItemFields,
+  isCodeItemType,
   parseTags,
   type CreatableItemType,
 } from "@/lib/item-fields";
@@ -140,7 +142,16 @@ function NewItemForm({ pending, startTransition, onCreated }: NewItemFormProps) 
           errors={fieldErrors?.description}
           rows={2}
         />
-        {fields.content && (
+        {fields.content && isCodeItemType(typeName) && (
+          <CodeEditorField
+            label="Content"
+            value={content}
+            language={language}
+            onChange={setContent}
+            errors={fieldErrors?.content}
+          />
+        )}
+        {fields.content && !isCodeItemType(typeName) && (
           <TextareaField
             label="Content"
             value={content}

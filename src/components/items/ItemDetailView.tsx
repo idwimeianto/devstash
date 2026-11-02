@@ -9,10 +9,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { CodeEditor } from "@/components/code/CodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { isCodeItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { getSafeHref } from "@/lib/safe-url";
 import { cn } from "@/lib/utils";
@@ -183,6 +185,19 @@ function ItemContent({ item }: ItemDetailViewProps) {
     return (
       <DetailSection title="File">
         <p className="text-sm break-all">{item.fileName ?? "No file"}</p>
+      </DetailSection>
+    );
+  }
+
+  if (item.content && isCodeItemType(item.typeName)) {
+    return (
+      <DetailSection title="Content">
+        <CodeEditor
+          value={item.content}
+          language={item.language}
+          readOnly
+          ariaLabel={`${item.title} content`}
+        />
       </DetailSection>
     );
   }

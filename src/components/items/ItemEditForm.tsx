@@ -8,9 +8,10 @@ import { toast } from "sonner";
 import { updateItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
 import { ItemDrawerHeader, ItemMetaSections } from "@/components/items/ItemDetailView";
+import { CodeEditorField } from "@/components/items/CodeEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
-import { getEditableItemFields, parseTags } from "@/lib/item-fields";
+import { getEditableItemFields, isCodeItemType, parseTags } from "@/lib/item-fields";
 import type { ItemDetailJson, UpdateItemInput, UpdateItemResult } from "@/types/items";
 
 const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
@@ -106,7 +107,16 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
           errors={fieldErrors?.description}
           rows={2}
         />
-        {editable.content && (
+        {editable.content && isCodeItemType(item.typeName) && (
+          <CodeEditorField
+            label="Content"
+            value={content}
+            language={language}
+            onChange={setContent}
+            errors={fieldErrors?.content}
+          />
+        )}
+        {editable.content && !isCodeItemType(item.typeName) && (
           <TextareaField
             label="Content"
             value={content}
