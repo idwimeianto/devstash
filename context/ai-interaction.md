@@ -7,6 +7,7 @@
 - Ask before large refactors or architectural changes
 - Don't add features not in the project spec
 - Never delete files without clarification
+- Add Todos for every step. After finishing each single todo, show the whole todo list (done items checked, the rest open) before starting the next one; never batch several todos between lists, including during testing and `/feature` actions
 
 ## Workflow
 
