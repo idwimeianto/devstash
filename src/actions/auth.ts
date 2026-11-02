@@ -1,10 +1,11 @@
 "use server";
 
 import { AuthError, CredentialsSignin } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { signIn, signOut } from "@/auth";
+import { SignInRateLimitedError, signIn, signOut } from "@/auth";
 import { getAppUrl } from "@/lib/app-url";
 import {
   createPasswordResetToken,
@@ -14,6 +15,7 @@ import {
 import { sendPasswordResetEmail } from "@/lib/email";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp, getRateLimitMessage } from "@/lib/rate-limit";
 import {
   EMAIL_NOT_VERIFIED,
   forgotPasswordSchema,
@@ -38,6 +40,9 @@ function getRedirectTo(value: FormDataEntryValue | null) {
 }
 
 function getSignInErrorMessage(error: AuthError) {
+  if (error instanceof SignInRateLimitedError) {
+    return getRateLimitMessage(error.reset);
+  }
   if (error instanceof CredentialsSignin) {
     return error.code === EMAIL_NOT_VERIFIED
       ? "Please verify your email first. Check your inbox for the verification link."
@@ -107,6 +112,11 @@ export async function requestPasswordReset(
     };
   }
 
+  const limit = await checkRateLimit("forgotPassword", getClientIp(await headers()));
+  if (!limit.success) {
+    return { success: false, email, error: getRateLimitMessage(limit.reset) };
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email },
@@ -142,6 +152,11 @@ export async function resetPassword(
     const { fieldErrors } = z.flattenError(parsed.error);
     if (fieldErrors.token) return { success: false, linkStatus: "invalid" };
     return { success: false, fieldErrors };
+  }
+
+  const limit = await checkRateLimit("resetPassword", getClientIp(await headers()));
+  if (!limit.success) {
+    return { success: false, error: getRateLimitMessage(limit.reset) };
   }
 
   let result: ResetPasswordResult;

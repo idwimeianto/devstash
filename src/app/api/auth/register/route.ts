@@ -6,6 +6,12 @@ import { sendVerificationEmail } from "@/lib/email";
 import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import {
+  checkRateLimit,
+  getClientIp,
+  getRateLimitMessage,
+  getRetryAfterSeconds,
+} from "@/lib/rate-limit";
 import { registerSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
@@ -15,6 +21,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" },
       { status: 400 },
+    );
+  }
+
+  const limit = await checkRateLimit("register", getClientIp(request.headers));
+  if (!limit.success) {
+    return NextResponse.json(
+      { success: false, error: getRateLimitMessage(limit.reset) },
+      {
+        status: 429,
+        headers: { "Retry-After": String(getRetryAfterSeconds(limit.reset)) },
+      },
     );
   }
 

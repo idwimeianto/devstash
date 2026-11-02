@@ -35,6 +35,15 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="grid gap-6">
+      {state?.error && (
+        <p
+          role="alert"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {state.error}
+        </p>
+      )}
+
       <form action={formAction} className="grid gap-4" noValidate>
         <FormField
           name="email"

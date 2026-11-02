@@ -6,17 +6,38 @@ import authConfig, { CREDENTIALS_FIELDS } from "@/auth.config";
 import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { EMAIL_NOT_VERIFIED, signInSchema } from "@/lib/validations/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import {
+  EMAIL_NOT_VERIFIED,
+  SIGN_IN_RATE_LIMITED,
+  signInSchema,
+} from "@/lib/validations/auth";
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = EMAIL_NOT_VERIFIED;
 }
 
+export class SignInRateLimitedError extends CredentialsSignin {
+  code = SIGN_IN_RATE_LIMITED;
+
+  constructor(readonly reset: number) {
+    super();
+  }
+}
+
 const credentials = Credentials({
   credentials: CREDENTIALS_FIELDS,
-  async authorize(input) {
+  // Limited here rather than in the sign-in action, so direct POSTs to the
+  // credentials callback are covered too.
+  async authorize(input, request) {
     const parsed = signInSchema.safeParse(input);
     if (!parsed.success) return null;
+
+    const limit = await checkRateLimit(
+      "login",
+      `${getClientIp(request.headers)}:${parsed.data.email}`,
+    );
+    if (!limit.success) throw new SignInRateLimitedError(limit.reset);
 
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email },
