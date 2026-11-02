@@ -1,18 +1,25 @@
-# Current Feature
+# Current Feature: Three-Column Item Grid
 
-<!-- Feature name and short description -->
+Show the `/items/[type]` list view in three columns on larger screens instead of two, keeping it responsive.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `/items/[type]` grid: one column on mobile, two from `md`, three from `xl`
+- The loading skeleton uses the same columns as the grid
+- Cards stay readable with the sidebar expanded (no cramped titles, tags or dates) at every breakpoint
+- Verified in the browser at about 390px, 800px, 1280px and 1536px, with the sidebar expanded and collapsed
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Only `GRID_CLASSES` in `src/components/items/ItemGrid.tsx` should change (currently `grid gap-3 md:grid-cols-2`); `ItemCard` stays as is
+- Three columns start at `xl` (1280px) rather than `lg`: with the 16rem sidebar open, `lg` leaves about 768px for content, about 245px per card
+- `ItemGrid` is only used by the items list view; the dashboard's Pinned and Recent Items lists are separate and unchanged
+- `SKELETON_COUNT` (6) already fills full rows of two and three
+- No server actions or utilities change, so no new unit tests are expected
 
 ## History
 

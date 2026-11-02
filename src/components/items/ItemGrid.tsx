@@ -2,7 +2,7 @@ import { ItemCard } from "@/components/dashboard/ItemCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ItemSummary } from "@/types/items";
 
-const GRID_CLASSES = "grid gap-3 md:grid-cols-2";
+const GRID_CLASSES = "grid gap-3 md:grid-cols-2 xl:grid-cols-3";
 const SKELETON_COUNT = 6;
 
 interface ItemGridProps {
