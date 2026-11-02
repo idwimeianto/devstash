@@ -26,5 +26,12 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sign-in", "/register", "/forgot-password", "/reset-password"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profile",
+    "/sign-in",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ],
 };

@@ -48,6 +48,13 @@ export function createPasswordResetToken(email: string): Promise<string> {
   return issueToken(passwordResetIdentifier(email), PASSWORD_RESET_TTL_MS);
 }
 
+// Both kinds of token for an email; returned unawaited so it can join a transaction.
+export function deleteTokensForEmail(email: string) {
+  return prisma.verificationToken.deleteMany({
+    where: { identifier: { in: [email, passwordResetIdentifier(email)] } },
+  });
+}
+
 export async function verifyEmailToken(token: string): Promise<VerifyEmailResult> {
   const record = await prisma.verificationToken.findFirst({
     where: {

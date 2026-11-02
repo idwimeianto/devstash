@@ -36,6 +36,14 @@ export const registerSchema = z
 
 export const forgotPasswordSchema = z.object({ email });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    password: newPassword,
+    confirmPassword: z.string(),
+  })
+  .refine(passwordsMatch.check, passwordsMatch.params);
+
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1, "Reset token is missing"),

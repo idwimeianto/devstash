@@ -1,7 +1,9 @@
 import { connection } from "next/server";
 import { cache } from "react";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { UserProfile } from "@/types/profile";
 
 const DEMO_USER_EMAIL = "demo@devstash.io";
 
@@ -19,3 +21,22 @@ export const getCurrentUserId = cache(async (): Promise<string> => {
   });
   return user?.id ?? NO_USER_ID;
 });
+
+// The signed-in user's id, or null when signed out.
+export const getSessionUserId = cache(async (): Promise<string | null> => {
+  // NextAuth calls crypto.getRandomValues(), which can't run during prerendering.
+  await connection();
+  const session = await auth();
+  return session?.user?.id ?? null;
+});
+
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true, image: true, createdAt: true, password: true },
+  });
+  if (!user) return null;
+
+  const { password, ...profile } = user;
+  return { ...profile, hasPassword: password !== null };
+}
