@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getAppUrl } from "@/lib/app-url";
 import { createVerificationToken } from "@/lib/db/verification-tokens";
 import { sendVerificationEmail } from "@/lib/email";
+import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations/auth";
@@ -36,6 +37,14 @@ export async function POST(request: Request) {
       select: { id: true, name: true, email: true },
     });
 
+    const verificationRequired = isEmailVerificationEnabled();
+    if (!verificationRequired) {
+      return NextResponse.json(
+        { success: true, data: { ...user, verificationRequired } },
+        { status: 201 },
+      );
+    }
+
     try {
       const token = await createVerificationToken(email);
       await sendVerificationEmail(
@@ -58,7 +67,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, data: user }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: { ...user, verificationRequired } },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Registration failed", error);
     return NextResponse.json(

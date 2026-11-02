@@ -43,7 +43,9 @@ export function RegisterForm() {
         return;
       }
       router.push(
-        `/verify-email?${new URLSearchParams({ status: "sent", email: parsed.data.email })}`,
+        result.data?.verificationRequired === false
+          ? "/sign-in"
+          : `/verify-email?${new URLSearchParams({ status: "sent", email: parsed.data.email })}`,
       );
     } catch {
       setError("Something went wrong. Please try again.");

@@ -3,6 +3,7 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import authConfig, { CREDENTIALS_FIELDS } from "@/auth.config";
+import { isEmailVerificationEnabled } from "@/lib/email-verification";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { EMAIL_NOT_VERIFIED, signInSchema } from "@/lib/validations/auth";
@@ -32,7 +33,9 @@ const credentials = Credentials({
     if (!user?.password) return null;
     if (!(await verifyPassword(parsed.data.password, user.password))) return null;
     // Checked after the password so verification status isn't revealed to anyone else.
-    if (!user.emailVerified) throw new EmailNotVerifiedError();
+    if (isEmailVerificationEnabled() && !user.emailVerified) {
+      throw new EmailNotVerifiedError();
+    }
 
     return { id: user.id, name: user.name, email: user.email, image: user.image };
   },
