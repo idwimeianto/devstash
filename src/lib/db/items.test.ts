@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Prisma } from "@/generated/prisma/client";
-import { getItemDetail, getItemTypeName, updateItem } from "@/lib/db/items";
+import { deleteItem, getItemDetail, getItemTypeName, updateItem } from "@/lib/db/items";
 import { prisma } from "@/lib/prisma";
 
 const tx = vi.hoisted(() => ({
@@ -11,7 +11,7 @@ const tx = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    item: { findFirst: vi.fn() },
+    item: { findFirst: vi.fn(), delete: vi.fn() },
     // Runs the callback against the mocked transaction client.
     $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
   },
@@ -184,5 +184,33 @@ describe("updateItem", () => {
     tx.item.update.mockRejectedValue(new Error("connection lost"));
 
     await expect(updateItem(USER_ID, ITEM_ID, DATA)).rejects.toThrow("connection lost");
+  });
+});
+
+describe("deleteItem", () => {
+  it("only deletes the item among the user's own items", async () => {
+    vi.mocked(prisma.item.delete).mockResolvedValue({ id: ITEM_ID } as never);
+
+    await expect(deleteItem(USER_ID, ITEM_ID)).resolves.toBe(true);
+    expect(prisma.item.delete).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: ITEM_ID, userId: USER_ID } }),
+    );
+  });
+
+  it("returns false when the item isn't the user's", async () => {
+    vi.mocked(prisma.item.delete).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("No record was found for a delete.", {
+        code: "P2025",
+        clientVersion: "test",
+      }),
+    );
+
+    await expect(deleteItem(USER_ID, "someone_elses_item")).resolves.toBe(false);
+  });
+
+  it("rethrows other database errors", async () => {
+    vi.mocked(prisma.item.delete).mockRejectedValue(new Error("connection lost"));
+
+    await expect(deleteItem(USER_ID, ITEM_ID)).rejects.toThrow("connection lost");
   });
 });

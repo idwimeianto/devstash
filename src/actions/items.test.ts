@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { updateItem } from "@/actions/items";
-import { getItemTypeName, updateItem as updateItemQuery } from "@/lib/db/items";
+import { deleteItem, updateItem } from "@/actions/items";
+import {
+  deleteItem as deleteItemQuery,
+  getItemTypeName,
+  updateItem as updateItemQuery,
+} from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
 import type { ItemDetail, UpdateItemInput } from "@/types/items";
 
-vi.mock("@/lib/db/items", () => ({ getItemTypeName: vi.fn(), updateItem: vi.fn() }));
+vi.mock("@/lib/db/items", () => ({
+  deleteItem: vi.fn(),
+  getItemTypeName: vi.fn(),
+  updateItem: vi.fn(),
+}));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
 
 const USER_ID = "user_1";
@@ -136,6 +144,53 @@ describe("updateItem action", () => {
     vi.mocked(updateItemQuery).mockRejectedValue(new Error("connection lost"));
 
     const result = await updateItem(ITEM_ID, INPUT);
+
+    expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
+  });
+});
+
+describe("deleteItem action", () => {
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(deleteItemQuery).mockResolvedValue(true);
+  });
+
+  it("deletes the session user's item", async () => {
+    const result = await deleteItem(ITEM_ID);
+
+    expect(deleteItemQuery).toHaveBeenCalledWith(USER_ID, ITEM_ID);
+    expect(result).toEqual({ success: true });
+  });
+
+  it("rejects a missing item id without touching the database", async () => {
+    const result = await deleteItem("");
+
+    expect(result).toEqual({ success: false, error: "This item doesn't exist or was deleted." });
+    expect(deleteItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    const result = await deleteItem(ITEM_ID);
+
+    expect(result).toEqual({ success: false, error: "You're not signed in. Please sign in again." });
+    expect(deleteItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns not found for another user's or a missing item", async () => {
+    vi.mocked(deleteItemQuery).mockResolvedValue(false);
+
+    const result = await deleteItem("someone_elses_item");
+
+    expect(result).toEqual({ success: false, error: "This item doesn't exist or was deleted." });
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(deleteItemQuery).mockRejectedValue(new Error("connection lost"));
+
+    const result = await deleteItem(ITEM_ID);
 
     expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
   });

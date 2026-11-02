@@ -1,18 +1,29 @@
-# Current Feature
+# Current Feature: Delete Items
 
-<!-- Feature name and short description -->
+Delete an item from the item drawer, with a shadcn confirmation dialog and a success toast.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- The red Delete icon in the item drawer's action bar (`ItemActionBar` in `src/components/items/ItemDetailView.tsx`) opens a shadcn `AlertDialog` confirmation naming the item, with Cancel and a destructive Delete button
+- Cancel (or Escape) closes the dialog and leaves the item and the drawer as they were
+- Confirming calls a `deleteItem(itemId)` server action in `src/actions/items.ts` that deletes only the signed-in user's item (another user's or a missing item returns "not found") and returns `{ success, error }`
+- A `deleteItem(userId, itemId)` query in `src/lib/db/items.ts` deletes with `where: { id, userId }`; collection links and tag links go with it (cascade / implicit join), tags themselves are kept
+- While deleting, the Delete button is disabled with a spinner
+- On success: a toast ("Item deleted"), the dialog and drawer close, and `router.refresh()` removes the card from the dashboard / `/items/[type]` and updates the counts in the stats and sidebar
+- On failure: an error toast, the dialog stays usable and the drawer stays open
+- Unit tests for the action (success, signed out, not found, database error) and the query (user filter, not-found mapping)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Reuse the existing shadcn `alert-dialog` (Base UI) already used by `DeleteAccountDialog` in `src/components/profile/`, and the `sonner` toasts added with edit mode
+- Follow the `updateItem` action's patterns: `getSessionUserId()`, `{ success, data/error }` result, `P2025` mapped to not found
+- The drawer state lives in `ItemDrawerProvider`; it needs a way to close the drawer after a delete
+- Delete only; Favorite, Pin and Copy stay display only
+- No migration expected
 
 ## History
 

@@ -2,11 +2,21 @@
 
 import { z } from "zod";
 
-import { getItemTypeName, updateItem as updateItemQuery } from "@/lib/db/items";
+import {
+  deleteItem as deleteItemQuery,
+  getItemTypeName,
+  updateItem as updateItemQuery,
+} from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
 import { getEditableItemFields } from "@/lib/item-fields";
 import { updateItemSchema } from "@/lib/validations/items";
-import type { ItemDetail, ItemDetailJson, UpdateItemInput, UpdateItemResult } from "@/types/items";
+import type {
+  DeleteItemResult,
+  ItemDetail,
+  ItemDetailJson,
+  UpdateItemInput,
+  UpdateItemResult,
+} from "@/types/items";
 
 const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
 const NOT_FOUND = "This item doesn't exist or was deleted.";
@@ -56,6 +66,21 @@ export async function updateItem(
     return { success: true, data: toItemDetailJson(item) };
   } catch (error) {
     console.error("Updating item failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
+}
+
+export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
+  if (typeof itemId !== "string" || !itemId) return { success: false, error: NOT_FOUND };
+
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  try {
+    const deleted = await deleteItemQuery(userId, itemId);
+    return deleted ? { success: true } : { success: false, error: NOT_FOUND };
+  } catch (error) {
+    console.error("Deleting item failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
 }

@@ -178,6 +178,20 @@ export async function updateItem(
   }
 }
 
+// Collection and tag links go with the item; the tags themselves stay.
+// Returns false if the item is missing or isn't the user's.
+export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
+  try {
+    await prisma.item.delete({ where: { id: itemId, userId }, select: { id: true } });
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return false;
+    }
+    throw error;
+  }
+}
+
 // Resolves a plural route slug ("snippets") to a system type or one of the user's custom types.
 export async function getItemTypeBySlug(
   userId: string,

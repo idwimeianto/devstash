@@ -20,16 +20,29 @@ interface ItemDrawerProps {
   state: ItemDrawerState;
   onRetry: (itemId: string) => void;
   onItemUpdated: (item: ItemDetailJson) => void;
+  onItemDeleted: () => void;
 }
 
-export function ItemDrawer({ open, onOpenChange, state, onRetry, onItemUpdated }: ItemDrawerProps) {
+export function ItemDrawer({
+  open,
+  onOpenChange,
+  state,
+  onRetry,
+  onItemUpdated,
+  onItemDeleted,
+}: ItemDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-xl">
         {state.status === "loading" && <ItemDrawerSkeleton />}
         {state.status === "loaded" && (
           // Keyed by id so another item always opens in view mode.
-          <ItemPanel key={state.item.id} item={state.item} onItemUpdated={onItemUpdated} />
+          <ItemPanel
+            key={state.item.id}
+            item={state.item}
+            onItemUpdated={onItemUpdated}
+            onItemDeleted={onItemDeleted}
+          />
         )}
         {state.status === "error" && (
           <SheetHeader className="gap-3 p-6 pr-12">
@@ -52,12 +65,17 @@ export function ItemDrawer({ open, onOpenChange, state, onRetry, onItemUpdated }
 interface ItemPanelProps {
   item: ItemDetailJson;
   onItemUpdated: (item: ItemDetailJson) => void;
+  onItemDeleted: () => void;
 }
 
-function ItemPanel({ item, onItemUpdated }: ItemPanelProps) {
+function ItemPanel({ item, onItemUpdated, onItemDeleted }: ItemPanelProps) {
   const [editing, setEditing] = useState(false);
 
-  if (!editing) return <ItemDetailView item={item} onEdit={() => setEditing(true)} />;
+  if (!editing) {
+    return (
+      <ItemDetailView item={item} onEdit={() => setEditing(true)} onDeleted={onItemDeleted} />
+    );
+  }
 
   return (
     <ItemEditForm

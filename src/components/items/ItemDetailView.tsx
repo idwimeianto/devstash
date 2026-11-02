@@ -6,10 +6,10 @@ import {
   Pin,
   Star,
   Tag,
-  Trash2,
   type LucideIcon,
 } from "lucide-react";
 
+import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -29,15 +29,16 @@ interface ItemDetailViewProps {
   item: ItemDetailJson;
 }
 
-interface ItemDetailViewWithEditProps extends ItemDetailViewProps {
+interface ItemDetailViewWithActionsProps extends ItemDetailViewProps {
   onEdit: () => void;
+  onDeleted: () => void;
 }
 
-export function ItemDetailView({ item, onEdit }: ItemDetailViewWithEditProps) {
+export function ItemDetailView({ item, onEdit, onDeleted }: ItemDetailViewWithActionsProps) {
   return (
     <>
       <ItemDrawerHeader item={item}>
-        <ItemActionBar isFavorite={item.isFavorite} isPinned={item.isPinned} onEdit={onEdit} />
+        <ItemActionBar item={item} onEdit={onEdit} onDeleted={onDeleted} />
       </ItemDrawerHeader>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
@@ -119,14 +120,9 @@ export function ItemMetaSections({ item }: ItemDetailViewProps) {
   );
 }
 
-interface ItemActionBarProps {
-  isFavorite: boolean;
-  isPinned: boolean;
-  onEdit: () => void;
-}
-
-// Only Edit works so far; the other actions come with later item features.
-function ItemActionBar({ isFavorite, isPinned, onEdit }: ItemActionBarProps) {
+// Only Edit and Delete work so far; the other actions come with later item features.
+function ItemActionBar({ item, onEdit, onDeleted }: ItemDetailViewWithActionsProps) {
+  const { isFavorite, isPinned } = item;
   return (
     <div className="flex flex-wrap items-center gap-1">
       <Button
@@ -156,14 +152,7 @@ function ItemActionBar({ isFavorite, isPinned, onEdit }: ItemActionBarProps) {
           <Pencil />
           Edit
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Delete item"
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 />
-        </Button>
+        <DeleteItemDialog itemId={item.id} itemTitle={item.title} onDeleted={onDeleted} />
       </div>
     </div>
   );

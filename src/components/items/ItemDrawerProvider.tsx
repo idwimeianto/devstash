@@ -56,6 +56,8 @@ export function ItemDrawerProvider({ children }: ItemDrawerProviderProps) {
     [],
   );
 
+  const closeDrawer = useCallback(() => setOpen(false), []);
+
   const context = useMemo(() => ({ openItem }), [openItem]);
 
   return (
@@ -67,6 +69,7 @@ export function ItemDrawerProvider({ children }: ItemDrawerProviderProps) {
         state={state}
         onRetry={openItem}
         onItemUpdated={showItem}
+        onItemDeleted={closeDrawer}
       />
     </ItemDrawerContext>
   );

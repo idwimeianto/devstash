@@ -60,6 +60,8 @@ export type UpdateItemResult =
   | { success: true; data: ItemDetailJson }
   | { success: false; error: string; fieldErrors?: Partial<Record<keyof UpdateItemInput, string[]>> };
 
+export type DeleteItemResult = { success: true } | { success: false; error: string };
+
 export interface ItemTypeRef {
   id: string;
   name: string;
