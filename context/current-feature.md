@@ -1,18 +1,35 @@
-# Current Feature
+# Current Feature: Item Drawer
 
-<!-- Feature name and short description -->
+Right-side slide-in drawer that opens when an item card is clicked and shows the item's full details. It is the item detail view; there is no separate item page. Spec: `context/features/item-drawer-spec.md`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Clicking an `ItemCard` opens a shadcn `Sheet` from the right with that item's full data, with no page navigation
+- Works on the dashboard (Pinned and Recent Items) and on `/items/[type]`
+- A client wrapper component holds the drawer state (open item id), since the pages are server components; cards stay server-rendered
+- Full detail is fetched on click from `GET /api/items/[id]`; the drawer shows a skeleton while loading and an error message if the request fails
+- `getItemDetail(userId, itemId)` in `src/lib/db/items.ts` loads content, language, URL, file fields, type, tags, collections and created / updated dates, filtered by `userId`, with an `ItemDetail` type in `src/types/items.ts`
+- The API route checks the session: 401 when signed out, 404 for a missing item or another user's item, 200 with the `{ success, data, error }` shape
+- Header like the screenshot: type icon on its tint, title, type badge and language badge (when set), close button
+- Action bar: Favorite (star, yellow when the item is a favorite), Pin, Copy, Edit (pencil), and Delete (red trash icon, right-aligned)
+- Body sections: Description, Content (or the URL for links), Tags, Collections, and Details (Created / Updated dates)
+- Keyboard and screen-reader friendly: cards open the drawer with Enter / Space, Escape closes it, and the sheet has a title
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Visual reference: `context/screenshots/dashboard-ui-drawer.png`
+- The action bar is display only for now: Favorite and Pin reflect the item's state but don't toggle, and Edit / Delete do nothing. Toggling, editing and deleting come with item CRUD. Copy is display only too (decided at `start`)
+- Content shows as plain preformatted monospace text; the code editor, syntax highlighting and line numbers come later
+- `ItemSummary` stays light for cards; only `ItemDetail` loads `content`, which can be large
+- `docs/item-crud-architecture.md` planned a URL-driven drawer (`?item=<id>`, server-rendered `ItemDetail`); this spec replaces that with client state plus an API route fetch, so the drawer isn't shareable by URL or kept after a refresh
+- Next.js 16 route handlers get `params` as a Promise; check `node_modules/next/dist/docs/` before writing the route
+- `/api/items` isn't in the `src/proxy.ts` matcher; the route does its own session check (`getSessionUserId()`), like the other API routes
+- Updating `lastUsedAt` when an item is opened is out of scope
+- Unit tests: `getItemDetail` is a Prisma query; the route handler's 401 / 404 / 200 branches are worth testing with `@/auth` and the query mocked
 
 ## History
 

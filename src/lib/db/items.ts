@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type {
+  ItemDetail,
   ItemStats,
   ItemSummary,
   ItemTypeRef,
@@ -82,6 +83,47 @@ export async function getRecentItems(
     select: ITEM_SUMMARY_SELECT,
   });
   return items.map(toItemSummary);
+}
+
+// Filtering by userId makes another user's item look missing.
+export async function getItemDetail(
+  userId: string,
+  itemId: string
+): Promise<ItemDetail | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      contentType: true,
+      content: true,
+      language: true,
+      url: true,
+      fileUrl: true,
+      fileName: true,
+      fileSize: true,
+      isPinned: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+      type: { select: { name: true } },
+      tags: { select: { name: true }, orderBy: { name: "asc" } },
+      collections: {
+        select: { collection: { select: { id: true, name: true } } },
+        orderBy: { collection: { name: "asc" } },
+      },
+    },
+  });
+  if (!item) return null;
+
+  const { type, tags, collections, ...fields } = item;
+  return {
+    ...fields,
+    typeName: type.name,
+    tags: tags.map((tag) => tag.name),
+    collections: collections.map(({ collection }) => collection),
+  };
 }
 
 // Resolves a plural route slug ("snippets") to a system type or one of the user's custom types.

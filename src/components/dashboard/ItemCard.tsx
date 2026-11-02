@@ -1,5 +1,6 @@
 import { Pin, Star } from "lucide-react";
 
+import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
@@ -24,10 +25,11 @@ export function ItemCard({ item }: ItemCardProps) {
   return (
     <Card
       className={cn(
-        "border-l-4 transition-colors hover:ring-foreground/25",
+        "relative border-l-4 transition-colors hover:ring-foreground/25 has-focus-visible:ring-2 has-focus-visible:ring-ring",
         borderColor
       )}
     >
+      <OpenItemButton itemId={item.id} title={item.title} />
       <CardContent className="flex items-start gap-4">
         <div
           className={cn(
