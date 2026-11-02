@@ -21,6 +21,7 @@ export function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "";
   const urlError = searchParams.get("error");
+  const passwordReset = searchParams.get("reset") === "1";
 
   const [state, formAction, pending] = useActionState(
     signInWithCredentials,
@@ -33,6 +34,14 @@ export function SignInForm() {
 
   return (
     <div className="grid gap-6">
+      {passwordReset && !state && (
+        <p
+          role="status"
+          className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
+        >
+          Password updated. Sign in with your new password.
+        </p>
+      )}
       {error && (
         <p
           role="alert"
@@ -67,14 +76,22 @@ export function SignInForm() {
           errors={state?.fieldErrors?.email}
           required
         />
-        <FormField
-          name="password"
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          errors={state?.fieldErrors?.password}
-          required
-        />
+        <div className="grid gap-2">
+          <FormField
+            name="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            errors={state?.fieldErrors?.password}
+            required
+          />
+          <Link
+            href="/forgot-password"
+            className="justify-self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Signing in..." : "Sign in"}
         </Button>

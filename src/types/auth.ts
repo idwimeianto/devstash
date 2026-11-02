@@ -11,6 +11,23 @@ export interface SignInState {
   fieldErrors?: FieldErrors<"email" | "password">;
 }
 
+export interface ForgotPasswordState {
+  success: boolean;
+  data?: { email: string };
+  error?: string;
+  email?: string;
+  fieldErrors?: FieldErrors<"email">;
+}
+
+export type ResetLinkStatus = "expired" | "invalid";
+
+export interface ResetPasswordState {
+  success: boolean;
+  error?: string;
+  linkStatus?: ResetLinkStatus;
+  fieldErrors?: FieldErrors<"password" | "confirmPassword">;
+}
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export interface RegisterResponse {

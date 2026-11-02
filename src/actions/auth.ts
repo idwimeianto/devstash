@@ -1,11 +1,26 @@
 "use server";
 
 import { AuthError, CredentialsSignin } from "next-auth";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth";
-import { EMAIL_NOT_VERIFIED, signInSchema } from "@/lib/validations/auth";
-import type { SignInState } from "@/types/auth";
+import { getAppUrl } from "@/lib/app-url";
+import {
+  createPasswordResetToken,
+  resetPasswordWithToken,
+  type ResetPasswordResult,
+} from "@/lib/db/verification-tokens";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { hashPassword } from "@/lib/password";
+import { prisma } from "@/lib/prisma";
+import {
+  EMAIL_NOT_VERIFIED,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+} from "@/lib/validations/auth";
+import type { ForgotPasswordState, ResetPasswordState, SignInState } from "@/types/auth";
 
 const DEFAULT_REDIRECT = "/dashboard";
 
@@ -73,4 +88,76 @@ export async function signInWithGitHub(formData: FormData) {
 
 export async function signOutUser() {
   await signOut({ redirectTo: "/sign-in" });
+}
+
+// Always reports success for a valid email, so the response doesn't reveal which emails
+// are registered. Only users with a password get a reset link.
+export async function requestPasswordReset(
+  _prevState: ForgotPasswordState | null,
+  formData: FormData,
+): Promise<ForgotPasswordState> {
+  const email = String(formData.get("email") ?? "");
+  const parsed = forgotPasswordSchema.safeParse({ email });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      email,
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+      select: { password: true },
+    });
+
+    if (user?.password) {
+      const token = await createPasswordResetToken(parsed.data.email);
+      await sendPasswordResetEmail(
+        parsed.data.email,
+        `${getAppUrl()}/reset-password?token=${token}`,
+      );
+    }
+  } catch (error) {
+    // Reporting the failure would reveal that the account exists.
+    console.error("Password reset request failed", error);
+  }
+
+  return { success: true, data: { email: parsed.data.email } };
+}
+
+export async function resetPassword(
+  _prevState: ResetPasswordState | null,
+  formData: FormData,
+): Promise<ResetPasswordState> {
+  const parsed = resetPasswordSchema.safeParse({
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    const { fieldErrors } = z.flattenError(parsed.error);
+    if (fieldErrors.token) return { success: false, linkStatus: "invalid" };
+    return { success: false, fieldErrors };
+  }
+
+  let result: ResetPasswordResult;
+  try {
+    result = await resetPasswordWithToken(
+      parsed.data.token,
+      await hashPassword(parsed.data.password),
+    );
+  } catch (error) {
+    console.error("Password reset failed", error);
+    return { success: false, error: "Something went wrong. Please try again." };
+  }
+
+  if (result !== "reset") {
+    return { success: false, linkStatus: result };
+  }
+
+  redirect("/sign-in?reset=1");
 }

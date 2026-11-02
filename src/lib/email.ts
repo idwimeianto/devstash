@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 
+import type { EmailContent } from "@/emails/layout";
+import { renderResetPasswordEmail } from "@/emails/reset-password";
 import { renderVerifyEmail } from "@/emails/verify-email";
 
 // Resend's shared sender; it only delivers to the Resend account owner until a domain is verified.
@@ -15,14 +17,22 @@ function getResend() {
   return resend;
 }
 
-export async function sendVerificationEmail(to: string, verifyUrl: string) {
+async function sendEmail(to: string, content: EmailContent, kind: string) {
   const { error } = await getResend().emails.send({
     from: process.env.RESEND_FROM ?? DEFAULT_FROM,
     to,
-    ...renderVerifyEmail(verifyUrl),
+    ...content,
   });
 
   if (error) {
-    throw new Error(`Failed to send verification email: ${error.message}`);
+    throw new Error(`Failed to send ${kind} email: ${error.message}`);
   }
+}
+
+export function sendVerificationEmail(to: string, verifyUrl: string) {
+  return sendEmail(to, renderVerifyEmail(verifyUrl), "verification");
+}
+
+export function sendPasswordResetEmail(to: string, resetUrl: string) {
+  return sendEmail(to, renderResetPasswordEmail(resetUrl), "password reset");
 }

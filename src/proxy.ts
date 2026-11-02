@@ -5,12 +5,12 @@ import authConfig from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const AUTH_PAGES = ["/sign-in", "/register"];
+const AUTH_PAGES = ["/sign-in", "/register", "/forgot-password", "/reset-password"];
 
 export const proxy = auth((req) => {
   const { pathname, search, origin } = req.nextUrl;
 
-  // Signed-in users have no reason to see the sign-in or register pages.
+  // Signed-in users have no reason to see the auth pages.
   if (AUTH_PAGES.includes(pathname)) {
     if (req.auth) {
       return NextResponse.redirect(new URL("/dashboard", origin));
@@ -26,5 +26,5 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sign-in", "/register"],
+  matcher: ["/dashboard/:path*", "/sign-in", "/register", "/forgot-password", "/reset-password"],
 };
