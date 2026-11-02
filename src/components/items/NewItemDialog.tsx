@@ -35,16 +35,28 @@ const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try 
 
 type FieldErrors = Extract<CreateItemResult, { success: false }>["fieldErrors"];
 
-export function NewItemDialog() {
+interface NewItemDialogProps {
+  // Type selected when the dialog opens; it can still be changed in the picker.
+  defaultType?: CreatableItemType;
+  label?: string;
+  // The top bar shows only the icon on small screens.
+  iconOnlyOnMobile?: boolean;
+}
+
+export function NewItemDialog({
+  defaultType = "snippet",
+  label = "New Item",
+  iconOnlyOnMobile = false,
+}: NewItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   return (
     // Stays open while saving, so Escape or a backdrop click can't hide a pending create.
     <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
-      <DialogTrigger render={<Button aria-label="New Item" />}>
+      <DialogTrigger render={<Button aria-label={label} />}>
         <Plus />
-        <span className="hidden sm:inline">New Item</span>
+        <span className={cn(iconOnlyOnMobile && "hidden sm:inline")}>{label}</span>
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
@@ -53,6 +65,7 @@ export function NewItemDialog() {
         </DialogHeader>
         {/* Mounted only while open, so the form starts empty every time. */}
         <NewItemForm
+          defaultType={defaultType}
           pending={pending}
           startTransition={startTransition}
           onCreated={() => setOpen(false)}
@@ -63,16 +76,17 @@ export function NewItemDialog() {
 }
 
 interface NewItemFormProps {
+  defaultType: CreatableItemType;
   pending: boolean;
   startTransition: TransitionStartFunction;
   onCreated: () => void;
 }
 
-function NewItemForm({ pending, startTransition, onCreated }: NewItemFormProps) {
+function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewItemFormProps) {
   const router = useRouter();
   const formId = useId();
 
-  const [typeName, setTypeName] = useState<CreatableItemType>("snippet");
+  const [typeName, setTypeName] = useState<CreatableItemType>(defaultType);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");

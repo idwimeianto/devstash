@@ -9,6 +9,10 @@ export const CREATABLE_ITEM_TYPES = ["snippet", "prompt", "command", "note", "li
 
 export type CreatableItemType = (typeof CREATABLE_ITEM_TYPES)[number];
 
+export function isCreatableItemType(typeName: string): typeName is CreatableItemType {
+  return (CREATABLE_ITEM_TYPES as readonly string[]).includes(typeName);
+}
+
 const CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
 const URL_TYPES = new Set(["link"]);

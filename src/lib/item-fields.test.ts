@@ -4,8 +4,23 @@ import {
   getEditableItemFields,
   getItemContentType,
   isCodeItemType,
+  isCreatableItemType,
   parseTags,
 } from "@/lib/item-fields";
+
+describe("isCreatableItemType", () => {
+  it("is true for the 5 types the New Item dialog offers", () => {
+    for (const typeName of ["snippet", "prompt", "command", "note", "link"]) {
+      expect(isCreatableItemType(typeName)).toBe(true);
+    }
+  });
+
+  it("is false for file types and custom types", () => {
+    for (const typeName of ["file", "image", "recipe", "Snippet", ""]) {
+      expect(isCreatableItemType(typeName)).toBe(false);
+    }
+  });
+});
 
 describe("isCodeItemType", () => {
   it("is true for snippets and commands only", () => {

@@ -32,7 +32,7 @@ export function TopBar() {
             <FolderPlus />
             <span className="hidden sm:inline">New Collection</span>
           </Button>
-          <NewItemDialog />
+          <NewItemDialog iconOnlyOnMobile />
         </div>
       </div>
     </header>

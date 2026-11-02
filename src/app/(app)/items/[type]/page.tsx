@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ItemGrid, ItemGridSkeleton } from "@/components/items/ItemGrid";
+import { NewItemDialog } from "@/components/items/NewItemDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getItemTypeBySlug, getItemsByType } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
+import { isCreatableItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +36,15 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
             {items.length} {items.length === 1 ? "item" : "items"}
           </p>
         </div>
+        {/* File, image and custom types can't be created from the dialog yet. */}
+        {isCreatableItemType(type.name) && (
+          <div className="ml-auto">
+            <NewItemDialog
+              defaultType={type.name}
+              label={`New ${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}`}
+            />
+          </div>
+        )}
       </header>
 
       <ItemGrid
