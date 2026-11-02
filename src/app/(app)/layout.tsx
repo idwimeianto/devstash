@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export default function DashboardLayout({
-  children,
-}: LayoutProps<"/dashboard">) {
+// Shared shell for the signed-in app pages (dashboard, items).
+export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <SidebarProvider className="flex-col [--header-height:calc(--spacing(14))]">
       <TopBar />

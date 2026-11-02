@@ -1,18 +1,34 @@
-# Current Feature
+# Current Feature: Items List View
 
-<!-- Feature name and short description -->
+Dynamic `/items/[type]` page listing the current user's items of one type (e.g. `/items/snippets`, `/items/notes`).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Dynamic route `/items/[type]` using the plural slug the sidebar already links to (`getItemTypeHref()` → `/items/<name>s`)
+- Unknown types (e.g. `/items/foo`) show the 404 page
+- Items of that type fetched from the database via Prisma, for the signed-in user only
+- Dashboard and sidebar also show the signed-in user's data instead of the seeded demo user's
+- Page header with the type icon, plural label and item count, matching the dashboard header style
+- Responsive grid of `ItemCard` components: one column on small screens, two columns from `md` up
+- Each card keeps its left border colored by item type (existing `ItemCard` behavior)
+- Empty state when the user has no items of that type
+- Loading skeleton while items load
+- Same sidebar and top bar as `/dashboard`; signed-out visitors redirected to `/sign-in`
+- `npm run build` passes and the page is verified in the browser for several types
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/item-list-view-spec.md`. Design reference: `docs/item-crud-architecture.md` (only the list page; the drawer, create / edit / delete and clickable cards are out of scope).
+- Data: add `getItemTypeBySlug(userId, slug)` and `getItemsByType(userId, typeId)` to `src/lib/db/items.ts`, reusing `ITEM_SUMMARY_SELECT`, `RECENT_ORDER` and `toItemSummary()`; every query scoped by `userId`. The type is looked up in the database (system types plus the user's custom types), not a hard-coded list.
+- Next.js 16.4: `params` is a Promise, typed with `PageProps<"/items/[type]">`; `cacheComponents` is on, so the async part of the page goes inside `<Suspense>` (same pattern as `dashboard/page.tsx` and `profile/page.tsx`).
+- Add `"/items/:path*"` to the `matcher` in `src/proxy.ts`.
+- Decided: the shell moves into a `src/app/(app)/` route group. `dashboard/layout.tsx` becomes `(app)/layout.tsx`, shared by `dashboard` and `items`; URLs unchanged.
+- Decided (changed during review): show only the signed-in user's items. `getCurrentUserId()` now returns the session user's id (via `getSessionUserId()`), so the items page, dashboard and sidebar all switch together and stay consistent.
+- Reuse `ItemCard` from `src/components/dashboard/` as is.
 
 ## History
 

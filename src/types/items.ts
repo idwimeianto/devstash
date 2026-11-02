@@ -10,6 +10,11 @@ export interface ItemSummary {
   date: Date;
 }
 
+export interface ItemTypeRef {
+  id: string;
+  name: string;
+}
+
 export interface ItemTypeWithCount {
   id: string;
   name: string;

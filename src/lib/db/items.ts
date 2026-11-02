@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type {
   ItemStats,
   ItemSummary,
+  ItemTypeRef,
   ItemTypeWithCount,
 } from "@/types/items";
 
@@ -78,6 +79,30 @@ export async function getRecentItems(
     where: { userId },
     orderBy: RECENT_ORDER,
     take: limit,
+    select: ITEM_SUMMARY_SELECT,
+  });
+  return items.map(toItemSummary);
+}
+
+// Resolves a plural route slug ("snippets") to a system type or one of the user's custom types.
+export async function getItemTypeBySlug(
+  userId: string,
+  slug: string
+): Promise<ItemTypeRef | null> {
+  if (!slug.endsWith("s")) return null;
+  return prisma.itemType.findFirst({
+    where: { name: slug.slice(0, -1), OR: [{ isSystem: true }, { userId }] },
+    select: { id: true, name: true },
+  });
+}
+
+export async function getItemsByType(
+  userId: string,
+  typeId: string
+): Promise<ItemSummary[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, typeId },
+    orderBy: RECENT_ORDER,
     select: ITEM_SUMMARY_SELECT,
   });
   return items.map(toItemSummary);

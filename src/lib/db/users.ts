@@ -5,21 +5,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { UserProfile } from "@/types/profile";
 
-const DEMO_USER_EMAIL = "demo@devstash.io";
-
-// Matches no rows, so an unseeded database renders empty states instead of failing.
+// Matches no rows, so a missing session renders empty states instead of failing.
 const NO_USER_ID = "";
 
-// Temporary until Auth.js is in place: every request acts as the seeded demo user.
-// Cached per request so the dashboard's server components share one lookup.
+// The signed-in user's id for data queries. The proxy redirects signed-out visitors,
+// so the empty fallback only shows if a page outside its matcher calls this.
 export const getCurrentUserId = cache(async (): Promise<string> => {
-  // User data is per request; keep it (and the queries that depend on it) out of prerendering.
-  await connection();
-  const user = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
-    select: { id: true },
-  });
-  return user?.id ?? NO_USER_ID;
+  return (await getSessionUserId()) ?? NO_USER_ID;
 });
 
 // The signed-in user's id, or null when signed out.
