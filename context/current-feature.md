@@ -1,18 +1,34 @@
-# Current Feature
+# Current Feature: Email Verification on Register
 
-<!-- Feature name and short description -->
+New email/password accounts must confirm their email by clicking a link sent with Resend before they can sign in.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Install the `resend` SDK and send email with `RESEND_API_KEY` from `.env`
+- On successful registration, create a verification token and email the user a verification link
+- Verification link route checks the token (exists, matches, not expired), sets `User.emailVerified`, deletes the token, and sends the user to `/sign-in` with a success message
+- Expired or invalid links show a clear error on `/sign-in`
+- Email/password sign-in is refused for users whose email isn't verified, with a message telling them to check their inbox
+- After registering, the user is told to check their email instead of being told to sign in
+- GitHub sign-in is unaffected
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `VerificationToken` (`identifier`, `token`, `expires`, `@@id([identifier, token])`) is already in the schema from the Auth.js models, so no migration is expected.
+- Store only a hash of the token in the database and send the raw token in the link; give it an expiry (e.g. 24 hours) and replace any older token for the same email.
+- `resend` isn't installed yet (latest is 6.37.0).
+- There's no sender address or app URL in `.env` yet:
+  - Without a verified domain, Resend only allows sending from `onboarding@resend.dev`, and only to the Resend account owner's own email. A `RESEND_FROM` (or similar) variable will be needed for a real domain.
+  - The link needs the app's base URL; add a variable such as `APP_URL` / `AUTH_URL` rather than trusting the request's `Host` header.
+- If sending the email fails after the user is created, the user still exists; decide whether to report an error or let them request a new link.
+- Existing unverified test users (`test@test.com`, `brad@test.com`) will be blocked from email/password sign-in once this ships. The seeded demo user is already verified.
+- Credentials sign-in errors need a way to tell "not verified" apart from "wrong password" (e.g. a custom `CredentialsSignin` subclass with its own `code`).
+- `RESEND_API_KEY` is also in `.env.production`.
+- Not in scope unless asked: a "resend verification email" button, verifying email changes, password reset.
 
 ## History
 

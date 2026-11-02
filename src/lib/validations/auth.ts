@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Error code for email/password sign-in by a user who hasn't verified their email.
+export const EMAIL_NOT_VERIFIED = "email_not_verified";
+
 const email = z
   .string()
   .trim()

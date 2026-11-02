@@ -1,11 +1,15 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import authConfig, { CREDENTIALS_FIELDS } from "@/auth.config";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { signInSchema } from "@/lib/validations/auth";
+import { EMAIL_NOT_VERIFIED, signInSchema } from "@/lib/validations/auth";
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = EMAIL_NOT_VERIFIED;
+}
 
 const credentials = Credentials({
   credentials: CREDENTIALS_FIELDS,
@@ -15,11 +19,20 @@ const credentials = Credentials({
 
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email },
-      select: { id: true, name: true, email: true, image: true, password: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        password: true,
+        emailVerified: true,
+      },
     });
     // OAuth-only users have no password and can't sign in this way.
     if (!user?.password) return null;
     if (!(await verifyPassword(parsed.data.password, user.password))) return null;
+    // Checked after the password so verification status isn't revealed to anyone else.
+    if (!user.emailVerified) throw new EmailNotVerifiedError();
 
     return { id: user.id, name: user.name, email: user.email, image: user.image };
   },

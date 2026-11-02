@@ -20,7 +20,6 @@ const DEFAULT_AUTH_ERROR = "Sign in failed. Please try again.";
 export function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "";
-  const registered = searchParams.has("registered");
   const urlError = searchParams.get("error");
 
   const [state, formAction, pending] = useActionState(
@@ -34,11 +33,6 @@ export function SignInForm() {
 
   return (
     <div className="grid gap-6">
-      {registered && !state && (
-        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
-          Account created. Sign in to continue.
-        </p>
-      )}
       {error && (
         <p
           role="alert"

@@ -1,10 +1,10 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth";
-import { signInSchema } from "@/lib/validations/auth";
+import { EMAIL_NOT_VERIFIED, signInSchema } from "@/lib/validations/auth";
 import type { SignInState } from "@/types/auth";
 
 const DEFAULT_REDIRECT = "/dashboard";
@@ -20,6 +20,15 @@ function getRedirectTo(value: FormDataEntryValue | null) {
     return value;
   }
   return DEFAULT_REDIRECT;
+}
+
+function getSignInErrorMessage(error: AuthError) {
+  if (error instanceof CredentialsSignin) {
+    return error.code === EMAIL_NOT_VERIFIED
+      ? "Please verify your email first. Check your inbox for the verification link."
+      : "Invalid email or password.";
+  }
+  return "Something went wrong. Please try again.";
 }
 
 export async function signInWithCredentials(
@@ -47,14 +56,7 @@ export async function signInWithCredentials(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return {
-        success: false,
-        email,
-        error:
-          error.type === "CredentialsSignin"
-            ? "Invalid email or password."
-            : "Something went wrong. Please try again.",
-      };
+      return { success: false, email, error: getSignInErrorMessage(error) };
     }
     // A successful sign-in throws Next.js's redirect, which must propagate.
     throw error;

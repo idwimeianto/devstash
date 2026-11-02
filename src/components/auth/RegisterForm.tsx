@@ -42,7 +42,9 @@ export function RegisterForm() {
         setError(result.error ?? "Registration failed. Please try again.");
         return;
       }
-      router.push("/sign-in?registered=1");
+      router.push(
+        `/verify-email?${new URLSearchParams({ status: "sent", email: parsed.data.email })}`,
+      );
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
