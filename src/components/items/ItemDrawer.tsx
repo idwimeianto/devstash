@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import { ItemDetailView } from "@/components/items/ItemDetailView";
+import { ItemEditForm } from "@/components/items/ItemEditForm";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,14 +19,18 @@ interface ItemDrawerProps {
   onOpenChange: (open: boolean) => void;
   state: ItemDrawerState;
   onRetry: (itemId: string) => void;
+  onItemUpdated: (item: ItemDetailJson) => void;
 }
 
-export function ItemDrawer({ open, onOpenChange, state, onRetry }: ItemDrawerProps) {
+export function ItemDrawer({ open, onOpenChange, state, onRetry, onItemUpdated }: ItemDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-xl">
         {state.status === "loading" && <ItemDrawerSkeleton />}
-        {state.status === "loaded" && <ItemDetailView item={state.item} />}
+        {state.status === "loaded" && (
+          // Keyed by id so another item always opens in view mode.
+          <ItemPanel key={state.item.id} item={state.item} onItemUpdated={onItemUpdated} />
+        )}
         {state.status === "error" && (
           <SheetHeader className="gap-3 p-6 pr-12">
             <SheetTitle className="text-lg font-semibold">Couldn&apos;t load this item</SheetTitle>
@@ -39,6 +46,28 @@ export function ItemDrawer({ open, onOpenChange, state, onRetry }: ItemDrawerPro
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+interface ItemPanelProps {
+  item: ItemDetailJson;
+  onItemUpdated: (item: ItemDetailJson) => void;
+}
+
+function ItemPanel({ item, onItemUpdated }: ItemPanelProps) {
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) return <ItemDetailView item={item} onEdit={() => setEditing(true)} />;
+
+  return (
+    <ItemEditForm
+      item={item}
+      onCancel={() => setEditing(false)}
+      onSaved={(updated) => {
+        onItemUpdated(updated);
+        setEditing(false);
+      }}
+    />
   );
 }
 

@@ -29,29 +29,16 @@ interface ItemDetailViewProps {
   item: ItemDetailJson;
 }
 
-export function ItemDetailView({ item }: ItemDetailViewProps) {
-  const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(item.typeName);
+interface ItemDetailViewWithEditProps extends ItemDetailViewProps {
+  onEdit: () => void;
+}
 
+export function ItemDetailView({ item, onEdit }: ItemDetailViewWithEditProps) {
   return (
     <>
-      <SheetHeader className="gap-5 border-b p-6">
-        {/* Right padding keeps the title clear of the sheet's close button. */}
-        <div className="flex items-start gap-4 pr-6">
-          <div
-            className={cn("flex size-12 shrink-0 items-center justify-center rounded-xl", bgTint)}
-          >
-            <Icon className={cn("size-6", textColor)} />
-          </div>
-          <div className="min-w-0">
-            <SheetTitle className="text-lg font-semibold break-words">{item.title}</SheetTitle>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Badge variant="secondary">{getItemTypeLabel(item.typeName)}</Badge>
-              {item.language && <Badge variant="outline">{item.language}</Badge>}
-            </div>
-          </div>
-        </div>
-        <ItemActionBar isFavorite={item.isFavorite} isPinned={item.isPinned} />
-      </SheetHeader>
+      <ItemDrawerHeader item={item}>
+        <ItemActionBar isFavorite={item.isFavorite} isPinned={item.isPinned} onEdit={onEdit} />
+      </ItemDrawerHeader>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
         {item.description && (
@@ -71,24 +58,63 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
             </div>
           </DetailSection>
         )}
-        {item.collections.length > 0 && (
-          <DetailSection title="Collections" icon={FolderOpen}>
-            <div className="flex flex-wrap gap-1.5">
-              {item.collections.map((collection) => (
-                <Badge key={collection.id} variant="outline">
-                  {collection.name}
-                </Badge>
-              ))}
-            </div>
-          </DetailSection>
-        )}
-        <DetailSection title="Details" icon={CalendarDays}>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <DetailDate label="Created" value={item.createdAt} />
-            <DetailDate label="Updated" value={item.updatedAt} />
-          </dl>
-        </DetailSection>
+        <ItemMetaSections item={item} />
       </div>
+    </>
+  );
+}
+
+interface ItemDrawerHeaderProps extends ItemDetailViewProps {
+  children: React.ReactNode;
+}
+
+// Type icon, title and badges, with the mode's actions below.
+export function ItemDrawerHeader({ item, children }: ItemDrawerHeaderProps) {
+  const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(item.typeName);
+
+  return (
+    <SheetHeader className="gap-5 border-b p-6">
+      {/* Right padding keeps the title clear of the sheet's close button. */}
+      <div className="flex items-start gap-4 pr-6">
+        <div
+          className={cn("flex size-12 shrink-0 items-center justify-center rounded-xl", bgTint)}
+        >
+          <Icon className={cn("size-6", textColor)} />
+        </div>
+        <div className="min-w-0">
+          <SheetTitle className="text-lg font-semibold break-words">{item.title}</SheetTitle>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Badge variant="secondary">{getItemTypeLabel(item.typeName)}</Badge>
+            {item.language && <Badge variant="outline">{item.language}</Badge>}
+          </div>
+        </div>
+      </div>
+      {children}
+    </SheetHeader>
+  );
+}
+
+// Collections and dates, which are shown but not editable in both modes.
+export function ItemMetaSections({ item }: ItemDetailViewProps) {
+  return (
+    <>
+      {item.collections.length > 0 && (
+        <DetailSection title="Collections" icon={FolderOpen}>
+          <div className="flex flex-wrap gap-1.5">
+            {item.collections.map((collection) => (
+              <Badge key={collection.id} variant="outline">
+                {collection.name}
+              </Badge>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+      <DetailSection title="Details" icon={CalendarDays}>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <DetailDate label="Created" value={item.createdAt} />
+          <DetailDate label="Updated" value={item.updatedAt} />
+        </dl>
+      </DetailSection>
     </>
   );
 }
@@ -96,10 +122,11 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
 interface ItemActionBarProps {
   isFavorite: boolean;
   isPinned: boolean;
+  onEdit: () => void;
 }
 
-// Display only for now: the actions are wired up with item editing.
-function ItemActionBar({ isFavorite, isPinned }: ItemActionBarProps) {
+// Only Edit works so far; the other actions come with later item features.
+function ItemActionBar({ isFavorite, isPinned, onEdit }: ItemActionBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-1">
       <Button
@@ -125,7 +152,7 @@ function ItemActionBar({ isFavorite, isPinned }: ItemActionBarProps) {
         Copy
       </Button>
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={onEdit}>
           <Pencil />
           Edit
         </Button>
@@ -196,7 +223,7 @@ interface DetailSectionProps {
   children: React.ReactNode;
 }
 
-function DetailSection({ title, icon: Icon, children }: DetailSectionProps) {
+export function DetailSection({ title, icon: Icon, children }: DetailSectionProps) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

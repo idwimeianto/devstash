@@ -3,7 +3,7 @@
 import { createContext, use, useCallback, useMemo, useRef, useState } from "react";
 
 import { ItemDrawer, type ItemDrawerState } from "@/components/items/ItemDrawer";
-import type { ItemDetailResponse } from "@/types/items";
+import type { ItemDetailJson, ItemDetailResponse } from "@/types/items";
 
 const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
 
@@ -50,12 +50,24 @@ export function ItemDrawerProvider({ children }: ItemDrawerProviderProps) {
     if (request === latestRequest.current) setState(next);
   }, []);
 
+  // A save returns the updated item, so the drawer shows it without fetching again.
+  const showItem = useCallback(
+    (item: ItemDetailJson) => setState({ status: "loaded", item }),
+    [],
+  );
+
   const context = useMemo(() => ({ openItem }), [openItem]);
 
   return (
     <ItemDrawerContext value={context}>
       {children}
-      <ItemDrawer open={open} onOpenChange={setOpen} state={state} onRetry={openItem} />
+      <ItemDrawer
+        open={open}
+        onOpenChange={setOpen}
+        state={state}
+        onRetry={openItem}
+        onItemUpdated={showItem}
+      />
     </ItemDrawerContext>
   );
 }

@@ -1,5 +1,6 @@
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { UpdateItemData } from "@/lib/validations/items";
 import type {
   ItemDetail,
   ItemStats,
@@ -85,6 +86,40 @@ export async function getRecentItems(
   return items.map(toItemSummary);
 }
 
+const ITEM_DETAIL_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  contentType: true,
+  content: true,
+  language: true,
+  url: true,
+  fileUrl: true,
+  fileName: true,
+  fileSize: true,
+  isPinned: true,
+  isFavorite: true,
+  createdAt: true,
+  updatedAt: true,
+  type: { select: { name: true } },
+  tags: { select: { name: true }, orderBy: { name: "asc" } },
+  collections: {
+    select: { collection: { select: { id: true, name: true } } },
+    orderBy: { collection: { name: "asc" } },
+  },
+} satisfies Prisma.ItemSelect;
+
+type ItemDetailRow = Prisma.ItemGetPayload<{ select: typeof ITEM_DETAIL_SELECT }>;
+
+function toItemDetail({ type, tags, collections, ...fields }: ItemDetailRow): ItemDetail {
+  return {
+    ...fields,
+    typeName: type.name,
+    tags: tags.map((tag) => tag.name),
+    collections: collections.map(({ collection }) => collection),
+  };
+}
+
 // Filtering by userId makes another user's item look missing.
 export async function getItemDetail(
   userId: string,
@@ -92,38 +127,55 @@ export async function getItemDetail(
 ): Promise<ItemDetail | null> {
   const item = await prisma.item.findFirst({
     where: { id: itemId, userId },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      contentType: true,
-      content: true,
-      language: true,
-      url: true,
-      fileUrl: true,
-      fileName: true,
-      fileSize: true,
-      isPinned: true,
-      isFavorite: true,
-      createdAt: true,
-      updatedAt: true,
-      type: { select: { name: true } },
-      tags: { select: { name: true }, orderBy: { name: "asc" } },
-      collections: {
-        select: { collection: { select: { id: true, name: true } } },
-        orderBy: { collection: { name: "asc" } },
-      },
-    },
+    select: ITEM_DETAIL_SELECT,
   });
-  if (!item) return null;
+  return item && toItemDetail(item);
+}
 
-  const { type, tags, collections, ...fields } = item;
-  return {
-    ...fields,
-    typeName: type.name,
-    tags: tags.map((tag) => tag.name),
-    collections: collections.map(({ collection }) => collection),
-  };
+// The item's type name, or null when the item is missing or belongs to another user.
+export async function getItemTypeName(
+  userId: string,
+  itemId: string
+): Promise<string | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { type: { select: { name: true } } },
+  });
+  return item?.type.name ?? null;
+}
+
+// Fields left undefined in data stay as they are. Returns null if the item isn't the user's.
+export async function updateItem(
+  userId: string,
+  itemId: string,
+  { tags, ...fields }: UpdateItemData
+): Promise<ItemDetail | null> {
+  try {
+    const item = await prisma.$transaction(async (tx) => {
+      // Tags are unique per user, so this only creates the ones the user doesn't have yet.
+      await tx.tag.createMany({
+        data: tags.map((name) => ({ name, userId })),
+        skipDuplicates: true,
+      });
+      const tagIds = await tx.tag.findMany({
+        where: { userId, name: { in: tags } },
+        select: { id: true },
+      });
+
+      // set replaces the item's tags: old ones are disconnected, the new ones connected.
+      return tx.item.update({
+        where: { id: itemId, userId },
+        data: { ...fields, tags: { set: tagIds } },
+        select: ITEM_DETAIL_SELECT,
+      });
+    });
+    return toItemDetail(item);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return null;
+    }
+    throw error;
+  }
 }
 
 // Resolves a plural route slug ("snippets") to a system type or one of the user's custom types.

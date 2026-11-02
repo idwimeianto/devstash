@@ -46,6 +46,20 @@ export type ItemDetailResponse =
   | { success: true; data: ItemDetailJson }
   | { success: false; error: string };
 
+// Payload the drawer's edit form sends; only the fields for the item's type are included.
+export interface UpdateItemInput {
+  title: string;
+  description: string | null;
+  tags: string[];
+  content?: string | null;
+  language?: string | null;
+  url?: string | null;
+}
+
+export type UpdateItemResult =
+  | { success: true; data: ItemDetailJson }
+  | { success: false; error: string; fieldErrors?: Partial<Record<keyof UpdateItemInput, string[]>> };
+
 export interface ItemTypeRef {
   id: string;
   name: string;

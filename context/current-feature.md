@@ -1,18 +1,39 @@
-# Current Feature
+# Current Feature: Item Drawer Edit Mode
 
-<!-- Feature name and short description -->
+Clicking Edit (pencil) in the item drawer switches it to an inline edit form in the same drawer; Save persists the changes, Cancel discards them. Spec: `context/features/item-drawer-edit-spec.md`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Edit switches the open drawer from view mode to edit mode; in edit mode the action bar is replaced by Save and Cancel
+- Cancel discards the changes and returns to view mode
+- Save calls the server action, returns to view mode with the updated item (no second fetch), and calls `router.refresh()` so the cards behind the drawer update
+- Toast on save success and on error
+- Editable for every type: Title (required), Description (textarea, optional), Tags (comma-separated input, saved as an array)
+- Type-specific fields: Content (textarea) for snippet, prompt, command and note; Language (text input) for snippet and command; URL (text input) for link
+- Shown but not editable in edit mode: item type, collections, created / updated dates
+- Controlled inputs with local state, no form library; Save is disabled while the title is empty
+- Zod schema for the update payload: `title` trimmed non-empty; `description`, `content`, `language` string or null; `url` valid URL or null; `tags` array of trimmed non-empty strings
+- `updateItem(itemId, data)` server action in `src/actions/items.ts`: validates with Zod, gets the session via `auth()`, checks ownership, calls the query, returns `{ success, data, error }` with Zod errors in `error` so the form can show them
+- `updateItem` query in `src/lib/db/items.ts`: updates the fields, disconnects all existing tags and connect-or-creates the new ones (per user), and returns the updated `ItemDetail`
+- Unit tests for the server action (success, validation errors, signed out, not owned, database error) and the query's tag handling
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Visual reference: the view-mode drawer from the Item Drawer feature (`src/components/items/ItemDetailView.tsx`)
+- No toast library is installed yet (earlier auth features used inline alerts). The spec asks for toasts, so this adds shadcn `sonner` with a `<Toaster />` in the root layout, dark themed
+- shadcn `textarea` isn't installed yet; add it for Description and Content
+- Only the fields for the item's type are sent and saved; other types' fields stay untouched (e.g. editing a link never clears `content`)
+- Empty optional inputs are saved as `null`, not `""`
+- Tags: split on commas, trim, drop empties and duplicates; tags are unique per user (`@@unique([name, userId])`), so connect-or-create uses that key and never another user's tag
+- URL: any URL `new URL()` accepts is saved, as the spec says (decided at `start`); the drawer still only makes `http(s)` URLs clickable (`getSafeHref()`), so other schemes show as plain text
+- Ownership: the action checks the item belongs to the session user (the query filters by `userId`, so another user's item behaves as not found)
+- Tags left with no items after an edit stay in the database; cleaning them up is out of scope
+- Not editable here: item type and collections (managed separately); the content textarea isn't a code editor yet
+- The other action bar buttons (Favorite, Pin, Copy, Delete) stay display only
 
 ## History
 

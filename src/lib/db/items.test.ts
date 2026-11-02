@@ -1,9 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getItemDetail } from "@/lib/db/items";
+import { Prisma } from "@/generated/prisma/client";
+import { getItemDetail, getItemTypeName, updateItem } from "@/lib/db/items";
 import { prisma } from "@/lib/prisma";
 
-vi.mock("@/lib/prisma", () => ({ prisma: { item: { findFirst: vi.fn() } } }));
+const tx = vi.hoisted(() => ({
+  tag: { createMany: vi.fn(), findMany: vi.fn() },
+  item: { update: vi.fn() },
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    item: { findFirst: vi.fn() },
+    // Runs the callback against the mocked transaction client.
+    $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
+  },
+}));
 
 const USER_ID = "user_1";
 const ITEM_ID = "item_1";
@@ -75,5 +87,102 @@ describe("getItemDetail", () => {
     vi.mocked(prisma.item.findFirst).mockResolvedValue(null);
 
     await expect(getItemDetail(USER_ID, "someone_elses_item")).resolves.toBeNull();
+  });
+});
+
+describe("getItemTypeName", () => {
+  it("returns the type name of the user's own item", async () => {
+    vi.mocked(prisma.item.findFirst).mockResolvedValue({ type: { name: "link" } } as never);
+
+    await expect(getItemTypeName(USER_ID, ITEM_ID)).resolves.toBe("link");
+    expect(prisma.item.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: ITEM_ID, userId: USER_ID } }),
+    );
+  });
+
+  it("returns null for a missing item or another user's item", async () => {
+    vi.mocked(prisma.item.findFirst).mockResolvedValue(null);
+
+    await expect(getItemTypeName(USER_ID, ITEM_ID)).resolves.toBeNull();
+  });
+});
+
+describe("updateItem", () => {
+  const DATA = {
+    title: "useAuth Hook",
+    description: null,
+    content: "export function useAuth() {}",
+    language: "typescript",
+    url: undefined,
+    tags: ["auth", "hooks"],
+  };
+
+  beforeEach(() => {
+    tx.tag.findMany.mockResolvedValue([{ id: "tag_auth" }, { id: "tag_hooks" }]);
+    tx.item.update.mockResolvedValue(ROW);
+  });
+
+  it("creates the user's missing tags and replaces the item's tags with them", async () => {
+    await updateItem(USER_ID, ITEM_ID, DATA);
+
+    expect(tx.tag.createMany).toHaveBeenCalledWith({
+      data: [
+        { name: "auth", userId: USER_ID },
+        { name: "hooks", userId: USER_ID },
+      ],
+      skipDuplicates: true,
+    });
+    expect(tx.tag.findMany).toHaveBeenCalledWith({
+      where: { userId: USER_ID, name: { in: ["auth", "hooks"] } },
+      select: { id: true },
+    });
+    expect(tx.item.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: ITEM_ID, userId: USER_ID },
+        data: {
+          title: "useAuth Hook",
+          description: null,
+          content: "export function useAuth() {}",
+          language: "typescript",
+          url: undefined,
+          tags: { set: [{ id: "tag_auth" }, { id: "tag_hooks" }] },
+        },
+      }),
+    );
+  });
+
+  it("removes every tag when none are given", async () => {
+    tx.tag.findMany.mockResolvedValue([]);
+
+    await updateItem(USER_ID, ITEM_ID, { ...DATA, tags: [] });
+
+    expect(tx.item.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ tags: { set: [] } }),
+      }),
+    );
+  });
+
+  it("returns the updated item in the drawer's shape", async () => {
+    const item = await updateItem(USER_ID, ITEM_ID, DATA);
+
+    expect(item).toMatchObject({ id: ITEM_ID, typeName: "snippet", tags: ["auth", "react"] });
+  });
+
+  it("returns null when the item isn't the user's", async () => {
+    tx.item.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("No record was found for an update.", {
+        code: "P2025",
+        clientVersion: "test",
+      }),
+    );
+
+    await expect(updateItem(USER_ID, ITEM_ID, DATA)).resolves.toBeNull();
+  });
+
+  it("rethrows other database errors", async () => {
+    tx.item.update.mockRejectedValue(new Error("connection lost"));
+
+    await expect(updateItem(USER_ID, ITEM_ID, DATA)).rejects.toThrow("connection lost");
   });
 });
