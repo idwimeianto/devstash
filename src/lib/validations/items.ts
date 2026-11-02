@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CREATABLE_ITEM_TYPES } from "@/lib/item-fields";
+
 // Blank optional fields are stored as null, not "".
 const optionalText = z
   .string()
@@ -31,3 +33,12 @@ export const updateItemSchema = z.object({
 });
 
 export type UpdateItemData = z.output<typeof updateItemSchema>;
+
+export const createItemSchema = updateItemSchema
+  .extend({ typeName: z.enum(CREATABLE_ITEM_TYPES, "Choose a type") })
+  .refine((data) => data.typeName !== "link" || data.url, {
+    message: "URL is required",
+    path: ["url"],
+  });
+
+export type CreateItemData = z.output<typeof createItemSchema>;

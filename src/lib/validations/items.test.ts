@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
-import { updateItemSchema } from "@/lib/validations/items";
+import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
 
 const VALID = { title: "useAuth Hook", description: null, tags: [] };
 
@@ -53,5 +54,44 @@ describe("updateItemSchema", () => {
       "hooks",
     ]);
     expect(updateItemSchema.safeParse({ ...VALID, tags: ["react", " "] }).success).toBe(false);
+  });
+});
+
+describe("createItemSchema", () => {
+  it("accepts the creatable types with the same field rules as editing", () => {
+    const data = createItemSchema.parse({ ...VALID, typeName: "note", title: " Ideas ", content: "x" });
+    expect(data).toMatchObject({ typeName: "note", title: "Ideas", content: "x" });
+  });
+
+  it("rejects file types and unknown types", () => {
+    for (const typeName of ["file", "image", "recipe"]) {
+      const result = createItemSchema.safeParse({ ...VALID, typeName });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toBe("Choose a type");
+    }
+  });
+
+  it("requires a URL for links", () => {
+    for (const url of [undefined, "  "]) {
+      const result = createItemSchema.safeParse({ ...VALID, typeName: "link", url });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]).toMatchObject({ message: "URL is required", path: ["url"] });
+    }
+    expect(
+      createItemSchema.safeParse({ ...VALID, typeName: "link", url: "https://ui.shadcn.com" }).success,
+    ).toBe(true);
+  });
+
+  it("reports a missing URL together with other field errors", () => {
+    const result = createItemSchema.safeParse({ ...VALID, typeName: "link", title: " ", url: "" });
+
+    expect(result.error && z.flattenError(result.error).fieldErrors).toEqual({
+      title: ["Title is required"],
+      url: ["URL is required"],
+    });
+  });
+
+  it("doesn't require a URL for other types", () => {
+    expect(createItemSchema.safeParse({ ...VALID, typeName: "snippet" }).success).toBe(true);
   });
 });

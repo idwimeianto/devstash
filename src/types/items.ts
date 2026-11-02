@@ -60,6 +60,15 @@ export type UpdateItemResult =
   | { success: true; data: ItemDetailJson }
   | { success: false; error: string; fieldErrors?: Partial<Record<keyof UpdateItemInput, string[]>> };
 
+// Payload the New Item dialog sends; the type picks which optional fields are included.
+export interface CreateItemInput extends UpdateItemInput {
+  typeName: string;
+}
+
+export type CreateItemResult =
+  | { success: true; data: ItemDetailJson }
+  | { success: false; error: string; fieldErrors?: Partial<Record<keyof CreateItemInput, string[]>> };
+
 export type DeleteItemResult = { success: true } | { success: false; error: string };
 
 export interface ItemTypeRef {

@@ -1,18 +1,35 @@
-# Current Feature
+# Current Feature: Item Create
 
-<!-- Feature name and short description -->
+Add new items through a modal dialog opened from the "New Item" button in the top bar (spec in `context/features/item-create-spec.md`).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- The "New Item" button in `TopBar` (`src/components/dashboard/TopBar.tsx`, currently display only) opens a shadcn `Dialog`
+- A type selector with the 5 text/URL system types: snippet, prompt, command, note, link
+- Fields shown for the selected type:
+  - All types: title (required), description, tags
+  - snippet / command: content, language
+  - prompt / note: content
+  - link: URL (required)
+- `createItem` server action in `src/actions/items.ts` with Zod validation (session user only, `{ success, data }` or `{ success: false, error, fieldErrors }`)
+- `createItem` query in `src/lib/db/items.ts`
+- On success: a toast, the dialog closes and the page refreshes (`router.refresh()`) so the new item shows on the dashboard / `/items/[type]` and the counts update
+- Unit tests for the action, the query and any new validation / field rules
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- shadcn `dialog` isn't installed yet (only `alert-dialog` and `sheet`); add it with the shadcn CLI (Base UI, like the existing components; check the generated `cn` import, which was wrong for `alert-dialog`)
+- Type selector decided at `start`: a row of 5 icon buttons (type icon and color, selected one tinted), built on the existing `Button`, no new shadcn component
+- Reuse from edit mode: `getEditableItemFields()` and `parseTags()` in `src/lib/item-fields.ts` (they already match the spec's field rules), `updateItemSchema`'s field rules in `src/lib/validations/items.ts` (a create schema needs the type and a required URL for links), the auth `FormField` and the `TextareaField` / toast / pending patterns in `ItemEditForm`
+- Items need `typeId` (look up the system type by name, `isSystem: true`) and `contentType` (`TEXT` for snippet / prompt / command / note, `URL` for link); tags created per user the same way `updateItem` does (`createMany` with `skipDuplicates`, then connect)
+- File and Image (Pro, file uploads) are out of scope; collections, favorite and pin aren't part of the form
+- `TopBar` is a server component, so the button and dialog need a small client component
+- Free-plan limits (50 items) aren't enforced yet; all users can use every feature during development
+- No migration expected
 
 ## History
 

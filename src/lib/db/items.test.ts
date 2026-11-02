@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Prisma } from "@/generated/prisma/client";
-import { deleteItem, getItemDetail, getItemTypeName, updateItem } from "@/lib/db/items";
+import {
+  createItem,
+  deleteItem,
+  getItemDetail,
+  getItemTypeName,
+  updateItem,
+} from "@/lib/db/items";
 import { prisma } from "@/lib/prisma";
 
 const tx = vi.hoisted(() => ({
   tag: { createMany: vi.fn(), findMany: vi.fn() },
-  item: { update: vi.fn() },
+  item: { update: vi.fn(), create: vi.fn() },
+  itemType: { findFirst: vi.fn() },
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -104,6 +111,76 @@ describe("getItemTypeName", () => {
     vi.mocked(prisma.item.findFirst).mockResolvedValue(null);
 
     await expect(getItemTypeName(USER_ID, ITEM_ID)).resolves.toBeNull();
+  });
+});
+
+describe("createItem", () => {
+  const DATA = {
+    typeName: "snippet" as const,
+    title: "useAuth Hook",
+    description: null,
+    content: "export function useAuth() {}",
+    language: "typescript",
+    url: undefined,
+    tags: ["auth", "hooks"],
+  };
+
+  beforeEach(() => {
+    tx.itemType.findFirst.mockResolvedValue({ id: "type_snippet" });
+    tx.tag.findMany.mockResolvedValue([{ id: "tag_auth" }, { id: "tag_hooks" }]);
+    tx.item.create.mockResolvedValue(ROW);
+  });
+
+  it("creates the item for the user with the system type, content kind and tags", async () => {
+    await createItem(USER_ID, DATA);
+
+    expect(tx.itemType.findFirst).toHaveBeenCalledWith({
+      where: { name: "snippet", isSystem: true },
+      select: { id: true },
+    });
+    expect(tx.tag.createMany).toHaveBeenCalledWith({
+      data: [
+        { name: "auth", userId: USER_ID },
+        { name: "hooks", userId: USER_ID },
+      ],
+      skipDuplicates: true,
+    });
+    expect(tx.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          title: "useAuth Hook",
+          description: null,
+          content: "export function useAuth() {}",
+          language: "typescript",
+          url: undefined,
+          contentType: "TEXT",
+          userId: USER_ID,
+          typeId: "type_snippet",
+          tags: { connect: [{ id: "tag_auth" }, { id: "tag_hooks" }] },
+        },
+      }),
+    );
+  });
+
+  it("stores links with the URL content kind", async () => {
+    await createItem(USER_ID, { ...DATA, typeName: "link", url: "https://ui.shadcn.com" });
+
+    expect(tx.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ contentType: "URL" }) }),
+    );
+  });
+
+  it("returns the new item in the drawer's shape", async () => {
+    const item = await createItem(USER_ID, DATA);
+
+    expect(item).toMatchObject({ id: ITEM_ID, typeName: "snippet", tags: ["auth", "react"] });
+  });
+
+  it("throws when the system type is missing", async () => {
+    tx.itemType.findFirst.mockResolvedValue(null);
+
+    await expect(createItem(USER_ID, DATA)).rejects.toThrow('Unknown system item type "snippet"');
+    expect(tx.item.create).not.toHaveBeenCalled();
   });
 });
 

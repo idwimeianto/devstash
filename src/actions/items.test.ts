@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { deleteItem, updateItem } from "@/actions/items";
+import { createItem, deleteItem, updateItem } from "@/actions/items";
 import {
+  createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   getItemTypeName,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
-import type { ItemDetail, UpdateItemInput } from "@/types/items";
+import type { CreateItemInput, ItemDetail, UpdateItemInput } from "@/types/items";
 
 vi.mock("@/lib/db/items", () => ({
+  createItem: vi.fn(),
   deleteItem: vi.fn(),
   getItemTypeName: vi.fn(),
   updateItem: vi.fn(),
@@ -46,6 +48,88 @@ const UPDATED: ItemDetail = {
   createdAt: new Date("2026-01-15T00:00:00Z"),
   updatedAt: new Date("2026-01-16T00:00:00Z"),
 };
+
+describe("createItem action", () => {
+  const CREATE_INPUT: CreateItemInput = { ...INPUT, typeName: "snippet" };
+
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(createItemQuery).mockResolvedValue(UPDATED);
+  });
+
+  it("creates the validated item for the session user and returns it with ISO dates", async () => {
+    const result = await createItem(CREATE_INPUT);
+
+    expect(createItemQuery).toHaveBeenCalledWith(USER_ID, {
+      typeName: "snippet",
+      title: "useAuth Hook",
+      description: null,
+      tags: ["react", "auth"],
+      content: "export function useAuth() {}",
+      language: "typescript",
+      url: undefined,
+    });
+    expect(result).toEqual({
+      success: true,
+      data: {
+        ...UPDATED,
+        createdAt: "2026-01-15T00:00:00.000Z",
+        updatedAt: "2026-01-16T00:00:00.000Z",
+      },
+    });
+  });
+
+  it("ignores fields the chosen type doesn't have", async () => {
+    await createItem({ ...CREATE_INPUT, typeName: "link", url: "https://ui.shadcn.com" });
+
+    expect(createItemQuery).toHaveBeenCalledWith(
+      USER_ID,
+      expect.objectContaining({
+        typeName: "link",
+        content: undefined,
+        language: undefined,
+        url: "https://ui.shadcn.com",
+      }),
+    );
+  });
+
+  it("returns field errors for invalid input without touching the database", async () => {
+    const result = await createItem({ ...CREATE_INPUT, typeName: "link", url: "" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "URL is required",
+      fieldErrors: { url: ["URL is required"] },
+    });
+    expect(getSessionUserId).not.toHaveBeenCalled();
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a type that can't be created", async () => {
+    const result = await createItem({ ...CREATE_INPUT, typeName: "file" });
+
+    expect(result).toMatchObject({ success: false, fieldErrors: { typeName: ["Choose a type"] } });
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    const result = await createItem(CREATE_INPUT);
+
+    expect(result).toEqual({ success: false, error: "You're not signed in. Please sign in again." });
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(createItemQuery).mockRejectedValue(new Error("connection lost"));
+
+    const result = await createItem(CREATE_INPUT);
+
+    expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
+  });
+});
 
 describe("updateItem action", () => {
   beforeEach(() => {

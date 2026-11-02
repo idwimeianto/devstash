@@ -3,14 +3,17 @@
 import { z } from "zod";
 
 import {
+  createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   getItemTypeName,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
 import { getEditableItemFields } from "@/lib/item-fields";
-import { updateItemSchema } from "@/lib/validations/items";
+import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
 import type {
+  CreateItemInput,
+  CreateItemResult,
   DeleteItemResult,
   ItemDetail,
   ItemDetailJson,
@@ -29,6 +32,38 @@ function toItemDetailJson(item: ItemDetail): ItemDetailJson {
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
   };
+}
+
+export async function createItem(input: CreateItemInput): Promise<CreateItemResult> {
+  const parsed = createItemSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  // Always the session's user, never one from the client.
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  // Drop fields this type doesn't have, even if a client sends them.
+  const { content, language, url, ...common } = parsed.data;
+  const editable = getEditableItemFields(common.typeName);
+
+  try {
+    const item = await createItemQuery(userId, {
+      ...common,
+      content: editable.content ? content : undefined,
+      language: editable.language ? language : undefined,
+      url: editable.url ? url : undefined,
+    });
+    return { success: true, data: toItemDetailJson(item) };
+  } catch (error) {
+    console.error("Creating item failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
 }
 
 export async function updateItem(

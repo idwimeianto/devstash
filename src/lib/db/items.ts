@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
+import { getItemContentType } from "@/lib/item-fields";
 import { prisma } from "@/lib/prisma";
-import type { UpdateItemData } from "@/lib/validations/items";
+import type { CreateItemData, UpdateItemData } from "@/lib/validations/items";
 import type {
   ItemDetail,
   ItemStats,
@@ -144,6 +145,50 @@ export async function getItemTypeName(
   return item?.type.name ?? null;
 }
 
+// The ids of the user's tags with these names, creating the ones the user doesn't have yet.
+async function ensureTags(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  tags: string[]
+): Promise<{ id: string }[]> {
+  // Tags are unique per user, so this only creates the missing ones.
+  await tx.tag.createMany({
+    data: tags.map((name) => ({ name, userId })),
+    skipDuplicates: true,
+  });
+  return tx.tag.findMany({
+    where: { userId, name: { in: tags } },
+    select: { id: true },
+  });
+}
+
+// Creates the item with one of the system types; fields left undefined stay empty.
+export async function createItem(
+  userId: string,
+  { typeName, tags, ...fields }: CreateItemData
+): Promise<ItemDetail> {
+  const item = await prisma.$transaction(async (tx) => {
+    const type = await tx.itemType.findFirst({
+      where: { name: typeName, isSystem: true },
+      select: { id: true },
+    });
+    if (!type) throw new Error(`Unknown system item type "${typeName}"`);
+
+    const tagIds = await ensureTags(tx, userId, tags);
+    return tx.item.create({
+      data: {
+        ...fields,
+        contentType: getItemContentType(typeName),
+        userId,
+        typeId: type.id,
+        tags: { connect: tagIds },
+      },
+      select: ITEM_DETAIL_SELECT,
+    });
+  });
+  return toItemDetail(item);
+}
+
 // Fields left undefined in data stay as they are. Returns null if the item isn't the user's.
 export async function updateItem(
   userId: string,
@@ -152,15 +197,7 @@ export async function updateItem(
 ): Promise<ItemDetail | null> {
   try {
     const item = await prisma.$transaction(async (tx) => {
-      // Tags are unique per user, so this only creates the ones the user doesn't have yet.
-      await tx.tag.createMany({
-        data: tags.map((name) => ({ name, userId })),
-        skipDuplicates: true,
-      });
-      const tagIds = await tx.tag.findMany({
-        where: { userId, name: { in: tags } },
-        select: { id: true },
-      });
+      const tagIds = await ensureTags(tx, userId, tags);
 
       // set replaces the item's tags: old ones are disconnected, the new ones connected.
       return tx.item.update({

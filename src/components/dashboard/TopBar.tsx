@@ -1,5 +1,6 @@
-import { FolderPlus, Layers, Plus, Search } from "lucide-react";
+import { FolderPlus, Layers, Search } from "lucide-react";
 
+import { NewItemDialog } from "@/components/items/NewItemDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
@@ -31,10 +32,7 @@ export function TopBar() {
             <FolderPlus />
             <span className="hidden sm:inline">New Collection</span>
           </Button>
-          <Button aria-label="New Item">
-            <Plus />
-            <span className="hidden sm:inline">New Item</span>
-          </Button>
+          <NewItemDialog />
         </div>
       </div>
     </header>

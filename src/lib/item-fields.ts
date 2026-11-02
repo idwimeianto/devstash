@@ -4,9 +4,19 @@ export interface EditableItemFields {
   url: boolean;
 }
 
+// Types the New Item dialog offers; File and Image need uploads and come later.
+export const CREATABLE_ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const;
+
+export type CreatableItemType = (typeof CREATABLE_ITEM_TYPES)[number];
+
 const CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
 const URL_TYPES = new Set(["link"]);
+
+// The item's content kind: links store a URL, the other creatable types text.
+export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" {
+  return URL_TYPES.has(typeName) ? "URL" : "TEXT";
+}
 
 // Which type-specific fields an item of this type can edit; title, description and tags always can.
 export function getEditableItemFields(typeName: string): EditableItemFields {

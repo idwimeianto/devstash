@@ -2,17 +2,15 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition, type ComponentProps } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updateItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
 import { ItemDrawerHeader, ItemMetaSections } from "@/components/items/ItemDetailView";
+import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { getEditableItemFields, parseTags } from "@/lib/item-fields";
-import { cn } from "@/lib/utils";
 import type { ItemDetailJson, UpdateItemInput, UpdateItemResult } from "@/types/items";
 
 const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
@@ -150,35 +148,5 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
         <ItemMetaSections item={item} />
       </form>
     </>
-  );
-}
-
-interface TextareaFieldProps extends ComponentProps<typeof Textarea> {
-  label: string;
-  errors?: string[];
-}
-
-// Textarea counterpart of FormField: label, error text and aria wiring.
-function TextareaField({ label, errors, className, ...textareaProps }: TextareaFieldProps) {
-  const id = useId();
-  const errorId = `${id}-error`;
-  const error = errors?.[0];
-
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Textarea
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-        className={cn("resize-y", className)}
-        {...textareaProps}
-      />
-      {error && (
-        <p id={errorId} className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

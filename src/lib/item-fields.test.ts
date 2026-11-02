@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { getEditableItemFields, parseTags } from "@/lib/item-fields";
+import { getEditableItemFields, getItemContentType, parseTags } from "@/lib/item-fields";
+
+describe("getItemContentType", () => {
+  it("stores links as URLs and the other creatable types as text", () => {
+    expect(getItemContentType("link")).toBe("URL");
+    for (const typeName of ["snippet", "prompt", "command", "note"] as const) {
+      expect(getItemContentType(typeName)).toBe("TEXT");
+    }
+  });
+});
 
 describe("getEditableItemFields", () => {
   it("gives snippets and commands content and language", () => {
