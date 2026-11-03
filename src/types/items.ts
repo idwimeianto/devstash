@@ -8,6 +8,8 @@ export interface ItemSummary {
   isFavorite: boolean;
   typeName: string;
   tags: string[];
+  // Public R2 URL for file types, used for image thumbnails.
+  fileUrl: string | null;
   // Last used, falling back to created.
   date: Date;
 }

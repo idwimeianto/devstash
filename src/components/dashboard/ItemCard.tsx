@@ -7,7 +7,7 @@ import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/types/items";
 
-const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+export const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   timeZone: "UTC",

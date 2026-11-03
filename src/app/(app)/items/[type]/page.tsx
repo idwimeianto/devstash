@@ -49,6 +49,7 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
 
       <ItemGrid
         items={items}
+        gallery={type.name === "image"}
         emptyMessage={`No ${label.toLowerCase()} yet. Add one to start building your stash.`}
       />
     </>

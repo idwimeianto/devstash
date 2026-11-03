@@ -36,6 +36,7 @@ const ITEM_SUMMARY_SELECT = {
   description: true,
   isPinned: true,
   isFavorite: true,
+  fileUrl: true,
   lastUsedAt: true,
   createdAt: true,
   type: { select: { name: true } },
@@ -61,6 +62,7 @@ function toItemSummary(item: ItemSummaryRow): ItemSummary {
     isFavorite: item.isFavorite,
     typeName: item.type.name,
     tags: item.tags.map((tag) => tag.name),
+    fileUrl: item.fileUrl,
     date: item.lastUsedAt ?? item.createdAt,
   };
 }

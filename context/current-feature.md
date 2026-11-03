@@ -1,18 +1,26 @@
-# Current Feature
+# Current Feature: Image Gallery View
 
-<!-- Feature name and short description -->
+Show image items as a gallery of thumbnail cards instead of the regular item card.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Create an image thumbnail card that replaces the regular `ItemCard` for image items
+- Show image items in a gallery grid with 3 columns
+- Thumbnail uses a 16:9 aspect ratio (`aspect-video`)
+- Thumbnail uses `object-cover` to fill the card (edges may be cropped)
+- Subtle hover zoom on the thumbnail (5% scale, 300ms transition)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/image-display-spec.md`
+- `/items/[type]` renders `ItemGrid` (`src/components/items/ItemGrid.tsx`, `md:grid-cols-2 xl:grid-cols-3`) with `ItemCard` from `src/components/dashboard/ItemCard.tsx`; `ItemSummary` (`ITEM_SUMMARY_SELECT` in `src/lib/db/items.ts`) doesn't include `fileUrl` yet, so the thumbnail needs it added
+- Image `fileUrl` is the public R2 URL; the drawer already previews it through `getSafeHref()` (`ItemDetailView.tsx`), which the card should reuse
+- The card must still open the item drawer (`OpenItemButton` overlay) and keep the focus ring
+- Decided at `start`: gallery only on `/items/images` (dashboard Pinned / Recent keep `ItemCard`); responsive columns like the existing grid (1 / 2 / 3); a caption under the image with the title, date and pin / favorite markers (no tags); thumbnails via `next/image` with `images.remotePatterns` for the R2 public domain
 
 ## History
 

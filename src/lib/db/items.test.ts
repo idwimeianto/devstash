@@ -6,6 +6,7 @@ import {
   deleteItem,
   getItemDetail,
   getItemFile,
+  getItemsByType,
   getItemTypeName,
   isFileUrlInUse,
   updateItem,
@@ -20,7 +21,7 @@ const tx = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    item: { findFirst: vi.fn(), delete: vi.fn(), count: vi.fn() },
+    item: { findFirst: vi.fn(), findMany: vi.fn(), delete: vi.fn(), count: vi.fn() },
     // Runs the callback against the mocked transaction client.
     $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
   },
@@ -53,6 +54,35 @@ const ROW = {
     { collection: { id: "col_2", name: "React Patterns" } },
   ],
 };
+
+describe("getItemsByType", () => {
+  const IMAGE_URL = "https://pub.example.r2.dev/user_1/abc.png";
+  const LAST_USED_AT = new Date("2026-02-01T00:00:00Z");
+
+  it("only lists the user's items of that type", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([]);
+
+    await getItemsByType(USER_ID, "type_image");
+
+    expect(prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: USER_ID, typeId: "type_image" } })
+    );
+  });
+
+  it("includes the file URL for thumbnails and dates by last use, then creation", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { ...ROW, id: "img_1", type: { name: "image" }, fileUrl: IMAGE_URL, lastUsedAt: LAST_USED_AT },
+      { ...ROW, id: "img_2", type: { name: "image" }, fileUrl: null, lastUsedAt: null },
+    ] as never);
+
+    const items = await getItemsByType(USER_ID, "type_image");
+
+    expect(items).toEqual([
+      expect.objectContaining({ id: "img_1", typeName: "image", fileUrl: IMAGE_URL, date: LAST_USED_AT }),
+      expect.objectContaining({ id: "img_2", fileUrl: null, date: CREATED_AT }),
+    ]);
+  });
+});
 
 describe("getItemDetail", () => {
   beforeEach(() => {
