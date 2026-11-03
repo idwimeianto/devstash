@@ -1,6 +1,7 @@
 "use server";
 
 import { validationFailure } from "@/lib/action-result";
+import { areUserCollections } from "@/lib/db/collections";
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
@@ -29,6 +30,21 @@ const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again."
 const NOT_FOUND = "This item doesn't exist or was deleted.";
 const URL_REQUIRED = "URL is required";
 const FILE_IN_USE = "This file already belongs to another item. Please upload it again.";
+const COLLECTION_NOT_FOUND = "A selected collection doesn't exist anymore. Please choose again.";
+
+// Another user's collection id looks missing, the same as a deleted one.
+async function hasUnknownCollection(userId: string, collectionIds?: string[]) {
+  return collectionIds !== undefined && !(await areUserCollections(userId, collectionIds));
+}
+
+// Fits both results: collectionIds is a field of UpdateItemInput and CreateItemInput.
+function collectionNotFound(): Extract<UpdateItemResult, { success: false }> {
+  return {
+    success: false,
+    error: COLLECTION_NOT_FOUND,
+    fieldErrors: { collectionIds: [COLLECTION_NOT_FOUND] },
+  };
+}
 
 // Same shape GET /api/items/[id] sends, so the drawer can show the result directly.
 function toItemDetailJson(item: ItemDetail): ItemDetailJson {
@@ -66,6 +82,8 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
   const editable = getEditableItemFields(common.typeName);
 
   try {
+    if (await hasUnknownCollection(userId, common.collectionIds)) return collectionNotFound();
+
     let storedFile: UploadedFile | null = null;
     if (isUploadKind(common.typeName) && file) {
       storedFile = await getStoredUpload(userId, common.typeName, file);
@@ -114,6 +132,7 @@ export async function updateItem(
     if (typeName === "link" && url === null) {
       return { success: false, error: URL_REQUIRED, fieldErrors: { url: [URL_REQUIRED] } };
     }
+    if (await hasUnknownCollection(userId, common.collectionIds)) return collectionNotFound();
     const item = await updateItemQuery(userId, itemId, {
       ...common,
       content: editable.content ? content : undefined,

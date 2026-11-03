@@ -1,18 +1,30 @@
-# Current Feature
+# Current Feature: Add Items to Collections
 
-<!-- Feature name and short description -->
+Let an item belong to one or more collections, chosen from a collections input in the New Item dialog and the drawer's edit form.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- A "Collections" input in the shared item form (`ItemFormFields`), shown for every item type in both the New Item dialog and the drawer's edit form, where the user can pick zero, one or several of their own collections
+- The options are the signed-in user's collections (name, sorted by name), loaded on the server; an empty state when the user has no collections
+- The edit form opens with the item's current collections already selected; saving adds the new ones and removes the deselected ones
+- `createItem` and `updateItem` (schemas, actions and queries) accept `collectionIds`; leaving it out on update keeps the current collections
+- Server-side ownership check: every collection id must belong to the user, otherwise the action returns a field error and nothing is saved
+- Create and update stay in one transaction with the collection links (`ItemCollection` rows)
+- After a save, the drawer's Collections section and the collection counts (dashboard Recent Collections, sidebar) update via `router.refresh()`
+- Vitest unit tests for the changed schemas, actions and queries; `npm test`, type-check, lint and build pass
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Out of scope: the `/collections` and `/collections/[id]` pages, creating a collection from inside the item form, editing / deleting collections
+- `ItemCollection` already exists (composite id `itemId` + `collectionId`, `addedAt`), so no migration is expected
+- The drawer already shows an item's collections (`ItemDetail.collections`, via `ITEM_DETAIL_SELECT` in `src/lib/db/items.ts`)
+- Shared form code from the Split Large Blocks refactor: `ItemFormFields`, `useItemForm()`, `buildItemInput()`, `runItemAction()`
+- Decided at `start`: the list is fetched by a server action when the New Item dialog or edit form opens (always fresh, layout unchanged); the input started as toggle chips, then was switched to a tag-style combobox (shadcn `combobox` on Base UI: selected collections as removable chips inside an input that filters a suggestion list), which also added `input-group`
+- Keep the `addedAt` of collections that stay selected (only create / delete the changed links rather than replacing all)
 
 ## History
 

@@ -42,6 +42,16 @@ export interface CreatedCollection {
   description: string | null;
 }
 
+// A collection the item forms can add an item to.
+export interface CollectionOption {
+  id: string;
+  name: string;
+}
+
+export type CollectionOptionsResult =
+  | { success: true; data: CollectionOption[] }
+  | { success: false; error: string };
+
 export interface CreateCollectionInput {
   name: string;
   description?: string | null;

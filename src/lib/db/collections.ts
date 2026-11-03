@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { CreateCollectionData } from "@/lib/validations/collections";
 import type {
+  CollectionOption,
   CollectionStats,
   CollectionSummary,
   CollectionTypeSummary,
@@ -113,4 +114,28 @@ export async function createCollection(
     data: { userId, name: data.name, description: data.description ?? null },
     select: { id: true, name: true, description: true },
   });
+}
+
+// All of the user's collections by name, for the item forms' collection picker.
+export async function getCollectionOptions(userId: string): Promise<CollectionOption[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    select: { id: true, name: true },
+  });
+  // Sorted here: Postgres would put lowercase names after every capitalized one.
+  return collections.toSorted((a, b) =>
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+  );
+}
+
+// Whether every one of these ids is one of the user's collections.
+export async function areUserCollections(
+  userId: string,
+  collectionIds: string[]
+): Promise<boolean> {
+  if (collectionIds.length === 0) return true;
+  const count = await prisma.collection.count({
+    where: { userId, id: { in: collectionIds } },
+  });
+  return count === collectionIds.length;
 }

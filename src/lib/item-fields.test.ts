@@ -99,13 +99,15 @@ describe("buildItemInput", () => {
     language: "ts",
     url: "https://example.com",
     tags: "react, hooks, react",
+    collectionIds: ["col_1"],
   };
 
-  it("sends only the fields the type has, with tags parsed", () => {
+  it("sends only the fields the type has, with tags parsed and the collections", () => {
     expect(buildItemInput("snippet", VALUES)).toEqual({
       title: "useAuth",
       description: "",
       tags: ["react", "hooks"],
+      collectionIds: ["col_1"],
       content: "export {}",
       language: "ts",
     });
@@ -113,12 +115,14 @@ describe("buildItemInput", () => {
       title: "useAuth",
       description: "",
       tags: ["react", "hooks"],
+      collectionIds: ["col_1"],
       url: "https://example.com",
     });
     expect(buildItemInput("image", VALUES)).toEqual({
       title: "useAuth",
       description: "",
       tags: ["react", "hooks"],
+      collectionIds: ["col_1"],
     });
   });
 });

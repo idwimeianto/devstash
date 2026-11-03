@@ -71,6 +71,7 @@ export interface ItemFormValues {
   language: string;
   url: string;
   tags: string;
+  collectionIds: string[];
 }
 
 // The payload for an item of this type: only the fields it has, so values typed in before
@@ -81,6 +82,7 @@ export function buildItemInput(typeName: string, values: ItemFormValues): Update
     title: values.title,
     description: values.description,
     tags: parseTags(values.tags),
+    collectionIds: values.collectionIds,
     ...(fields.content && { content: values.content }),
     ...(fields.language && { language: values.language }),
     ...(fields.url && { url: values.url }),

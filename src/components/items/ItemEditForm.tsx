@@ -29,6 +29,7 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
     language: item.language ?? "",
     url: item.url ?? "",
     tags: item.tags.join(", "),
+    collectionIds: item.collections.map((collection) => collection.id),
   });
   const [pending, startTransition] = useTransition();
 

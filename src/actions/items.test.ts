@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createItem, deleteItem, updateItem } from "@/actions/items";
+import { areUserCollections } from "@/lib/db/collections";
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
@@ -19,6 +20,7 @@ vi.mock("@/lib/db/items", () => ({
   isFileUrlInUse: vi.fn(),
   updateItem: vi.fn(),
 }));
+vi.mock("@/lib/db/collections", () => ({ areUserCollections: vi.fn() }));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
 // Keep the real URL helpers; only the calls to R2 are faked.
 vi.mock("@/lib/r2", async (importOriginal) => ({
@@ -31,6 +33,7 @@ const USER_ID = "user_1";
 const ITEM_ID = "item_1";
 const PUBLIC_URL = "https://pub-test.r2.dev";
 const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again.";
+const COLLECTION_NOT_FOUND = "A selected collection doesn't exist anymore. Please choose again.";
 
 const INPUT: UpdateItemInput = {
   title: "  useAuth Hook  ",
@@ -113,6 +116,48 @@ describe("createItem action", () => {
       fieldErrors: { url: ["URL is required"] },
     });
     expect(getSessionUserId).not.toHaveBeenCalled();
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("adds the item to the user's collections, deduplicated", async () => {
+    vi.mocked(areUserCollections).mockResolvedValue(true);
+
+    await createItem({ ...CREATE_INPUT, collectionIds: ["col_1", "col_2", "col_1"] });
+
+    expect(areUserCollections).toHaveBeenCalledWith(USER_ID, ["col_1", "col_2"]);
+    expect(createItemQuery).toHaveBeenCalledWith(
+      USER_ID,
+      expect.objectContaining({ collectionIds: ["col_1", "col_2"] }),
+    );
+  });
+
+  it("rejects a collection that isn't the user's", async () => {
+    vi.mocked(areUserCollections).mockResolvedValue(false);
+
+    const result = await createItem({ ...CREATE_INPUT, collectionIds: ["someone_elses"] });
+
+    expect(result).toEqual({
+      success: false,
+      error: COLLECTION_NOT_FOUND,
+      fieldErrors: { collectionIds: [COLLECTION_NOT_FOUND] },
+    });
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("skips the collection check when no collections are sent", async () => {
+    await createItem(CREATE_INPUT);
+
+    expect(areUserCollections).not.toHaveBeenCalled();
+    expect(vi.mocked(createItemQuery).mock.calls[0][1].collectionIds).toBeUndefined();
+  });
+
+  it("returns a generic error when the collection check fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(areUserCollections).mockRejectedValue(new Error("connection lost"));
+
+    const result = await createItem({ ...CREATE_INPUT, collectionIds: ["col_1"] });
+
+    expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
     expect(createItemQuery).not.toHaveBeenCalled();
   });
 
@@ -287,6 +332,48 @@ describe("updateItem action", () => {
       ITEM_ID,
       expect.objectContaining({ url: undefined }),
     );
+  });
+
+  it("replaces the item's collections after checking they are the user's", async () => {
+    vi.mocked(areUserCollections).mockResolvedValue(true);
+
+    await updateItem(ITEM_ID, { ...INPUT, collectionIds: ["col_1"] });
+
+    expect(areUserCollections).toHaveBeenCalledWith(USER_ID, ["col_1"]);
+    expect(updateItemQuery).toHaveBeenCalledWith(
+      USER_ID,
+      ITEM_ID,
+      expect.objectContaining({ collectionIds: ["col_1"] }),
+    );
+  });
+
+  it("leaves the collections alone when none are sent", async () => {
+    await updateItem(ITEM_ID, INPUT);
+
+    expect(areUserCollections).not.toHaveBeenCalled();
+    expect(vi.mocked(updateItemQuery).mock.calls[0][2].collectionIds).toBeUndefined();
+  });
+
+  it("rejects a collection that isn't the user's without saving", async () => {
+    vi.mocked(areUserCollections).mockResolvedValue(false);
+
+    const result = await updateItem(ITEM_ID, { ...INPUT, collectionIds: ["someone_elses"] });
+
+    expect(result).toMatchObject({
+      success: false,
+      fieldErrors: { collectionIds: [COLLECTION_NOT_FOUND] },
+    });
+    expect(updateItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic error when the collection check fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(areUserCollections).mockRejectedValue(new Error("connection lost"));
+
+    const result = await updateItem(ITEM_ID, { ...INPUT, collectionIds: ["col_1"] });
+
+    expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
+    expect(updateItemQuery).not.toHaveBeenCalled();
   });
 
   it("returns field errors for invalid input without touching the database", async () => {

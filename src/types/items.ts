@@ -64,6 +64,8 @@ export interface UpdateItemInput {
   content?: string | null;
   language?: string | null;
   url?: string | null;
+  // Every collection the item should be in; left out, its collections stay as they are.
+  collectionIds?: string[];
 }
 
 export type UpdateItemResult =

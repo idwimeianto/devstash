@@ -1,11 +1,31 @@
 "use server";
 
 import { validationFailure } from "@/lib/action-result";
-import { createCollection as createCollectionQuery } from "@/lib/db/collections";
+import {
+  createCollection as createCollectionQuery,
+  getCollectionOptions as getCollectionOptionsQuery,
+} from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { createCollectionSchema } from "@/lib/validations/collections";
-import type { CreateCollectionInput, CreateCollectionResult } from "@/types/collections";
+import type {
+  CollectionOptionsResult,
+  CreateCollectionInput,
+  CreateCollectionResult,
+} from "@/types/collections";
+
+// The signed-in user's collections for the item forms' collection picker.
+export async function getCollectionOptions(): Promise<CollectionOptionsResult> {
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  try {
+    return { success: true, data: await getCollectionOptionsQuery(userId) };
+  } catch (error) {
+    console.error("Loading collections failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
+}
 
 export async function createCollection(
   input: CreateCollectionInput,

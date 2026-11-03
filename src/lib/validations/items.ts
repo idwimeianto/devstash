@@ -11,6 +11,7 @@ export const ITEM_LIMITS = {
   url: 2_048,
   tag: 50,
   tags: 20,
+  collections: 100,
 } as const;
 
 export function tooLong(field: string, max: number) {
@@ -61,6 +62,12 @@ export const updateItemSchema = z.object({
     )
     .max(ITEM_LIMITS.tags, `Use at most ${ITEM_LIMITS.tags} tags`)
     .transform((tags) => [...new Set(tags)]),
+  // Left out, the item keeps its collections; the action checks they are the user's.
+  collectionIds: z
+    .array(z.string().min(1, "Choose a collection"))
+    .max(ITEM_LIMITS.collections, `Choose at most ${ITEM_LIMITS.collections} collections`)
+    .transform((ids) => [...new Set(ids)])
+    .optional(),
 });
 
 export type UpdateItemData = z.output<typeof updateItemSchema>;

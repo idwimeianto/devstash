@@ -12,14 +12,20 @@ const EMPTY_VALUES: ItemFormValues = {
   language: "",
   url: "",
   tags: "",
+  collectionIds: [],
 };
+
+export type SetItemField = <K extends keyof ItemFormValues>(
+  name: K,
+  value: ItemFormValues[K],
+) => void;
 
 // The item forms' field values and the server's field errors.
 export function useItemForm(initial: Partial<ItemFormValues> = {}) {
   const [values, setValues] = useState<ItemFormValues>(() => ({ ...EMPTY_VALUES, ...initial }));
   const [fieldErrors, setFieldErrors] = useState<ItemFieldErrors>({});
 
-  const setField = useCallback((name: keyof ItemFormValues, value: string) => {
+  const setField = useCallback<SetItemField>((name, value) => {
     setValues((previous) => ({ ...previous, [name]: value }));
   }, []);
 

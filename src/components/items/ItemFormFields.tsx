@@ -2,9 +2,10 @@
 
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
+import { CollectionPicker } from "@/components/items/CollectionPicker";
 import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
-import type { ItemFieldErrors } from "@/hooks/use-item-form";
+import type { ItemFieldErrors, SetItemField } from "@/hooks/use-item-form";
 import {
   getEditableItemFields,
   isCodeItemType,
@@ -15,7 +16,7 @@ import {
 interface ItemFormFieldsProps {
   typeName: string;
   values: ItemFormValues;
-  onChange: (name: keyof ItemFormValues, value: string) => void;
+  onChange: SetItemField;
   fieldErrors: ItemFieldErrors;
   autoFocusTitle?: boolean;
   // Shown after the content field, e.g. the upload for file and image items.
@@ -99,6 +100,11 @@ export function ItemFormFields({
         value={values.tags}
         onChange={(event) => onChange("tags", event.target.value)}
         errors={fieldErrors.tags}
+      />
+      <CollectionPicker
+        value={values.collectionIds}
+        onChange={(collectionIds) => onChange("collectionIds", collectionIds)}
+        errors={fieldErrors.collectionIds}
       />
     </>
   );

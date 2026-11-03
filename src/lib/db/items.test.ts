@@ -230,7 +230,20 @@ describe("createItem", () => {
           userId: USER_ID,
           typeId: "type_snippet",
           tags: { connect: [{ id: "tag_auth" }, { id: "tag_hooks" }] },
+          collections: { create: [] },
         },
+      }),
+    );
+  });
+
+  it("adds the item to the given collections", async () => {
+    await createItem(USER_ID, { ...DATA, collectionIds: ["col_1", "col_2"] });
+
+    expect(tx.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          collections: { create: [{ collectionId: "col_1" }, { collectionId: "col_2" }] },
+        }),
       }),
     );
   });
@@ -334,6 +347,39 @@ describe("updateItem", () => {
         data: expect.objectContaining({ tags: { set: [] } }),
       }),
     );
+  });
+
+  it("keeps the item's collections when none are sent", async () => {
+    await updateItem(USER_ID, ITEM_ID, DATA);
+
+    expect(tx.item.update.mock.calls[0][0].data).not.toHaveProperty("collections");
+  });
+
+  it("removes deselected collections and adds new ones, keeping the rest", async () => {
+    await updateItem(USER_ID, ITEM_ID, { ...DATA, collectionIds: ["col_1", "col_3"] });
+
+    expect(tx.item.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          collections: {
+            deleteMany: { collectionId: { notIn: ["col_1", "col_3"] } },
+            createMany: {
+              data: [{ collectionId: "col_1" }, { collectionId: "col_3" }],
+              skipDuplicates: true,
+            },
+          },
+        }),
+      }),
+    );
+  });
+
+  it("removes the item from every collection when an empty list is sent", async () => {
+    await updateItem(USER_ID, ITEM_ID, { ...DATA, collectionIds: [] });
+
+    expect(tx.item.update.mock.calls[0][0].data.collections).toEqual({
+      deleteMany: { collectionId: { notIn: [] } },
+      createMany: { data: [], skipDuplicates: true },
+    });
   });
 
   it("returns the updated item in the drawer's shape", async () => {

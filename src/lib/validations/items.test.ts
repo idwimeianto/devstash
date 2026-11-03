@@ -90,6 +90,17 @@ describe("updateItemSchema", () => {
     const result = updateItemSchema.safeParse({ ...VALID, tags });
     expect(result.error?.issues[0]?.message).toBe("Use at most 20 tags");
   });
+
+  it("deduplicates collection ids, keeps an unsent list undefined and limits the count", () => {
+    expect(updateItemSchema.parse({ ...VALID, collectionIds: ["c1", "c2", "c1"] }).collectionIds)
+      .toEqual(["c1", "c2"]);
+    expect(updateItemSchema.parse(VALID).collectionIds).toBeUndefined();
+    expect(updateItemSchema.safeParse({ ...VALID, collectionIds: [""] }).success).toBe(false);
+
+    const collectionIds = Array.from({ length: ITEM_LIMITS.collections + 1 }, (_, i) => `c${i}`);
+    const result = updateItemSchema.safeParse({ ...VALID, collectionIds });
+    expect(result.error?.issues[0]?.message).toBe("Choose at most 100 collections");
+  });
 });
 
 describe("createItemSchema", () => {

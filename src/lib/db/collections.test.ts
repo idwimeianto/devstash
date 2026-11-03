@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createCollection, getRecentCollections, getSidebarCollections } from "@/lib/db/collections";
+import {
+  areUserCollections,
+  createCollection,
+  getCollectionOptions,
+  getRecentCollections,
+  getSidebarCollections,
+} from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: { collection: { findMany: vi.fn(), create: vi.fn() } },
+  prisma: { collection: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() } },
 }));
 
 const SNIPPET = { id: "t_snippet", name: "snippet", icon: "Code", color: "#3b82f6" };
@@ -97,5 +103,41 @@ describe("createCollection", () => {
     expect(prisma.collection.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: { userId: "user_1", name: "Empty", description: null } }),
     );
+  });
+});
+
+describe("getCollectionOptions", () => {
+  it("lists the user's collections by name, ignoring case", async () => {
+    vi.mocked(prisma.collection.findMany).mockResolvedValue([
+      { id: "c1", name: "React Patterns" },
+      { id: "c3", name: "devops" },
+      { id: "c2", name: "AI Workflows" },
+    ] as never);
+
+    const options = await getCollectionOptions("user_1");
+
+    expect(options.map((option) => option.name)).toEqual(["AI Workflows", "devops", "React Patterns"]);
+    expect(prisma.collection.findMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+      select: { id: true, name: true },
+    });
+  });
+});
+
+describe("areUserCollections", () => {
+  it("is true only when every id is one of the user's collections", async () => {
+    vi.mocked(prisma.collection.count).mockResolvedValue(2);
+    await expect(areUserCollections("user_1", ["c1", "c2"])).resolves.toBe(true);
+    expect(prisma.collection.count).toHaveBeenCalledWith({
+      where: { userId: "user_1", id: { in: ["c1", "c2"] } },
+    });
+
+    vi.mocked(prisma.collection.count).mockResolvedValue(1);
+    await expect(areUserCollections("user_1", ["c1", "someone_elses"])).resolves.toBe(false);
+  });
+
+  it("skips the query for an empty list", async () => {
+    await expect(areUserCollections("user_1", [])).resolves.toBe(true);
+    expect(prisma.collection.count).not.toHaveBeenCalled();
   });
 });

@@ -179,7 +179,7 @@ export type CreateItemRecord = Omit<CreateItemData, "file"> & { file?: UploadedF
 // Creates the item with one of the system types; fields left undefined stay empty.
 export async function createItem(
   userId: string,
-  { typeName, tags, file, ...fields }: CreateItemRecord
+  { typeName, tags, file, collectionIds = [], ...fields }: CreateItemRecord
 ): Promise<ItemDetail> {
   const item = await prisma.$transaction(async (tx) => {
     const type = await tx.itemType.findFirst({
@@ -197,6 +197,7 @@ export async function createItem(
         userId,
         typeId: type.id,
         tags: { connect: tagIds },
+        collections: { create: collectionIds.map((collectionId) => ({ collectionId })) },
       },
       select: ITEM_DETAIL_SELECT,
     });
@@ -217,11 +218,25 @@ async function nullIfNotFound<T>(query: Promise<T>): Promise<T | null> {
   }
 }
 
+// Makes the item's collections exactly these: deselected links are removed, new ones
+// created, and the ones kept stay untouched (so their addedAt is kept).
+function collectionLinks(
+  collectionIds: string[]
+): Prisma.ItemCollectionUpdateManyWithoutItemNestedInput {
+  return {
+    deleteMany: { collectionId: { notIn: collectionIds } },
+    createMany: {
+      data: collectionIds.map((collectionId) => ({ collectionId })),
+      skipDuplicates: true,
+    },
+  };
+}
+
 // Fields left undefined in data stay as they are. Returns null if the item isn't the user's.
 export async function updateItem(
   userId: string,
   itemId: string,
-  { tags, ...fields }: UpdateItemData
+  { tags, collectionIds, ...fields }: UpdateItemData
 ): Promise<ItemDetail | null> {
   const item = await nullIfNotFound(
     prisma.$transaction(async (tx) => {
@@ -230,7 +245,11 @@ export async function updateItem(
       // set replaces the item's tags: old ones are disconnected, the new ones connected.
       return tx.item.update({
         where: { id: itemId, userId },
-        data: { ...fields, tags: { set: tagIds } },
+        data: {
+          ...fields,
+          tags: { set: tagIds },
+          ...(collectionIds && { collections: collectionLinks(collectionIds) }),
+        },
         select: ITEM_DETAIL_SELECT,
       });
     })

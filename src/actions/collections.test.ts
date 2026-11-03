@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createCollection } from "@/actions/collections";
-import { createCollection as createCollectionQuery } from "@/lib/db/collections";
+import { createCollection, getCollectionOptions } from "@/actions/collections";
+import {
+  createCollection as createCollectionQuery,
+  getCollectionOptions as getCollectionOptionsQuery,
+} from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 
-vi.mock("@/lib/db/collections", () => ({ createCollection: vi.fn() }));
+vi.mock("@/lib/db/collections", () => ({
+  createCollection: vi.fn(),
+  getCollectionOptions: vi.fn(),
+}));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
 
 const USER_ID = "user_1";
@@ -55,5 +61,33 @@ describe("createCollection action", () => {
     const result = await createCollection({ name: "React Patterns" });
 
     expect(result).toEqual({ success: false, error: GENERIC_ERROR });
+  });
+});
+
+describe("getCollectionOptions action", () => {
+  const OPTIONS = [{ id: "c1", name: "React Patterns" }];
+
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(getCollectionOptionsQuery).mockResolvedValue(OPTIONS);
+  });
+
+  it("returns the session user's collections", async () => {
+    await expect(getCollectionOptions()).resolves.toEqual({ success: true, data: OPTIONS });
+    expect(getCollectionOptionsQuery).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    await expect(getCollectionOptions()).resolves.toEqual({ success: false, error: NOT_SIGNED_IN });
+    expect(getCollectionOptionsQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.mocked(getCollectionOptionsQuery).mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(getCollectionOptions()).resolves.toEqual({ success: false, error: GENERIC_ERROR });
   });
 });
