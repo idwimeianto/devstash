@@ -311,6 +311,18 @@ export async function getItemsByType(
   return items.map(toItemSummary);
 }
 
+export async function getItemsByCollection(
+  userId: string,
+  collectionId: string
+): Promise<ItemSummary[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, collections: { some: { collectionId } } },
+    orderBy: RECENT_ORDER,
+    select: ITEM_SUMMARY_SELECT,
+  });
+  return items.map(toItemSummary);
+}
+
 // System types plus the user's custom types, each with the user's item count.
 export async function getItemTypesWithCounts(
   userId: string

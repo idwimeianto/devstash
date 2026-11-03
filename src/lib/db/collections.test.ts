@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   areUserCollections,
   createCollection,
+  getAllCollections,
+  getCollection,
   getCollectionOptions,
   getRecentCollections,
   getSidebarCollections,
@@ -10,7 +12,9 @@ import {
 import { prisma } from "@/lib/prisma";
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: { collection: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() } },
+  prisma: {
+    collection: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), count: vi.fn() },
+  },
 }));
 
 const SNIPPET = { id: "t_snippet", name: "snippet", icon: "Code", color: "#3b82f6" };
@@ -58,6 +62,45 @@ describe("getRecentCollections", () => {
     const summaries = await getRecentCollections("user_1");
 
     expect(summaries.map((summary) => summary.mainTypeName)).toEqual(["prompt", null]);
+  });
+});
+
+describe("getAllCollections", () => {
+  it("lists every one of the user's collections, newest first, with no limit", async () => {
+    vi.mocked(prisma.collection.findMany).mockResolvedValue(
+      ["c1", "c2", "c3", "c4", "c5", "c6", "c7"].map((id) => collection(id, false, [SNIPPET])) as never
+    );
+
+    const summaries = await getAllCollections("user_1");
+
+    expect(summaries).toHaveLength(7);
+    expect(summaries[0]).toEqual(expect.objectContaining({ id: "c1", itemCount: 1, mainTypeName: "snippet" }));
+    expect(prisma.collection.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user_1" },
+        orderBy: { createdAt: "desc" },
+        take: undefined,
+      }),
+    );
+  });
+});
+
+describe("getCollection", () => {
+  it("looks the collection up by id and user", async () => {
+    const found = { id: "c1", name: "React Patterns", description: null };
+    vi.mocked(prisma.collection.findFirst).mockResolvedValue(found as never);
+
+    await expect(getCollection("user_1", "c1")).resolves.toEqual(found);
+    expect(prisma.collection.findFirst).toHaveBeenCalledWith({
+      where: { id: "c1", userId: "user_1" },
+      select: { id: true, name: true, description: true },
+    });
+  });
+
+  it("returns null for a missing or another user's collection", async () => {
+    vi.mocked(prisma.collection.findFirst).mockResolvedValue(null);
+
+    await expect(getCollection("user_1", "someone_elses")).resolves.toBeNull();
   });
 });
 

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { CreateCollectionData } from "@/lib/validations/collections";
 import type {
   CollectionOption,
+  CollectionRef,
   CollectionStats,
   CollectionSummary,
   CollectionTypeSummary,
@@ -49,14 +50,15 @@ function summarizeItemTypes({ defaultType, items }: CollectionWithItemTypes) {
   };
 }
 
-export async function getRecentCollections(
+// Newest first; every collection when `take` is undefined.
+async function findCollectionSummaries(
   userId: string,
-  limit = RECENT_COLLECTIONS_LIMIT
+  take?: number
 ): Promise<CollectionSummary[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: limit,
+    take,
     select: { id: true, name: true, description: true, isFavorite: true, ...ITEM_TYPES_SELECT },
   });
 
@@ -67,6 +69,28 @@ export async function getRecentCollections(
     isFavorite: collection.isFavorite,
     ...summarizeItemTypes(collection),
   }));
+}
+
+export function getRecentCollections(
+  userId: string,
+  limit = RECENT_COLLECTIONS_LIMIT
+): Promise<CollectionSummary[]> {
+  return findCollectionSummaries(userId, limit);
+}
+
+export function getAllCollections(userId: string): Promise<CollectionSummary[]> {
+  return findCollectionSummaries(userId);
+}
+
+// One of the user's collections; another user's collection looks missing.
+export function getCollection(
+  userId: string,
+  collectionId: string
+): Promise<CollectionRef | null> {
+  return prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: { id: true, name: true, description: true },
+  });
 }
 
 export async function getSidebarCollections(

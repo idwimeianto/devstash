@@ -17,6 +17,13 @@ export interface CollectionSummary {
   mainTypeName: string | null;
 }
 
+// A collection's own fields, for the collection page header.
+export interface CollectionRef {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 export interface SidebarCollection {
   id: string;
   name: string;

@@ -1,18 +1,31 @@
-# Current Feature
+# Current Feature: Collections Pages
 
-<!-- Feature name and short description -->
+`/collections` lists the user's collections and `/collections/[id]` shows the items in one collection, both with the existing cards.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+Complete
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `/collections` page listing all of the signed-in user's collections, using the existing `CollectionCard` (same tint / left border by most-used type, item count, description and type icons as the dashboard's Recent Collections)
+- `/collections/[id]` page showing the items in that collection, using the existing item cards (`ItemGrid` / `ItemCard`), with clicks opening the item drawer
+- Collection page header with the collection name, description and item count
+- Collection items split into sections in the order Items (regular cards), Files (the `/items/files` list) and Images (the `/items/images` gallery), each with a heading and shown only when it has items
+- Unknown ids or another user's collection show the 404 page (`notFound()`)
+- Empty states: no collections yet on `/collections`, no items yet on `/collections/[id]`
+- Sidebar "View all collections" links to `/collections`, and every collection card (dashboard, `/collections`) and sidebar collection links to `/collections/[id]`
+- Loading skeletons via `<Suspense>`, matching the existing pages
+- Unit tests for any new queries in `src/lib/db/collections.ts` / `src/lib/db/items.ts`
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- The links already exist: `SidebarCollections` links "View all collections" to `/collections` and each collection to `/collections/${id}`, `CollectionCard` links to `/collections/${id}` and the dashboard's "View all" links to `/collections`; only the pages are missing (they 404 today). Verify each link lands on the right page.
+- Put both pages in the `src/app/(app)/` route group so they get the sidebar shell and the existing error boundary; follow `src/app/(app)/items/[type]/page.tsx` (`PAGE_CLASSES`, `PageProps<"/collections/[id]">`, params awaited inside `<Suspense>`).
+- Add `/collections/:path*` to the `src/proxy.ts` matcher so signed-out visitors are redirected to `/sign-in`.
+- Queries scope by `userId` (`getCurrentUserId()`), so another user's collection looks missing. Reuse `ITEM_SUMMARY_SELECT`, `RECENT_ORDER` and `toItemSummary()` for the collection's items, and the existing `CollectionSummary` shape (from `getRecentCollections`) for the list.
+- Items in a collection can be any type, so use the regular card layout (no image gallery / file list), as the dashboard does.
+- Out of scope: editing / deleting collections, removing items from a collection on this page, sorting / filtering, pagination, the favorites page.
 
 ## History
 

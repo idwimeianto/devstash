@@ -2,11 +2,9 @@ import { Clock } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { CollectionGridSkeleton } from "@/components/collections/CollectionGrid";
 import { PinnedItems } from "@/components/dashboard/PinnedItems";
-import {
-  RecentCollections,
-  RecentCollectionsSkeleton,
-} from "@/components/dashboard/RecentCollections";
+import { RecentCollections } from "@/components/dashboard/RecentCollections";
 import {
   RecentItems,
   RecentItemsSkeleton,
@@ -38,7 +36,7 @@ export default function DashboardPage() {
             View all
           </Link>
         </div>
-        <Suspense fallback={<RecentCollectionsSkeleton />}>
+        <Suspense fallback={<CollectionGridSkeleton />}>
           <RecentCollections />
         </Suspense>
       </section>

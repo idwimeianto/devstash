@@ -6,6 +6,7 @@ import {
   deleteItem,
   getItemDetail,
   getItemFile,
+  getItemsByCollection,
   getItemsByType,
   getItemTypeName,
   isFileUrlInUse,
@@ -122,6 +123,28 @@ describe("getItemsByType", () => {
       null,
       null,
     ]);
+  });
+});
+
+describe("getItemsByCollection", () => {
+  it("lists the user's items in that collection, most recently used first", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { ...ROW, lastUsedAt: null },
+      { ...ROW, id: "link_1", type: { name: "link" }, lastUsedAt: null },
+    ] as never);
+
+    const items = await getItemsByCollection(USER_ID, "col_1");
+
+    expect(items.map((item) => [item.id, item.typeName])).toEqual([
+      [ITEM_ID, "snippet"],
+      ["link_1", "link"],
+    ]);
+    expect(prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, collections: { some: { collectionId: "col_1" } } },
+        orderBy: [{ lastUsedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+      })
+    );
   });
 });
 
