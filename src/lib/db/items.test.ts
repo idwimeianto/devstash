@@ -82,6 +82,29 @@ describe("getItemsByType", () => {
       expect.objectContaining({ id: "img_2", fileUrl: null, date: CREATED_AT }),
     ]);
   });
+
+  it("includes the file name, size and creation date for the file list", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      {
+        ...ROW,
+        type: { name: "file" },
+        fileName: "notes.md",
+        fileSize: 2048,
+        lastUsedAt: LAST_USED_AT,
+      },
+    ] as never);
+
+    const [item] = await getItemsByType(USER_ID, "type_file");
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        fileName: "notes.md",
+        fileSize: 2048,
+        createdAt: CREATED_AT,
+        date: LAST_USED_AT,
+      })
+    );
+  });
 });
 
 describe("getItemDetail", () => {

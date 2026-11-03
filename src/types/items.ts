@@ -10,8 +10,12 @@ export interface ItemSummary {
   tags: string[];
   // Public R2 URL for file types, used for image thumbnails.
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   // Last used, falling back to created.
   date: Date;
+  // When the item (and its upload) was created.
+  createdAt: Date;
 }
 
 export interface ItemCollectionRef {

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { ItemGrid, ItemGridSkeleton } from "@/components/items/ItemGrid";
+import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { NewItemDialog } from "@/components/items/NewItemDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getItemTypeBySlug, getItemsByType } from "@/lib/db/items";
@@ -11,6 +11,12 @@ import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 
 const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
+
+function getLayout(typeName: string): ItemGridLayout {
+  if (typeName === "image") return "gallery";
+  if (typeName === "file") return "list";
+  return "cards";
+}
 
 async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params">) {
   const { type: slug } = await params;
@@ -49,7 +55,7 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
 
       <ItemGrid
         items={items}
-        gallery={type.name === "image"}
+        layout={getLayout(type.name)}
         emptyMessage={`No ${label.toLowerCase()} yet. Add one to start building your stash.`}
       />
     </>

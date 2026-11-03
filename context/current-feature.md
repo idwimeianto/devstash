@@ -1,18 +1,29 @@
-# Current Feature
+# Current Feature: File List View
 
-<!-- Feature name and short description -->
+Show `/items/files` as a single-column list of rows (like Google Drive / Dropbox) instead of grid cards.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `/items/files` renders file items as a single-column list instead of the card grid
+- Each row shows a file icon chosen by extension, the file name, file size, upload date and a download button
+- Rows highlight on hover
+- Clicking a row opens the existing `ItemDrawer`
+- The download button downloads the file directly and doesn't open the drawer (stops propagation)
+- Responsive: on mobile the row's info stacks vertically
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/file-display-spec.md`
+- Mirrors the Image Gallery View: `ItemGrid` already switches layouts with a `gallery` prop set by `src/app/(app)/items/[type]/page.tsx` for the `image` type; a list mode for the `file` type fits the same pattern
+- Reuse what exists: `OpenItemButton` overlay (row click + keyboard, `has-focus-visible` ring), `GET /api/items/[id]/download` (attachment download), `formatFileSize()` / `getFileExtension()` in `src/lib/file-upload.ts`, `DATE_FORMAT` from `ItemCard`
+- The download button must sit above the `OpenItemButton` overlay and stop propagation so it doesn't open the drawer
+- `ItemSummary` / `ITEM_SUMMARY_SELECT` include `fileUrl` but not `fileName` / `fileSize` (only `ItemDetail` has them), so they need adding; its `date` is last used falling back to created, not the upload date
+- Only `/items/files` changes; the dashboard's Pinned / Recent Items keep `ItemCard`
+- Decided at `start`: the row date is `createdAt` (added to `ItemSummary`); grouped lucide icons by extension (`FileText` for pdf / txt / md, `FileJson` for json, `FileCode` for xml / yaml / yml / toml / ini, `FileSpreadsheet` for csv, `File` otherwise) in one map in `src/lib`, unit-tested; the page skeleton stays the generic grid (it renders before the type is known)
 
 ## History
 

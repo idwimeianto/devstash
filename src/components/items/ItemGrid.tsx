@@ -1,4 +1,5 @@
 import { ItemCard } from "@/components/dashboard/ItemCard";
+import { FileRow } from "@/components/items/FileRow";
 import { ImageCard } from "@/components/items/ImageCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ItemSummary } from "@/types/items";
@@ -8,18 +9,32 @@ const SKELETON_COUNT = 6;
 // The first row at the widest layout.
 const EAGER_IMAGE_COUNT = 3;
 
+// Images show as a gallery of thumbnail cards, files as a list of rows.
+export type ItemGridLayout = "cards" | "gallery" | "list";
+
 interface ItemGridProps {
   items: ItemSummary[];
   emptyMessage: string;
-  // Images show as a gallery of thumbnail cards.
-  gallery?: boolean;
+  layout?: ItemGridLayout;
 }
 
-export function ItemGrid({ items, emptyMessage, gallery = false }: ItemGridProps) {
+export function ItemGrid({ items, emptyMessage, layout = "cards" }: ItemGridProps) {
   if (items.length === 0) {
     return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
   }
 
+  if (layout === "list") {
+    // A minmax(0, 1fr) column so long, truncated names can't widen the page.
+    return (
+      <ul className="grid grid-cols-1 divide-y overflow-hidden rounded-xl border bg-card">
+        {items.map((item) => (
+          <FileRow key={item.id} item={item} />
+        ))}
+      </ul>
+    );
+  }
+
+  const gallery = layout === "gallery";
   return (
     <div className={GRID_CLASSES}>
       {items.map((item, index) =>
