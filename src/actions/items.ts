@@ -1,7 +1,6 @@
 "use server";
 
-import { z } from "zod";
-
+import { validationFailure } from "@/lib/action-result";
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
@@ -12,6 +11,7 @@ import {
 import { getSessionUserId } from "@/lib/db/users";
 import { getStoredContentType, isUploadKind, type UploadKind } from "@/lib/file-upload";
 import { getEditableItemFields } from "@/lib/item-fields";
+import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getObjectSize } from "@/lib/r2";
 import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
 import type {
@@ -25,12 +25,10 @@ import type {
 } from "@/types/items";
 import type { UploadedFile } from "@/types/uploads";
 
-const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
 const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again.";
 const NOT_FOUND = "This item doesn't exist or was deleted.";
 const URL_REQUIRED = "URL is required";
 const FILE_IN_USE = "This file already belongs to another item. Please upload it again.";
-const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 // Same shape GET /api/items/[id] sends, so the drawer can show the result directly.
 function toItemDetailJson(item: ItemDetail): ItemDetailJson {
@@ -57,13 +55,7 @@ async function getStoredUpload(
 
 export async function createItem(input: CreateItemInput): Promise<CreateItemResult> {
   const parsed = createItemSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-      fieldErrors: z.flattenError(parsed.error).fieldErrors,
-    };
-  }
+  if (!parsed.success) return validationFailure(parsed.error);
 
   // Always the session's user, never one from the client.
   const userId = await getSessionUserId();
@@ -105,13 +97,7 @@ export async function updateItem(
   input: UpdateItemInput,
 ): Promise<UpdateItemResult> {
   const parsed = updateItemSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-      fieldErrors: z.flattenError(parsed.error).fieldErrors,
-    };
-  }
+  if (!parsed.success) return validationFailure(parsed.error);
 
   // Always the session's user, never one from the client.
   const userId = await getSessionUserId();

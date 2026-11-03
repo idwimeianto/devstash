@@ -11,11 +11,9 @@ import {
   UPLOAD_CONSTRAINTS,
   validateUpload,
 } from "@/lib/file-upload";
+import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getPublicUrl, putObject } from "@/lib/r2";
 import type { DeleteUploadResponse, UploadResponse } from "@/types/uploads";
-
-const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
-const GENERIC_ERROR = "Something went wrong. Please try again.";
 const MAX_FILE_NAME_LENGTH = 255;
 // The largest allowed file plus room for the multipart boundaries and other fields.
 const MAX_REQUEST_BYTES =

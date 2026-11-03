@@ -1,18 +1,26 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+**Split Large Blocks** — refactor duplicated and oversized code into shared components, hooks and utilities, with no behavior change.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Shared item form: `ItemFormFields` (Title, Description, Content, Language, URL, Tags), `useItemForm` hook, `buildItemInput()` in `src/lib/item-fields.ts`, and `runItemAction()` (submit, network / error / success toasts) used by `NewItemDialog` and `ItemEditForm`
+- `src/lib/upload-client.ts`: `uploadFile()` (XHR with progress, abortable) and `discardUpload()` moved out of `FileUpload`
+- `src/lib/messages.ts` (`NOT_SIGNED_IN`, `GENERIC_ERROR`, `NETWORK_ERROR`) and `src/lib/action-result.ts` (`validationFailure()`) replacing the copies
+- Register route split: `sendVerificationOrRollback()` in `src/lib/registration.ts` and `jsonError()` in `src/lib/api-response.ts`
+- `ItemMarkers` for the pin / favorite icons in `ItemCard`, `ImageCard` and `FileRow`
+- Private `nullIfNotFound()` in `src/lib/db/items.ts` for `updateItem` / `deleteItem`
+- Shared collection type summary in `src/lib/db/collections.ts`
+- `ItemDrawerParts.tsx` with `ItemDrawerHeader`, `ItemMetaSections` and `DetailSection` moved out of `ItemDetailView`
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- No UI or API behavior changes; existing tests must keep passing unchanged where possible
+- The collection query rewrite (audit #3) stays deferred; only the mapping is shared
 
 ## History
 

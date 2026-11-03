@@ -1,7 +1,8 @@
-import { Image as ImageIcon, Pin, Star } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 
 import { DATE_FORMAT } from "@/components/dashboard/ItemCard";
+import { ItemMarkers } from "@/components/items/ItemMarkers";
 import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSafeHref } from "@/lib/safe-url";
@@ -40,10 +41,7 @@ export function ImageCard({ item, eager = false }: ImageCardProps) {
       </div>
       <CardContent className="flex items-center gap-2 py-3">
         <h3 className="truncate font-medium">{item.title}</h3>
-        {item.isPinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" />}
-        {item.isFavorite && (
-          <Star className="size-3.5 shrink-0 fill-yellow-400 text-yellow-400" />
-        )}
+        <ItemMarkers isPinned={item.isPinned} isFavorite={item.isFavorite} />
         <time
           dateTime={item.date.toISOString()}
           className="ml-auto shrink-0 text-xs text-muted-foreground"

@@ -7,12 +7,10 @@ import { getSessionUserId } from "@/lib/db/users";
 import { deleteTokensForEmail } from "@/lib/db/verification-tokens";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl } from "@/lib/r2";
 import { changePasswordSchema } from "@/lib/validations/auth";
 import type { ChangePasswordState, DeleteAccountState } from "@/types/profile";
-
-const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
-const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 export async function changePassword(
   _prevState: ChangePasswordState | null,

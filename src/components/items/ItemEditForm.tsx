@@ -2,27 +2,16 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useId, useTransition } from "react";
 
 import { updateItem } from "@/actions/items";
-import { FormField } from "@/components/auth/FormField";
-import { ItemDrawerHeader, ItemMetaSections } from "@/components/items/ItemDetailView";
-import { CodeEditorField } from "@/components/items/CodeEditorField";
-import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
-import { TextareaField } from "@/components/items/TextareaField";
+import { ItemDrawerHeader, ItemMetaSections } from "@/components/items/ItemDrawerParts";
+import { ItemFormFields } from "@/components/items/ItemFormFields";
 import { Button } from "@/components/ui/button";
-import {
-  getEditableItemFields,
-  isCodeItemType,
-  isMarkdownItemType,
-  parseTags,
-} from "@/lib/item-fields";
-import type { ItemDetailJson, UpdateItemInput, UpdateItemResult } from "@/types/items";
-
-const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
-
-type FieldErrors = Extract<UpdateItemResult, { success: false }>["fieldErrors"];
+import { useItemForm } from "@/hooks/use-item-form";
+import { buildItemInput } from "@/lib/item-fields";
+import { runItemAction } from "@/lib/run-item-action";
+import type { ItemDetailJson } from "@/types/items";
 
 interface ItemEditFormProps {
   item: ItemDetailJson;
@@ -33,45 +22,28 @@ interface ItemEditFormProps {
 export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
   const router = useRouter();
   const formId = useId();
-  const editable = getEditableItemFields(item.typeName);
-
-  const [title, setTitle] = useState(item.title);
-  const [description, setDescription] = useState(item.description ?? "");
-  const [content, setContent] = useState(item.content ?? "");
-  const [language, setLanguage] = useState(item.language ?? "");
-  const [url, setUrl] = useState(item.url ?? "");
-  const [tags, setTags] = useState(item.tags.join(", "));
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { values, setField, fieldErrors, setFieldErrors } = useItemForm({
+    title: item.title,
+    description: item.description ?? "",
+    content: item.content ?? "",
+    language: item.language ?? "",
+    url: item.url ?? "",
+    tags: item.tags.join(", "),
+  });
   const [pending, startTransition] = useTransition();
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     // Only the fields this type has; the server ignores any others too.
-    const input: UpdateItemInput = {
-      title,
-      description,
-      tags: parseTags(tags),
-      ...(editable.content && { content }),
-      ...(editable.language && { language }),
-      ...(editable.url && { url }),
-    };
+    const input = buildItemInput(item.typeName, values);
 
     startTransition(async () => {
-      let result: UpdateItemResult;
-      try {
-        result = await updateItem(item.id, input);
-      } catch {
-        toast.error(NETWORK_ERROR);
-        return;
-      }
-
-      if (!result.success) {
-        setFieldErrors(result.fieldErrors ?? {});
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Item saved");
-      onSaved(result.data);
+      const saved = await runItemAction(() => updateItem(item.id, input), {
+        successMessage: "Item saved",
+        onFieldErrors: setFieldErrors,
+      });
+      if (!saved) return;
+      onSaved(saved);
       // Updates the cards behind the drawer.
       router.refresh();
     });
@@ -81,7 +53,7 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
     <>
       <ItemDrawerHeader item={item}>
         <div className="flex items-center gap-2">
-          <Button type="submit" form={formId} size="sm" disabled={pending || !title.trim()}>
+          <Button type="submit" form={formId} size="sm" disabled={pending || !values.title.trim()}>
             {pending && <Loader2 className="animate-spin" />}
             Save
           </Button>
@@ -98,67 +70,11 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
         noValidate
         className="flex flex-1 flex-col gap-6 overflow-y-auto p-6"
       >
-        <FormField
-          name="title"
-          label="Title"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          errors={fieldErrors?.title}
-          required
-        />
-        <TextareaField
-          label="Description"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          errors={fieldErrors?.description}
-          rows={2}
-        />
-        {editable.content && isCodeItemType(item.typeName) && (
-          <CodeEditorField
-            label="Content"
-            value={content}
-            language={language}
-            onChange={setContent}
-            errors={fieldErrors?.content}
-          />
-        )}
-        {editable.content && isMarkdownItemType(item.typeName) && (
-          <MarkdownEditorField
-            label="Content"
-            value={content}
-            onChange={setContent}
-            errors={fieldErrors?.content}
-          />
-        )}
-        {editable.language && (
-          <FormField
-            name="language"
-            label="Language"
-            placeholder="e.g. typescript"
-            value={language}
-            onChange={(event) => setLanguage(event.target.value)}
-            errors={fieldErrors?.language}
-          />
-        )}
-        {editable.url && (
-          <FormField
-            name="url"
-            label="URL"
-            type="url"
-            placeholder="https://"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            errors={fieldErrors?.url}
-            required
-          />
-        )}
-        <FormField
-          name="tags"
-          label="Tags"
-          placeholder="react, hooks, auth"
-          value={tags}
-          onChange={(event) => setTags(event.target.value)}
-          errors={fieldErrors?.tags}
+        <ItemFormFields
+          typeName={item.typeName}
+          values={values}
+          onChange={setField}
+          fieldErrors={fieldErrors}
         />
         <ItemMetaSections item={item} />
       </form>

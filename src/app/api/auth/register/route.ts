@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { getAppUrl } from "@/lib/app-url";
-import { createVerificationToken } from "@/lib/db/verification-tokens";
-import { sendVerificationEmail } from "@/lib/email";
+import { jsonError } from "@/lib/api-response";
 import { isEmailVerificationEnabled } from "@/lib/email-verification";
+import { GENERIC_ERROR } from "@/lib/messages";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import {
@@ -12,42 +11,28 @@ import {
   getRateLimitMessage,
   getRetryAfterSeconds,
 } from "@/lib/rate-limit";
+import { sendVerificationOrRollback } from "@/lib/registration";
 import { registerSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" },
-      { status: 400 },
-    );
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
   }
 
   const limit = await checkRateLimit("register", getClientIp(request.headers));
   if (!limit.success) {
-    return NextResponse.json(
-      { success: false, error: getRateLimitMessage(limit.reset) },
-      {
-        status: 429,
-        headers: { "Retry-After": String(getRetryAfterSeconds(limit.reset)) },
-      },
-    );
+    return jsonError(getRateLimitMessage(limit.reset), 429, {
+      headers: { "Retry-After": String(getRetryAfterSeconds(limit.reset)) },
+    });
   }
 
   const { name, email, password } = parsed.data;
 
   try {
-    const existing = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: "An account with this email already exists" },
-        { status: 409 },
-      );
-    }
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (existing) return jsonError("An account with this email already exists", 409);
 
     const user = await prisma.user.create({
       data: { name, email, password: await hashPassword(password) },
@@ -55,33 +40,8 @@ export async function POST(request: Request) {
     });
 
     const verificationRequired = isEmailVerificationEnabled();
-    if (!verificationRequired) {
-      return NextResponse.json(
-        { success: true, data: { ...user, verificationRequired } },
-        { status: 201 },
-      );
-    }
-
-    try {
-      const token = await createVerificationToken(email);
-      await sendVerificationEmail(
-        email,
-        `${getAppUrl()}/api/auth/verify-email?token=${token}`,
-      );
-    } catch (error) {
-      // Without the email the account can never be verified, so remove it and let them retry.
-      console.error("Verification email failed", error);
-      await prisma.$transaction([
-        prisma.verificationToken.deleteMany({ where: { identifier: email } }),
-        prisma.user.delete({ where: { id: user.id } }),
-      ]);
-      return NextResponse.json(
-        {
-          success: false,
-          error: "We couldn't send the verification email. Please try again.",
-        },
-        { status: 502 },
-      );
+    if (verificationRequired && !(await sendVerificationOrRollback(user))) {
+      return jsonError("We couldn't send the verification email. Please try again.", 502);
     }
 
     return NextResponse.json(
@@ -90,9 +50,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Registration failed", error);
-    return NextResponse.json(
-      { success: false, error: "Something went wrong. Please try again." },
-      { status: 500 },
-    );
+    return jsonError(GENERIC_ERROR, 500);
   }
 }

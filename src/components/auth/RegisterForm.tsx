@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { FormField } from "@/components/auth/FormField";
 import { Button } from "@/components/ui/button";
+import { GENERIC_ERROR } from "@/lib/messages";
 import { registerSchema } from "@/lib/validations/auth";
 import type { FieldErrors, RegisterInput, RegisterResponse } from "@/types/auth";
 
@@ -48,7 +49,7 @@ export function RegisterForm() {
           : `/verify-email?${new URLSearchParams({ status: "sent", email: parsed.data.email })}`,
       );
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(GENERIC_ERROR);
     } finally {
       setPending(false);
     }

@@ -18,9 +18,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { NETWORK_ERROR } from "@/lib/messages";
 import type { DeleteItemResult } from "@/types/items";
-
-const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
 
 interface DeleteItemDialogProps {
   itemId: string;

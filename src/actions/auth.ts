@@ -13,6 +13,7 @@ import {
   type ResetPasswordResult,
 } from "@/lib/db/verification-tokens";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { GENERIC_ERROR } from "@/lib/messages";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp, getRateLimitMessage } from "@/lib/rate-limit";
@@ -48,7 +49,7 @@ function getSignInErrorMessage(error: AuthError) {
       ? "Please verify your email first. Check your inbox for the verification link."
       : "Invalid email or password.";
   }
-  return "Something went wrong. Please try again.";
+  return GENERIC_ERROR;
 }
 
 export async function signInWithCredentials(
@@ -167,7 +168,7 @@ export async function resetPassword(
     );
   } catch (error) {
     console.error("Password reset failed", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return { success: false, error: GENERIC_ERROR };
   }
 
   if (result !== "reset") {

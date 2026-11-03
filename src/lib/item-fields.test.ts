@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildItemInput,
   getEditableItemFields,
   getItemContentType,
   isCodeItemType,
@@ -87,5 +88,37 @@ describe("parseTags", () => {
 
   it("returns no tags for a blank input", () => {
     expect(parseTags("   ")).toEqual([]);
+  });
+});
+
+describe("buildItemInput", () => {
+  const VALUES = {
+    title: "useAuth",
+    description: "",
+    content: "export {}",
+    language: "ts",
+    url: "https://example.com",
+    tags: "react, hooks, react",
+  };
+
+  it("sends only the fields the type has, with tags parsed", () => {
+    expect(buildItemInput("snippet", VALUES)).toEqual({
+      title: "useAuth",
+      description: "",
+      tags: ["react", "hooks"],
+      content: "export {}",
+      language: "ts",
+    });
+    expect(buildItemInput("link", VALUES)).toEqual({
+      title: "useAuth",
+      description: "",
+      tags: ["react", "hooks"],
+      url: "https://example.com",
+    });
+    expect(buildItemInput("image", VALUES)).toEqual({
+      title: "useAuth",
+      description: "",
+      tags: ["react", "hooks"],
+    });
   });
 });

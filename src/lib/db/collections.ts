@@ -12,6 +12,17 @@ const SIDEBAR_RECENT_LIMIT = 5;
 
 const TYPE_SELECT = { id: true, name: true, icon: true, color: true } as const;
 
+// What both collection queries need to work out item counts and the main type.
+const ITEM_TYPES_SELECT = {
+  defaultType: { select: { name: true } },
+  items: { select: { item: { select: { type: { select: TYPE_SELECT } } } } },
+} as const;
+
+interface CollectionWithItemTypes {
+  defaultType: { name: string } | null;
+  items: { item: { type: CollectionTypeSummary } }[];
+}
+
 // Unique types across the given items, most-used first.
 function rankTypes(types: CollectionTypeSummary[]): CollectionTypeSummary[] {
   const counts = new Map<string, { type: CollectionTypeSummary; count: number }>();
@@ -25,6 +36,16 @@ function rankTypes(types: CollectionTypeSummary[]): CollectionTypeSummary[] {
     .map(({ type }) => type);
 }
 
+// Item count, types by use, and the main type, falling back to the default type when empty.
+function summarizeItemTypes({ defaultType, items }: CollectionWithItemTypes) {
+  const types = rankTypes(items.map(({ item }) => item.type));
+  return {
+    itemCount: items.length,
+    types,
+    mainTypeName: types[0]?.name ?? defaultType?.name ?? null,
+  };
+}
+
 export async function getRecentCollections(
   userId: string,
   limit = RECENT_COLLECTIONS_LIMIT
@@ -33,28 +54,16 @@ export async function getRecentCollections(
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      isFavorite: true,
-      defaultType: { select: { name: true } },
-      items: { select: { item: { select: { type: { select: TYPE_SELECT } } } } },
-    },
+    select: { id: true, name: true, description: true, isFavorite: true, ...ITEM_TYPES_SELECT },
   });
 
-  return collections.map((collection) => {
-    const types = rankTypes(collection.items.map(({ item }) => item.type));
-    return {
-      id: collection.id,
-      name: collection.name,
-      description: collection.description,
-      isFavorite: collection.isFavorite,
-      itemCount: collection.items.length,
-      types,
-      mainTypeName: types[0]?.name ?? collection.defaultType?.name ?? null,
-    };
-  });
+  return collections.map((collection) => ({
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    ...summarizeItemTypes(collection),
+  }));
 }
 
 export async function getSidebarCollections(
@@ -63,25 +72,14 @@ export async function getSidebarCollections(
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      isFavorite: true,
-      defaultType: { select: { name: true } },
-      items: { select: { item: { select: { type: { select: TYPE_SELECT } } } } },
-    },
+    select: { id: true, name: true, isFavorite: true, ...ITEM_TYPES_SELECT },
   });
 
   const toSidebarCollection = (
     collection: (typeof collections)[number]
   ): SidebarCollection => {
-    const types = rankTypes(collection.items.map(({ item }) => item.type));
-    return {
-      id: collection.id,
-      name: collection.name,
-      itemCount: collection.items.length,
-      mainTypeName: types[0]?.name ?? collection.defaultType?.name ?? null,
-    };
+    const { itemCount, mainTypeName } = summarizeItemTypes(collection);
+    return { id: collection.id, name: collection.name, itemCount, mainTypeName };
   };
 
   return {

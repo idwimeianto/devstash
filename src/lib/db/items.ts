@@ -204,24 +204,11 @@ export async function createItem(
   return toItemDetail(item);
 }
 
-// Fields left undefined in data stay as they are. Returns null if the item isn't the user's.
-export async function updateItem(
-  userId: string,
-  itemId: string,
-  { tags, ...fields }: UpdateItemData
-): Promise<ItemDetail | null> {
+// The query's result, or null when the record it updates or deletes doesn't exist (P2025),
+// e.g. because the `where` also requires the user's id.
+async function nullIfNotFound<T>(query: Promise<T>): Promise<T | null> {
   try {
-    const item = await prisma.$transaction(async (tx) => {
-      const tagIds = await ensureTags(tx, userId, tags);
-
-      // set replaces the item's tags: old ones are disconnected, the new ones connected.
-      return tx.item.update({
-        where: { id: itemId, userId },
-        data: { ...fields, tags: { set: tagIds } },
-        select: ITEM_DETAIL_SELECT,
-      });
-    });
-    return toItemDetail(item);
+    return await query;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       return null;
@@ -230,24 +217,37 @@ export async function updateItem(
   }
 }
 
+// Fields left undefined in data stay as they are. Returns null if the item isn't the user's.
+export async function updateItem(
+  userId: string,
+  itemId: string,
+  { tags, ...fields }: UpdateItemData
+): Promise<ItemDetail | null> {
+  const item = await nullIfNotFound(
+    prisma.$transaction(async (tx) => {
+      const tagIds = await ensureTags(tx, userId, tags);
+
+      // set replaces the item's tags: old ones are disconnected, the new ones connected.
+      return tx.item.update({
+        where: { id: itemId, userId },
+        data: { ...fields, tags: { set: tagIds } },
+        select: ITEM_DETAIL_SELECT,
+      });
+    })
+  );
+  return item && toItemDetail(item);
+}
+
 // Collection and tag links go with the item; the tags themselves stay.
 // Returns the deleted item's file URL (so its upload can be removed), or null if the
 // item is missing or isn't the user's.
-export async function deleteItem(
+export function deleteItem(
   userId: string,
   itemId: string
 ): Promise<{ fileUrl: string | null } | null> {
-  try {
-    return await prisma.item.delete({
-      where: { id: itemId, userId },
-      select: { fileUrl: true },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return null;
-    }
-    throw error;
-  }
+  return nullIfNotFound(
+    prisma.item.delete({ where: { id: itemId, userId }, select: { fileUrl: true } })
+  );
 }
 
 // Whether one of the user's items still points at this uploaded file.

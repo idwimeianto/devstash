@@ -11,21 +11,9 @@ import {
   validateUpload,
   type UploadKind,
 } from "@/lib/file-upload";
+import { discardUpload, uploadFile, type UploadHandle } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
-import type { UploadedFile, UploadResponse } from "@/types/uploads";
-
-const UPLOAD_FAILED = "Upload failed. Check your connection and try again.";
-
-// Best effort: removes an upload that won't become an item. keepalive lets it finish
-// even when the dialog or page is closing.
-export function discardUpload(fileUrl: string) {
-  fetch("/api/upload", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileUrl }),
-    keepalive: true,
-  }).catch(() => {});
-}
+import type { UploadedFile } from "@/types/uploads";
 
 interface FileUploadProps {
   kind: UploadKind;
@@ -50,7 +38,7 @@ export function FileUpload({
   const [progress, setProgress] = useState<number | null>(null);
   const [uploadingName, setUploadingName] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  const request = useRef<XMLHttpRequest | null>(null);
+  const request = useRef<UploadHandle | null>(null);
 
   // Stop an upload still running when the dialog closes.
   useEffect(() => () => request.current?.abort(), []);
@@ -78,29 +66,15 @@ export function FileUpload({
       onChange(null);
     }
 
-    const formData = new FormData();
-    formData.set("kind", kind);
-    formData.set("file", file);
-
-    // XMLHttpRequest rather than fetch, which can't report upload progress.
-    const xhr = new XMLHttpRequest();
-    request.current = xhr;
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    xhr.onload = () => {
-      let body: UploadResponse | null = null;
-      try {
-        body = JSON.parse(xhr.responseText);
-      } catch {
-        body = null;
-      }
-      if (body?.success) finish(body.data);
-      else finish(null, body?.error ?? UPLOAD_FAILED);
-    };
-    xhr.onerror = () => finish(null, UPLOAD_FAILED);
-    xhr.open("POST", "/api/upload");
-    xhr.send(formData);
+    const handle = uploadFile(kind, file, { onProgress: setProgress });
+    request.current = handle;
+    handle.promise.then(
+      (result) => finish(result),
+      (error: Error) => {
+        // Aborted on unmount; nothing is left to update.
+        if (error.name !== "AbortError") finish(null, error.message);
+      },
+    );
 
     setUploadingName(file.name);
     setProgress(0);

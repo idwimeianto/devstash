@@ -3,9 +3,8 @@
 import { createContext, use, useCallback, useMemo, useRef, useState } from "react";
 
 import { ItemDrawer, type ItemDrawerState } from "@/components/items/ItemDrawer";
+import { NETWORK_ERROR } from "@/lib/messages";
 import type { ItemDetailJson, ItemDetailResponse } from "@/types/items";
-
-const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
 
 interface ItemDrawerContextValue {
   openItem: (itemId: string) => void;

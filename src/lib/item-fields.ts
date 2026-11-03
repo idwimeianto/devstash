@@ -5,6 +5,7 @@ export interface EditableItemFields {
 }
 
 import { isUploadKind } from "@/lib/file-upload";
+import type { UpdateItemInput } from "@/types/items";
 
 // Types the New Item dialog offers, in sidebar order; File and Image are uploads.
 export const CREATABLE_ITEM_TYPES = [
@@ -60,4 +61,28 @@ export function parseTags(input: string): string[] {
     .map((tag) => tag.trim())
     .filter(Boolean);
   return [...new Set(tags)];
+}
+
+// What the item forms hold: every field as typed, tags as one comma-separated string.
+export interface ItemFormValues {
+  title: string;
+  description: string;
+  content: string;
+  language: string;
+  url: string;
+  tags: string;
+}
+
+// The payload for an item of this type: only the fields it has, so values typed in before
+// switching types aren't sent.
+export function buildItemInput(typeName: string, values: ItemFormValues): UpdateItemInput {
+  const fields = getEditableItemFields(typeName);
+  return {
+    title: values.title,
+    description: values.description,
+    tags: parseTags(values.tags),
+    ...(fields.content && { content: values.content }),
+    ...(fields.language && { language: values.language }),
+    ...(fields.url && { url: values.url }),
+  };
 }

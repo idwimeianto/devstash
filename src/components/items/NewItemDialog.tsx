@@ -10,14 +10,10 @@ import {
   useTransition,
   type TransitionStartFunction,
 } from "react";
-import { toast } from "sonner";
 
 import { createItem } from "@/actions/items";
-import { FormField } from "@/components/auth/FormField";
-import { CodeEditorField } from "@/components/items/CodeEditorField";
-import { discardUpload, FileUpload } from "@/components/items/FileUpload";
-import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
-import { TextareaField } from "@/components/items/TextareaField";
+import { FileUpload } from "@/components/items/FileUpload";
+import { ItemFormFields } from "@/components/items/ItemFormFields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,23 +25,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useItemForm } from "@/hooks/use-item-form";
+import { isUploadKind } from "@/lib/file-upload";
 import {
+  buildItemInput,
   CREATABLE_ITEM_TYPES,
-  getEditableItemFields,
-  isCodeItemType,
-  isMarkdownItemType,
-  parseTags,
   type CreatableItemType,
 } from "@/lib/item-fields";
-import { isUploadKind } from "@/lib/file-upload";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
+import { runItemAction } from "@/lib/run-item-action";
+import { discardUpload } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
-import type { CreateItemInput, CreateItemResult } from "@/types/items";
+import type { CreateItemInput } from "@/types/items";
 import type { UploadedFile } from "@/types/uploads";
-
-const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
-
-type FieldErrors = Extract<CreateItemResult, { success: false }>["fieldErrors"];
 
 interface NewItemDialogProps {
   // Type selected when the dialog opens; it can still be changed in the picker.
@@ -101,16 +93,9 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
   const formId = useId();
 
   const [typeName, setTypeName] = useState<CreatableItemType>(defaultType);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [language, setLanguage] = useState("");
-  const [url, setUrl] = useState("");
-  const [tags, setTags] = useState("");
+  const { values, setField, fieldErrors, setFieldErrors } = useItemForm();
   const [upload, setUpload] = useState<UploadedFile | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const fields = getEditableItemFields(typeName);
   const uploadKind = isUploadKind(typeName) ? typeName : null;
 
   // An upload that hasn't become an item yet is removed when the dialog closes.
@@ -138,30 +123,16 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
     // Only the fields this type has; switching types keeps the others typed in but unsent.
     const input: CreateItemInput = {
       typeName,
-      title,
-      description,
-      tags: parseTags(tags),
-      ...(fields.content && { content }),
-      ...(fields.language && { language }),
-      ...(fields.url && { url }),
+      ...buildItemInput(typeName, values),
       ...(uploadKind && upload && { file: { fileUrl: upload.fileUrl, fileName: upload.fileName } }),
     };
 
     startTransition(async () => {
-      let result: CreateItemResult;
-      try {
-        result = await createItem(input);
-      } catch {
-        toast.error(NETWORK_ERROR);
-        return;
-      }
-
-      if (!result.success) {
-        setFieldErrors(result.fieldErrors ?? {});
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Item created");
+      const created = await runItemAction(() => createItem(input), {
+        successMessage: "Item created",
+        onFieldErrors: setFieldErrors,
+      });
+      if (!created) return;
       // The upload now belongs to the item, so closing the dialog mustn't remove it.
       unusedUpload.current = null;
       onCreated();
@@ -180,78 +151,24 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
         className="flex flex-col gap-5"
       >
         <ItemTypePicker value={typeName} onChange={changeType} disabled={pending || uploading} />
-        <FormField
-          name="title"
-          label="Title"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          errors={fieldErrors?.title}
-          required
-          autoFocus
-        />
-        <TextareaField
-          label="Description"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          errors={fieldErrors?.description}
-          rows={2}
-        />
-        {fields.content && isCodeItemType(typeName) && (
-          <CodeEditorField
-            label="Content"
-            value={content}
-            language={language}
-            onChange={setContent}
-            errors={fieldErrors?.content}
-          />
-        )}
-        {fields.content && isMarkdownItemType(typeName) && (
-          <MarkdownEditorField
-            label="Content"
-            value={content}
-            onChange={setContent}
-            errors={fieldErrors?.content}
-          />
-        )}
-        {uploadKind && (
-          <FileUpload
-            kind={uploadKind}
-            value={upload}
-            onChange={setUpload}
-            onUploadingChange={setUploading}
-            disabled={pending}
-            errors={fieldErrors?.file}
-          />
-        )}
-        {fields.language && (
-          <FormField
-            name="language"
-            label="Language"
-            placeholder="e.g. typescript"
-            value={language}
-            onChange={(event) => setLanguage(event.target.value)}
-            errors={fieldErrors?.language}
-          />
-        )}
-        {fields.url && (
-          <FormField
-            name="url"
-            label="URL"
-            type="url"
-            placeholder="https://"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            errors={fieldErrors?.url}
-            required
-          />
-        )}
-        <FormField
-          name="tags"
-          label="Tags"
-          placeholder="react, hooks, auth"
-          value={tags}
-          onChange={(event) => setTags(event.target.value)}
-          errors={fieldErrors?.tags}
+        <ItemFormFields
+          typeName={typeName}
+          values={values}
+          onChange={setField}
+          fieldErrors={fieldErrors}
+          autoFocusTitle
+          fileField={
+            uploadKind && (
+              <FileUpload
+                kind={uploadKind}
+                value={upload}
+                onChange={setUpload}
+                onUploadingChange={setUploading}
+                disabled={pending}
+                errors={fieldErrors.file}
+              />
+            )
+          }
         />
       </form>
       <DialogFooter>
@@ -259,7 +176,9 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
         <Button
           type="submit"
           form={formId}
-          disabled={pending || uploading || !title.trim() || (uploadKind !== null && !upload)}
+          disabled={
+            pending || uploading || !values.title.trim() || (uploadKind !== null && !upload)
+          }
         >
           {pending && <Loader2 className="animate-spin" />}
           Create
