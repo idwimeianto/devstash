@@ -13,6 +13,7 @@ import {
   isFileUrlInUse,
   updateItem,
 } from "@/lib/db/items";
+import { ITEMS_PER_PAGE } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 
 const tx = vi.hoisted(() => ({
@@ -93,13 +94,31 @@ describe("getItemsByType", () => {
   const IMAGE_URL = "https://pub.example.r2.dev/user_1/abc.png";
   const LAST_USED_AT = new Date("2026-02-01T00:00:00Z");
 
+  beforeEach(() => {
+    vi.mocked(prisma.item.count).mockResolvedValue(4);
+  });
+
   it("only lists the user's items of that type", async () => {
     vi.mocked(prisma.item.findMany).mockResolvedValue([]);
 
-    await getItemsByType(USER_ID, "type_image");
+    await getItemsByType(USER_ID, "type_image", 1);
+
+    const where = { userId: USER_ID, typeId: "type_image" };
+    expect(prisma.item.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
+    expect(prisma.item.count).toHaveBeenCalledWith({ where });
+  });
+
+  it("fetches only the requested page and returns the total", async () => {
+    vi.mocked(prisma.item.count).mockResolvedValue(50);
+    vi.mocked(prisma.item.findMany).mockResolvedValue([ROW] as never);
+
+    const page = await getItemsByType(USER_ID, "type_snippet", 2);
 
     expect(prisma.item.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: USER_ID, typeId: "type_image" } })
+      expect.objectContaining({ skip: ITEMS_PER_PAGE, take: ITEMS_PER_PAGE })
+    );
+    expect(page).toEqual(
+      expect.objectContaining({ total: 50, page: 2, pageCount: 3, rows: [expect.objectContaining({ id: ITEM_ID })] })
     );
   });
 
@@ -109,7 +128,7 @@ describe("getItemsByType", () => {
       { ...ROW, id: "img_2", type: { name: "image" }, fileUrl: null, lastUsedAt: null },
     ] as never);
 
-    const items = await getItemsByType(USER_ID, "type_image");
+    const { rows: items } = await getItemsByType(USER_ID, "type_image", 1);
 
     expect(items).toEqual([
       expect.objectContaining({ id: "img_1", typeName: "image", fileUrl: IMAGE_URL, date: LAST_USED_AT }),
@@ -128,7 +147,9 @@ describe("getItemsByType", () => {
       },
     ] as never);
 
-    const [item] = await getItemsByType(USER_ID, "type_file");
+    const {
+      rows: [item],
+    } = await getItemsByType(USER_ID, "type_file", 1);
 
     expect(item).toEqual(
       expect.objectContaining({
@@ -148,7 +169,7 @@ describe("getItemsByType", () => {
       { ...ROW, id: "note_1", content: "" },
     ] as never);
 
-    const items = await getItemsByType(USER_ID, "type_any");
+    const { rows: items } = await getItemsByType(USER_ID, "type_any", 1);
 
     expect(items.map((item) => item.copyValue)).toEqual([
       "https://ui.shadcn.com",
@@ -160,24 +181,52 @@ describe("getItemsByType", () => {
 });
 
 describe("getItemsByCollection", () => {
-  it("lists the user's items in that collection, most recently used first", async () => {
+  beforeEach(() => {
+    vi.mocked(prisma.item.count).mockResolvedValue(2);
+  });
+
+  it("lists the user's regular items in that collection, most recently used first", async () => {
     vi.mocked(prisma.item.findMany).mockResolvedValue([
       { ...ROW, lastUsedAt: null },
       { ...ROW, id: "link_1", type: { name: "link" }, lastUsedAt: null },
     ] as never);
 
-    const items = await getItemsByCollection(USER_ID, "col_1");
+    const { rows: items, total } = await getItemsByCollection(USER_ID, "col_1", "items", 1);
 
     expect(items.map((item) => [item.id, item.typeName])).toEqual([
       [ITEM_ID, "snippet"],
       ["link_1", "link"],
     ]);
+    expect(total).toBe(2);
     expect(prisma.item.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { userId: USER_ID, collections: { some: { collectionId: "col_1" } } },
+        where: {
+          userId: USER_ID,
+          collections: { some: { collectionId: "col_1" } },
+          type: { name: { notIn: ["file", "image"] } },
+        },
         orderBy: [{ lastUsedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+        skip: 0,
+        take: ITEMS_PER_PAGE,
       })
     );
+  });
+
+  it.each([
+    ["files", "file"],
+    ["images", "image"],
+  ] as const)("limits the %s section to %s items", async (section, typeName) => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([]);
+
+    await getItemsByCollection(USER_ID, "col_1", section, 1);
+
+    const where = {
+      userId: USER_ID,
+      collections: { some: { collectionId: "col_1" } },
+      type: { name: typeName },
+    };
+    expect(prisma.item.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
+    expect(prisma.item.count).toHaveBeenCalledWith({ where });
   });
 });
 

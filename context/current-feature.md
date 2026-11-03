@@ -1,18 +1,28 @@
-# Current Feature
+# Current Feature: Pagination
 
-<!-- Feature name and short description -->
+Numbered pagination for item and collection listings. Spec: `context/features/pagination-spec.md`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `/items/[type]` and `/collections/[id]` are paginated
+- Pagination controls at the bottom of the list: page numbers plus Previous / Next links
+- Previous / Next are disabled (greyed out) on the first / last page
+- Constants `ITEMS_PER_PAGE = 21` and `COLLECTIONS_PER_PAGE = 21`
+- Dashboard limits as constants: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
+- Each page fetches only its own rows (`skip` / `take` plus a count), never the full list
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Decided at `start`: `/collections` (all collections) is paginated with `COLLECTIONS_PER_PAGE`; `/collections/[id]` uses `ITEMS_PER_PAGE`
+- Decided at `start`: `/collections/[id]` paginates each section (Items, Files, Images) separately, each with its own query, count and bar, via `?page`, `?filesPage` and `?imagesPage`
+- The dashboard already caps at 6 collections (`RECENT_COLLECTIONS_LIMIT` in `src/lib/db/collections.ts`) and 10 recent items (`RECENT_ITEMS_LIMIT` in `src/lib/db/items.ts`); these become the named dashboard constants
+- 21 fills full rows in the 1 / 3-column grids (and 7 rows of 3 at `xl`)
+- Page number likely comes from a `?page=` search param; out-of-range or invalid pages need handling
+- The `/items/images` gallery and `/items/files` list layouts must keep working with paginated data
 
 ## History
 

@@ -20,6 +20,9 @@ export interface ItemSummary {
   createdAt: Date;
 }
 
+// The sections of a collection page, each paginated on its own.
+export type CollectionSection = "items" | "files" | "images";
+
 export interface ItemCollectionRef {
   id: string;
   name: string;

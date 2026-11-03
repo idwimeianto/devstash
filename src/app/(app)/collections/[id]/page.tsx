@@ -4,22 +4,43 @@ import { Suspense } from "react";
 
 import { CollectionActions } from "@/components/collections/CollectionActions";
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
+import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCollection } from "@/lib/db/collections";
 import { getItemsByCollection } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
-import type { ItemSummary } from "@/types/items";
+import { parsePage } from "@/lib/pagination";
+import type { CollectionSection } from "@/types/items";
 
 const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
 
-async function CollectionItems({ params }: Pick<PageProps<"/collections/[id]">, "params">) {
-  const { id } = await params;
+// Files and images get their own list and gallery, apart from the regular cards,
+// and each section has its own page param.
+const SECTIONS: {
+  section: CollectionSection;
+  title: string;
+  layout: ItemGridLayout;
+  param: string;
+}[] = [
+  { section: "items", title: "Items", layout: "cards", param: "page" },
+  { section: "files", title: "Files", layout: "list", param: "filesPage" },
+  { section: "images", title: "Images", layout: "gallery", param: "imagesPage" },
+];
+
+async function CollectionItems({ params, searchParams }: PageProps<"/collections/[id]">) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const userId = await getCurrentUserId();
-  const [collection, items] = await Promise.all([
+  const [collection, ...pages] = await Promise.all([
     getCollection(userId, id),
-    getItemsByCollection(userId, id),
+    ...SECTIONS.map(({ section, param }) =>
+      getItemsByCollection(userId, id, section, parsePage(query[param]))
+    ),
   ]);
   if (!collection) notFound();
+
+  const sections = SECTIONS.map((section, index) => ({ ...section, items: pages[index] }));
+  const total = pages.reduce((sum, page) => sum + page.total, 0);
+  const pathname = `/collections/${encodeURIComponent(id)}`;
 
   return (
     <>
@@ -31,7 +52,7 @@ async function CollectionItems({ params }: Pick<PageProps<"/collections/[id]">, 
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-3xl font-semibold">{collection.name}</h1>
             <p className="mt-1 text-muted-foreground">
-              {items.length} {items.length === 1 ? "item" : "items"}
+              {total} {total === 1 ? "item" : "items"}
             </p>
           </div>
           <CollectionActions collection={collection} />
@@ -41,37 +62,36 @@ async function CollectionItems({ params }: Pick<PageProps<"/collections/[id]">, 
         )}
       </header>
 
-      {items.length === 0 ? (
+      {total === 0 ? (
         <p className="text-sm text-muted-foreground">
           No items in this collection yet. Add some from an item&apos;s edit form.
         </p>
       ) : (
-        <CollectionSections items={items} />
+        sections
+          .filter(({ items }) => items.total > 0)
+          .map(({ section, title, layout, param, items }) => (
+            // scroll-mt keeps the heading clear of the sticky top bar when a page link jumps here.
+            <section
+              key={section}
+              id={section}
+              className="flex scroll-mt-(--header-height) flex-col gap-4"
+            >
+              <h2 className="text-xl font-semibold">{title}</h2>
+              <ItemGrid items={items.rows} layout={layout} emptyMessage="" />
+              <PaginationBar
+                page={items.page}
+                pageCount={items.pageCount}
+                pathname={pathname}
+                searchParams={query}
+                param={param}
+                hash={section}
+                label={`${title} pages`}
+              />
+            </section>
+          ))
       )}
     </>
   );
-}
-
-// Files and images get their own list and gallery, apart from the regular cards.
-function CollectionSections({ items }: { items: ItemSummary[] }) {
-  const sections: { title: string; layout: ItemGridLayout; items: ItemSummary[] }[] = [
-    {
-      title: "Items",
-      layout: "cards",
-      items: items.filter((item) => item.typeName !== "file" && item.typeName !== "image"),
-    },
-    { title: "Files", layout: "list", items: items.filter((item) => item.typeName === "file") },
-    { title: "Images", layout: "gallery", items: items.filter((item) => item.typeName === "image") },
-  ];
-
-  return sections
-    .filter((section) => section.items.length > 0)
-    .map((section) => (
-      <section key={section.title} className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">{section.title}</h2>
-        <ItemGrid items={section.items} layout={section.layout} emptyMessage="" />
-      </section>
-    ));
 }
 
 function CollectionItemsSkeleton() {
@@ -89,12 +109,12 @@ function CollectionItemsSkeleton() {
   );
 }
 
-export default function CollectionPage({ params }: PageProps<"/collections/[id]">) {
+export default function CollectionPage({ params, searchParams }: PageProps<"/collections/[id]">) {
   return (
     <div className={PAGE_CLASSES}>
       {/* The collection and its items are per user, so they stream in at request time. */}
       <Suspense fallback={<CollectionItemsSkeleton />}>
-        <CollectionItems params={params} />
+        <CollectionItems params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );

@@ -1,3 +1,9 @@
+import {
+  COLLECTIONS_PER_PAGE,
+  DASHBOARD_COLLECTIONS_LIMIT,
+  type Page,
+  paginate,
+} from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import type {
   CreateCollectionData,
@@ -14,7 +20,6 @@ import type {
   SidebarCollections,
 } from "@/types/collections";
 
-const RECENT_COLLECTIONS_LIMIT = 6;
 const SIDEBAR_RECENT_LIMIT = 5;
 
 const TYPE_SELECT = { id: true, name: true, icon: true, color: true } as const;
@@ -56,12 +61,14 @@ function summarizeItemTypes({ defaultType, items }: CollectionWithItemTypes) {
 // Newest first; every collection when `take` is undefined.
 async function findCollectionSummaries(
   userId: string,
-  take?: number
+  take?: number,
+  skip?: number
 ): Promise<CollectionSummary[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
     take,
+    skip,
     select: { id: true, name: true, description: true, isFavorite: true, ...ITEM_TYPES_SELECT },
   });
 
@@ -76,13 +83,27 @@ async function findCollectionSummaries(
 
 export function getRecentCollections(
   userId: string,
-  limit = RECENT_COLLECTIONS_LIMIT
+  limit = DASHBOARD_COLLECTIONS_LIMIT
 ): Promise<CollectionSummary[]> {
   return findCollectionSummaries(userId, limit);
 }
 
+// Every collection, for the command palette's search.
 export function getAllCollections(userId: string): Promise<CollectionSummary[]> {
   return findCollectionSummaries(userId);
+}
+
+// One page of the /collections grid, newest first.
+export function getCollectionsPage(
+  userId: string,
+  page: number
+): Promise<Page<CollectionSummary>> {
+  return paginate(
+    page,
+    COLLECTIONS_PER_PAGE,
+    () => prisma.collection.count({ where: { userId } }),
+    (skip, take) => findCollectionSummaries(userId, take, skip)
+  );
 }
 
 // One of the user's collections; another user's collection looks missing.

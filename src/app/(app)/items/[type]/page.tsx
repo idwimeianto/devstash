@@ -3,11 +3,13 @@ import { Suspense } from "react";
 
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { NewItemDialog } from "@/components/items/NewItemDialog";
+import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getItemTypeBySlug, getItemsByType } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
 import { isCreatableItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
+import { parsePage } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 
 const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
@@ -18,13 +20,13 @@ function getLayout(typeName: string): ItemGridLayout {
   return "cards";
 }
 
-async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params">) {
-  const { type: slug } = await params;
+async function ItemsByType({ params, searchParams }: PageProps<"/items/[type]">) {
+  const [{ type: slug }, query] = await Promise.all([params, searchParams]);
   const userId = await getCurrentUserId();
   const type = await getItemTypeBySlug(userId, slug);
   if (!type) notFound();
 
-  const items = await getItemsByType(userId, type.id);
+  const items = await getItemsByType(userId, type.id, parsePage(query.page));
   const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(type.name);
   const label = getItemTypeLabel(type.name);
 
@@ -39,7 +41,7 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
         <div>
           <h1 className="text-3xl font-semibold">{label}</h1>
           <p className="mt-1 text-muted-foreground">
-            {items.length} {items.length === 1 ? "item" : "items"}
+            {items.total} {items.total === 1 ? "item" : "items"}
           </p>
         </div>
         {/* Custom types can't be created from the dialog yet. */}
@@ -54,9 +56,16 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
       </header>
 
       <ItemGrid
-        items={items}
+        items={items.rows}
         layout={getLayout(type.name)}
         emptyMessage={`No ${label.toLowerCase()} yet. Add one to start building your stash.`}
+      />
+      <PaginationBar
+        page={items.page}
+        pageCount={items.pageCount}
+        pathname={`/items/${encodeURIComponent(slug)}`}
+        searchParams={query}
+        label={`${label} pages`}
       />
     </>
   );
@@ -77,12 +86,12 @@ function ItemsByTypeSkeleton() {
   );
 }
 
-export default function ItemsByTypePage({ params }: PageProps<"/items/[type]">) {
+export default function ItemsByTypePage({ params, searchParams }: PageProps<"/items/[type]">) {
   return (
     <div className={PAGE_CLASSES}>
       {/* The type and its items are per user, so they stream in at request time. */}
       <Suspense fallback={<ItemsByTypeSkeleton />}>
-        <ItemsByType params={params} />
+        <ItemsByType params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );

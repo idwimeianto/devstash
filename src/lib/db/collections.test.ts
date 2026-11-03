@@ -7,10 +7,12 @@ import {
   getAllCollections,
   getCollection,
   getCollectionOptions,
+  getCollectionsPage,
   getRecentCollections,
   getSidebarCollections,
   updateCollection,
 } from "@/lib/db/collections";
+import { COLLECTIONS_PER_PAGE } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 
 vi.mock("@/lib/prisma", () => ({
@@ -90,6 +92,30 @@ describe("getAllCollections", () => {
         orderBy: { createdAt: "desc" },
         take: undefined,
       }),
+    );
+  });
+});
+
+describe("getCollectionsPage", () => {
+  it("fetches one page of the user's collections with the total", async () => {
+    vi.mocked(prisma.collection.count).mockResolvedValue(30);
+    vi.mocked(prisma.collection.findMany).mockResolvedValue([
+      collection("c22", false, [SNIPPET]),
+    ] as never);
+
+    const page = await getCollectionsPage("user_1", 2);
+
+    expect(prisma.collection.count).toHaveBeenCalledWith({ where: { userId: "user_1" } });
+    expect(prisma.collection.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user_1" },
+        orderBy: { createdAt: "desc" },
+        skip: COLLECTIONS_PER_PAGE,
+        take: COLLECTIONS_PER_PAGE,
+      }),
+    );
+    expect(page).toEqual(
+      expect.objectContaining({ total: 30, page: 2, pageCount: 2, rows: [expect.objectContaining({ id: "c22" })] }),
     );
   });
 });

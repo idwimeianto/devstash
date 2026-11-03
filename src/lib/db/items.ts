@@ -1,9 +1,16 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getItemContentType } from "@/lib/item-fields";
+import {
+  DASHBOARD_RECENT_ITEMS_LIMIT,
+  ITEMS_PER_PAGE,
+  type Page,
+  paginate,
+} from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { toContentPreview } from "@/lib/search";
 import type { CreateItemData, UpdateItemData } from "@/lib/validations/items";
 import type {
+  CollectionSection,
   ItemDetail,
   ItemStats,
   ItemSummary,
@@ -13,7 +20,6 @@ import type {
 import type { SearchItem } from "@/types/search";
 import type { UploadedFile } from "@/types/uploads";
 
-const RECENT_ITEMS_LIMIT = 10;
 const PINNED_ITEMS_LIMIT = 10;
 
 // Sidebar order for the system types; any other type follows, by name.
@@ -89,7 +95,7 @@ export async function getPinnedItems(userId: string): Promise<ItemSummary[]> {
 
 export async function getRecentItems(
   userId: string,
-  limit = RECENT_ITEMS_LIMIT
+  limit = DASHBOARD_RECENT_ITEMS_LIMIT
 ): Promise<ItemSummary[]> {
   const items = await prisma.item.findMany({
     where: { userId },
@@ -301,28 +307,54 @@ export async function getItemTypeBySlug(
   });
 }
 
-export async function getItemsByType(
-  userId: string,
-  typeId: string
-): Promise<ItemSummary[]> {
-  const items = await prisma.item.findMany({
-    where: { userId, typeId },
-    orderBy: RECENT_ORDER,
-    select: ITEM_SUMMARY_SELECT,
-  });
-  return items.map(toItemSummary);
+// One page of the matching items, recent first, with the total count.
+function findItemsPage(where: Prisma.ItemWhereInput, page: number): Promise<Page<ItemSummary>> {
+  return paginate(
+    page,
+    ITEMS_PER_PAGE,
+    () => prisma.item.count({ where }),
+    async (skip, take) => {
+      const items = await prisma.item.findMany({
+        where,
+        orderBy: RECENT_ORDER,
+        skip,
+        take,
+        select: ITEM_SUMMARY_SELECT,
+      });
+      return items.map(toItemSummary);
+    }
+  );
 }
 
-export async function getItemsByCollection(
+export function getItemsByType(
   userId: string,
-  collectionId: string
-): Promise<ItemSummary[]> {
-  const items = await prisma.item.findMany({
-    where: { userId, collections: { some: { collectionId } } },
-    orderBy: RECENT_ORDER,
-    select: ITEM_SUMMARY_SELECT,
-  });
-  return items.map(toItemSummary);
+  typeId: string,
+  page: number
+): Promise<Page<ItemSummary>> {
+  return findItemsPage({ userId, typeId }, page);
+}
+
+// Which of the collection page's sections a query fills.
+const COLLECTION_SECTION_TYPES = {
+  items: { name: { notIn: ["file", "image"] } },
+  files: { name: "file" },
+  images: { name: "image" },
+} satisfies Record<CollectionSection, Prisma.ItemTypeWhereInput>;
+
+export function getItemsByCollection(
+  userId: string,
+  collectionId: string,
+  section: CollectionSection,
+  page: number
+): Promise<Page<ItemSummary>> {
+  return findItemsPage(
+    {
+      userId,
+      collections: { some: { collectionId } },
+      type: COLLECTION_SECTION_TYPES[section],
+    },
+    page
+  );
 }
 
 // Every item of the user, recent first, in the light shape the command palette searches.
