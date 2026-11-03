@@ -124,7 +124,8 @@ export function FileUpload({
   const { maxSize, extensions } = UPLOAD_CONSTRAINTS[kind];
 
   return (
-    <div className="grid gap-2">
+    // A minmax(0, 1fr) column so a long file name truncates instead of widening the dialog.
+    <div className="grid grid-cols-1 gap-2">
       <label htmlFor={inputId} className="text-sm leading-none font-medium select-none">
         {label}
       </label>

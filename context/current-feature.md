@@ -1,18 +1,20 @@
-# Current Feature
+# Current Feature: New Item Dialog Width
 
-<!-- Feature name and short description -->
+Keep the New Item dialog within its max width and truncate long uploaded file / image names.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- The New Item dialog never grows past its max width (`sm:max-w-lg`, `calc(100% - 2rem)` on phones)
+- A long file / image name is truncated with an ellipsis in the upload preview and the "Uploading …" text
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- The dialog already has its max width; the overflow comes from `FileUpload`'s `grid gap-2` wrapper, whose implicit `auto` column grows to the min-content width of a long unbroken file name (748px in a 480px dialog), so the content scrolls sideways and the existing `truncate` never applies
+- Fix: `grid-cols-1` (`minmax(0, 1fr)`) on that wrapper, the same fix as the file list; `grid-cols-1` on `DialogContent` made no difference, so it was left out
 
 ## History
 
