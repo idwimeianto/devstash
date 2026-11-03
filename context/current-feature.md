@@ -1,18 +1,23 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+**Card Quick Copy** — a copy icon on item cards that copies the item's content (or URL for links) without opening the drawer.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Copy icon button on `ItemCard` (dashboard Pinned / Recent Items and `/items/[type]` card grid)
+- Copies `content` for text types and `url` for links; no button when there is nothing to copy (files, images, empty content)
+- Clicking the icon copies without opening the drawer (button sits above the card's `OpenItemButton` overlay)
+- Reuse `CopyButton` (toast plus check icon for 2s)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `ItemSummary` gets a `copyValue` (URL, else content, else `null`); `ITEM_SUMMARY_SELECT` now loads `content` and `url`
+- Image gallery cards and file rows unchanged (files already have a download button)
+- `lastUsedAt` not updated on copy (opening doesn't update it yet either)
 
 ## History
 

@@ -8,6 +8,8 @@ export interface ItemSummary {
   isFavorite: boolean;
   typeName: string;
   tags: string[];
+  // What the card's copy button copies: the URL for links, else the content; null when empty.
+  copyValue: string | null;
   // Public R2 URL for file types, used for image thumbnails.
   fileUrl: string | null;
   fileName: string | null;

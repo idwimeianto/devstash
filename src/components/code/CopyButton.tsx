@@ -11,10 +11,11 @@ const COPIED_RESET_MS = 2000;
 interface CopyButtonProps {
   value: string;
   label: string;
+  className?: string;
 }
 
 // Copies the value with a toast, showing a check icon for 2s; disabled when there is nothing to copy.
-export function CopyButton({ value, label }: CopyButtonProps) {
+export function CopyButton({ value, label, className }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -41,6 +42,7 @@ export function CopyButton({ value, label }: CopyButtonProps) {
       onClick={handleCopy}
       disabled={!value}
       aria-label={copied ? "Copied" : label}
+      className={className}
     >
       {copied ? <Check className="text-emerald-500" /> : <Copy />}
     </Button>

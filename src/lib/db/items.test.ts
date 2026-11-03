@@ -105,6 +105,24 @@ describe("getItemsByType", () => {
       })
     );
   });
+
+  it("copies the URL for links, the content for text and nothing when both are empty", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { ...ROW, id: "link_1", content: null, url: "https://ui.shadcn.com" },
+      { ...ROW, id: "snippet_1" },
+      { ...ROW, id: "file_1", content: null, fileUrl: IMAGE_URL },
+      { ...ROW, id: "note_1", content: "" },
+    ] as never);
+
+    const items = await getItemsByType(USER_ID, "type_any");
+
+    expect(items.map((item) => item.copyValue)).toEqual([
+      "https://ui.shadcn.com",
+      "export function useAuth() {}",
+      null,
+      null,
+    ]);
+  });
 });
 
 describe("getItemDetail", () => {
