@@ -7,6 +7,7 @@ import { getSessionUserId } from "@/lib/db/users";
 import { deleteTokensForEmail } from "@/lib/db/verification-tokens";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { deleteObject, getKeyFromPublicUrl } from "@/lib/r2";
 import { changePasswordSchema } from "@/lib/validations/auth";
 import type { ChangePasswordState, DeleteAccountState } from "@/types/profile";
 
@@ -57,16 +58,29 @@ export async function changePassword(
   return { success: true, data: { message: "Password updated." } };
 }
 
+// The account is gone either way; files left behind in R2 are only logged.
+async function deleteUploadedFiles(fileUrls: string[]) {
+  const keys = fileUrls.map(getKeyFromPublicUrl).filter((key) => key !== null);
+  const results = await Promise.allSettled(keys.map((key) => deleteObject(key)));
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.error("Deleting an account's file from R2 failed", result.reason);
+    }
+  }
+}
+
 export async function deleteAccount(): Promise<DeleteAccountState> {
   const userId = await getSessionUserId();
   if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
+  let fileUrls: string[] = [];
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true },
+      select: { email: true, items: { where: { fileUrl: { not: null } }, select: { fileUrl: true } } },
     });
     if (user) {
+      fileUrls = user.items.flatMap((item) => (item.fileUrl ? [item.fileUrl] : []));
       // Items, collections, tags, custom types and accounts cascade from the user;
       // verification tokens aren't linked to it, so they're removed by email.
       await prisma.$transaction([
@@ -78,6 +92,9 @@ export async function deleteAccount(): Promise<DeleteAccountState> {
     console.error("Account deletion failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
+
+  // Uploads aren't in the database, so the cascade doesn't remove them.
+  await deleteUploadedFiles(fileUrls);
 
   // Throws Next.js's redirect, so it stays outside the try.
   await signOut({ redirectTo: "/sign-in" });

@@ -1,18 +1,25 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+**Codebase Quick Wins 3** — low-risk fixes from the third code-scanner audit.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Item field limits: title 200, description 2,000, content 100,000, language 50, URL 2,048, tag 50 characters, at most 20 tags (audit #2)
+- Editing a link requires a URL, like creating one (audit #5)
+- `POST /api/upload` rejects a `Content-Length` over the largest limit before reading the body (audit #4)
+- `createItem` refuses an upload another item already uses; `deleteItem` keeps the R2 object while another item still uses it (audit #6)
+- Deleting an account also deletes the user's R2 files, logging failures (audit #1)
+- New passwords are limited to 72 bytes (bcrypt's limit), not 72 characters (audit #10)
+- Security headers: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`; no CSP (audit #7)
+- `MonacoEditor` computes its font once and memoizes its options (audit #13)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Deferred from the audit: sidebar collection query rewrite (#3), `.xml` as attachment (#8), `DIRECT_URL` (#9), `changePassword` rate limit (#11), token index (#12), shared constants / moving `ItemCard` (#14), IP trust (#15), CSP
 
 ## History
 

@@ -6,6 +6,7 @@ import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   getItemTypeName,
+  isFileUrlInUse,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
@@ -27,6 +28,8 @@ import type { UploadedFile } from "@/types/uploads";
 const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
 const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again.";
 const NOT_FOUND = "This item doesn't exist or was deleted.";
+const URL_REQUIRED = "URL is required";
+const FILE_IN_USE = "This file already belongs to another item. Please upload it again.";
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 // Same shape GET /api/items/[id] sends, so the drawer can show the result directly.
@@ -77,6 +80,10 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
       if (!storedFile) {
         return { success: false, error: UPLOAD_MISSING, fieldErrors: { file: [UPLOAD_MISSING] } };
       }
+      // Each upload backs one item, so deleting one item can't break another.
+      if (await isFileUrlInUse(userId, storedFile.fileUrl)) {
+        return { success: false, error: FILE_IN_USE, fieldErrors: { file: [FILE_IN_USE] } };
+      }
     }
 
     const item = await createItemQuery(userId, {
@@ -117,6 +124,10 @@ export async function updateItem(
     // Drop fields this type doesn't have, even if a client sends them.
     const editable = getEditableItemFields(typeName);
     const { content, language, url, ...common } = parsed.data;
+    // Same rule as creating: a link can't be saved without its URL (undefined leaves it as is).
+    if (typeName === "link" && url === null) {
+      return { success: false, error: URL_REQUIRED, fieldErrors: { url: [URL_REQUIRED] } };
+    }
     const item = await updateItemQuery(userId, itemId, {
       ...common,
       content: editable.content ? content : undefined,
@@ -149,9 +160,10 @@ export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
 
   // The item is gone either way; a file left behind in R2 is only logged.
   const key = deleted.fileUrl && getKeyFromPublicUrl(deleted.fileUrl);
-  if (key) {
+  if (deleted.fileUrl && key) {
     try {
-      await deleteObject(key);
+      // Kept while another item still points at it (items created before uploads were unique).
+      if (!(await isFileUrlInUse(userId, deleted.fileUrl))) await deleteObject(key);
     } catch (error) {
       console.error("Deleting the item's file from R2 failed", error);
     }

@@ -3,33 +3,63 @@ import { z } from "zod";
 import { isUploadKind } from "@/lib/file-upload";
 import { CREATABLE_ITEM_TYPES } from "@/lib/item-fields";
 
+export const ITEM_LIMITS = {
+  title: 200,
+  description: 2_000,
+  content: 100_000,
+  language: 50,
+  url: 2_048,
+  tag: 50,
+  tags: 20,
+} as const;
+
+function tooLong(field: string, max: number) {
+  return `${field} must be at most ${max.toLocaleString("en-US")} characters`;
+}
+
 // Blank optional fields are stored as null, not "".
-const optionalText = z
-  .string()
-  .trim()
-  .transform((value) => value || null)
-  .nullable()
-  .optional();
+function optionalText(field: string, max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max, tooLong(field, max))
+    .transform((value) => value || null)
+    .nullable()
+    .optional();
+}
 
 export const updateItemSchema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  description: optionalText,
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(ITEM_LIMITS.title, tooLong("Title", ITEM_LIMITS.title)),
+  description: optionalText("Description", ITEM_LIMITS.description),
   // Not trimmed: leading whitespace is indentation in code.
   content: z
     .string()
+    .max(ITEM_LIMITS.content, tooLong("Content", ITEM_LIMITS.content))
     .transform((value) => (value.trim() ? value : null))
     .nullable()
     .optional(),
-  language: optionalText,
+  language: optionalText("Language", ITEM_LIMITS.language),
   url: z
     .string()
     .trim()
+    .max(ITEM_LIMITS.url, tooLong("URL", ITEM_LIMITS.url))
     .transform((value) => value || null)
     .pipe(z.url("Enter a valid URL").nullable())
     .nullable()
     .optional(),
   tags: z
-    .array(z.string().trim().min(1, "Tags can't be empty"))
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, "Tags can't be empty")
+        .max(ITEM_LIMITS.tag, `Tags must be at most ${ITEM_LIMITS.tag} characters each`),
+    )
+    .max(ITEM_LIMITS.tags, `Use at most ${ITEM_LIMITS.tags} tags`)
     .transform((tags) => [...new Set(tags)]),
 });
 

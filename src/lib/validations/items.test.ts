@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
+import { createItemSchema, ITEM_LIMITS, updateItemSchema } from "@/lib/validations/items";
 
 const VALID = { title: "useAuth Hook", description: null, tags: [] };
 
@@ -54,6 +54,41 @@ describe("updateItemSchema", () => {
       "hooks",
     ]);
     expect(updateItemSchema.safeParse({ ...VALID, tags: ["react", " "] }).success).toBe(false);
+  });
+
+  it("accepts fields at their limits and rejects longer ones", () => {
+    const atLimits = {
+      title: "t".repeat(ITEM_LIMITS.title),
+      description: "d".repeat(ITEM_LIMITS.description),
+      content: "c".repeat(ITEM_LIMITS.content),
+      language: "l".repeat(ITEM_LIMITS.language),
+      url: `https://example.com/${"u".repeat(ITEM_LIMITS.url - 20)}`,
+      tags: Array.from({ length: ITEM_LIMITS.tags }, (_, i) => `${i}`.padEnd(ITEM_LIMITS.tag, "x")),
+    };
+    expect(updateItemSchema.safeParse(atLimits).success).toBe(true);
+
+    const result = updateItemSchema.safeParse({
+      title: `${atLimits.title}t`,
+      description: `${atLimits.description}d`,
+      content: `${atLimits.content}c`,
+      language: `${atLimits.language}l`,
+      url: `${atLimits.url}u`,
+      tags: [`${atLimits.tags[0]}x`],
+    });
+    expect(result.error && z.flattenError(result.error).fieldErrors).toEqual({
+      title: ["Title must be at most 200 characters"],
+      description: ["Description must be at most 2,000 characters"],
+      content: ["Content must be at most 100,000 characters"],
+      language: ["Language must be at most 50 characters"],
+      url: ["URL must be at most 2,048 characters"],
+      tags: ["Tags must be at most 50 characters each"],
+    });
+  });
+
+  it("rejects more than 20 tags", () => {
+    const tags = Array.from({ length: ITEM_LIMITS.tags + 1 }, (_, i) => `tag${i}`);
+    const result = updateItemSchema.safeParse({ ...VALID, tags });
+    expect(result.error?.issues[0]?.message).toBe("Use at most 20 tags");
   });
 });
 

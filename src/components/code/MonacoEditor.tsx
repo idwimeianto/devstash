@@ -6,7 +6,7 @@ import Editor, { loader, type BeforeMount, type OnMount } from "@monaco-editor/r
 import * as monaco from "monaco-editor/editor";
 // Syntax highlighting for every basic language; each one loads on first use.
 import "monaco-editor/basic-languages/monaco.contribution";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 // The bundled copy of Monaco instead of the wrapper's default CDN download.
 self.MonacoEnvironment = {
@@ -96,6 +96,18 @@ export default function MonacoEditor({
 }: MonacoEditorProps) {
   const minHeight = readOnly ? 0 : MIN_EDITABLE_HEIGHT;
   const [height, setHeight] = useState(minHeight);
+  // Stable between height changes, so the wrapper doesn't re-apply options or re-read styles.
+  const options = useMemo(
+    () => ({
+      ...BASE_OPTIONS,
+      fontFamily: getMonoFontFamily(),
+      ariaLabel,
+      readOnly,
+      domReadOnly: readOnly,
+      renderLineHighlight: readOnly ? ("none" as const) : ("line" as const),
+    }),
+    [ariaLabel, readOnly],
+  );
 
   // Grows with the content up to MAX_HEIGHT, then scrolls.
   const handleMount: OnMount = (editor) => {
@@ -118,14 +130,7 @@ export default function MonacoEditor({
       beforeMount={defineTheme}
       onMount={handleMount}
       onChange={(next) => onChange?.(next ?? "")}
-      options={{
-        ...BASE_OPTIONS,
-        fontFamily: getMonoFontFamily(),
-        ariaLabel,
-        readOnly,
-        domReadOnly: readOnly,
-        renderLineHighlight: readOnly ? "none" : "line",
-      }}
+      options={options}
     />
   );
 }

@@ -5,6 +5,7 @@ import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   getItemTypeName,
+  isFileUrlInUse,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
@@ -15,6 +16,7 @@ vi.mock("@/lib/db/items", () => ({
   createItem: vi.fn(),
   deleteItem: vi.fn(),
   getItemTypeName: vi.fn(),
+  isFileUrlInUse: vi.fn(),
   updateItem: vi.fn(),
 }));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
@@ -134,6 +136,7 @@ describe("createItem action", () => {
     beforeEach(() => {
       vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
       vi.mocked(getObjectSize).mockResolvedValue(4096);
+      vi.mocked(isFileUrlInUse).mockResolvedValue(false);
     });
 
     it("stores the upload with the size read from R2", async () => {
@@ -176,6 +179,19 @@ describe("createItem action", () => {
       const result = await createItem(IMAGE_INPUT);
 
       expect(result).toMatchObject({ success: false, error: UPLOAD_MISSING });
+      expect(createItemQuery).not.toHaveBeenCalled();
+    });
+
+    it("rejects an upload another item already uses", async () => {
+      vi.mocked(isFileUrlInUse).mockResolvedValue(true);
+
+      const result = await createItem(IMAGE_INPUT);
+
+      expect(isFileUrlInUse).toHaveBeenCalledWith(USER_ID, FILE_URL);
+      expect(result).toMatchObject({
+        success: false,
+        fieldErrors: { file: ["This file already belongs to another item. Please upload it again."] },
+      });
       expect(createItemQuery).not.toHaveBeenCalled();
     });
 
@@ -253,6 +269,26 @@ describe("updateItem action", () => {
     );
   });
 
+  it("requires a URL when the item is a link, but leaves an unsent URL as is", async () => {
+    vi.mocked(getItemTypeName).mockResolvedValue("link");
+
+    const result = await updateItem(ITEM_ID, { ...INPUT, url: "  " });
+
+    expect(result).toEqual({
+      success: false,
+      error: "URL is required",
+      fieldErrors: { url: ["URL is required"] },
+    });
+    expect(updateItemQuery).not.toHaveBeenCalled();
+
+    await updateItem(ITEM_ID, INPUT);
+    expect(updateItemQuery).toHaveBeenCalledWith(
+      USER_ID,
+      ITEM_ID,
+      expect.objectContaining({ url: undefined }),
+    );
+  });
+
   it("returns field errors for invalid input without touching the database", async () => {
     const result = await updateItem(ITEM_ID, { ...INPUT, title: " ", url: "not a url" });
 
@@ -315,6 +351,7 @@ describe("deleteItem action", () => {
   beforeEach(() => {
     vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
     vi.mocked(deleteItemQuery).mockResolvedValue({ fileUrl: null });
+    vi.mocked(isFileUrlInUse).mockResolvedValue(false);
   });
 
   it("deletes the session user's item", async () => {
@@ -332,6 +369,19 @@ describe("deleteItem action", () => {
     const result = await deleteItem(ITEM_ID);
 
     expect(deleteObject).toHaveBeenCalledWith(`${USER_ID}/abc.pdf`);
+    expect(result).toEqual({ success: true });
+  });
+
+  it("keeps the file in R2 while another item still uses it", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
+    const fileUrl = `${PUBLIC_URL}/${USER_ID}/abc.pdf`;
+    vi.mocked(deleteItemQuery).mockResolvedValue({ fileUrl });
+    vi.mocked(isFileUrlInUse).mockResolvedValue(true);
+
+    const result = await deleteItem(ITEM_ID);
+
+    expect(isFileUrlInUse).toHaveBeenCalledWith(USER_ID, fileUrl);
+    expect(deleteObject).not.toHaveBeenCalled();
     expect(result).toEqual({ success: true });
   });
 

@@ -8,6 +8,7 @@ import {
   getFileExtension,
   getStoredContentType,
   isUploadKind,
+  UPLOAD_CONSTRAINTS,
   validateUpload,
 } from "@/lib/file-upload";
 import { deleteObject, getKeyFromPublicUrl, getPublicUrl, putObject } from "@/lib/r2";
@@ -16,6 +17,10 @@ import type { DeleteUploadResponse, UploadResponse } from "@/types/uploads";
 const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 const MAX_FILE_NAME_LENGTH = 255;
+// The largest allowed file plus room for the multipart boundaries and other fields.
+const MAX_REQUEST_BYTES =
+  Math.max(...Object.values(UPLOAD_CONSTRAINTS).map((constraint) => constraint.maxSize)) +
+  64 * 1024;
 
 function json<T extends UploadResponse | DeleteUploadResponse>(body: T, status = 200) {
   return NextResponse.json(body, { status });
@@ -26,6 +31,11 @@ function json<T extends UploadResponse | DeleteUploadResponse>(body: T, status =
 export async function POST(request: Request) {
   const userId = await getSessionUserId();
   if (!userId) return json({ success: false, error: NOT_SIGNED_IN }, 401);
+
+  // Refuse oversized bodies before reading them; validateUpload checks the exact limit per kind.
+  if (Number(request.headers.get("content-length")) > MAX_REQUEST_BYTES) {
+    return json({ success: false, error: "This file is too large" }, 413);
+  }
 
   let formData: FormData;
   try {

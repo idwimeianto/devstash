@@ -70,6 +70,22 @@ describe("POST /api/upload", () => {
     expect(vi.mocked(putObject).mock.calls[0][0].contentType).toBe("text/markdown");
   });
 
+  it("returns 413 for a body over the limit without reading it", async () => {
+    const request = new Request("http://localhost/api/upload", {
+      method: "POST",
+      headers: { "content-length": String(11 * 1024 * 1024) },
+      body: "x",
+    });
+    const formData = vi.spyOn(request, "formData");
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ success: false, error: "This file is too large" });
+    expect(formData).not.toHaveBeenCalled();
+    expect(putObject).not.toHaveBeenCalled();
+  });
+
   it("returns 401 when signed out", async () => {
     vi.mocked(getSessionUserId).mockResolvedValue(null);
 

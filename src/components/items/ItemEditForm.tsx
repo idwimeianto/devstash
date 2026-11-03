@@ -149,6 +149,7 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             errors={fieldErrors?.url}
+            required
           />
         )}
         <FormField

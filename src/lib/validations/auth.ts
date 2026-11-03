@@ -12,10 +12,16 @@ const email = z
   .toLowerCase()
   .pipe(z.email("Enter a valid email address"));
 
+// bcrypt ignores everything after 72 bytes, so the limit counts bytes, not characters.
+const MAX_PASSWORD_BYTES = 72;
+
 const newPassword = z
   .string()
   .min(8, "Password must be at least 8 characters")
-  .max(72, "Password must be at most 72 characters");
+  .refine(
+    (password) => new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES,
+    "Password is too long (at most 72 characters, fewer with emoji or accented letters)",
+  );
 
 const passwordsMatch = {
   check: (data: { password: string; confirmPassword: string }) =>
