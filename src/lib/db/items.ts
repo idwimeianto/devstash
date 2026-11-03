@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getItemContentType } from "@/lib/item-fields";
 import { prisma } from "@/lib/prisma";
+import { toContentPreview } from "@/lib/search";
 import type { CreateItemData, UpdateItemData } from "@/lib/validations/items";
 import type {
   ItemDetail,
@@ -9,6 +10,7 @@ import type {
   ItemTypeRef,
   ItemTypeWithCount,
 } from "@/types/items";
+import type { SearchItem } from "@/types/search";
 import type { UploadedFile } from "@/types/uploads";
 
 const RECENT_ITEMS_LIMIT = 10;
@@ -321,6 +323,29 @@ export async function getItemsByCollection(
     select: ITEM_SUMMARY_SELECT,
   });
   return items.map(toItemSummary);
+}
+
+// Every item of the user, recent first, in the light shape the command palette searches.
+export async function getSearchItems(userId: string): Promise<SearchItem[]> {
+  const items = await prisma.item.findMany({
+    where: { userId },
+    orderBy: RECENT_ORDER,
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      content: true,
+      url: true,
+      fileName: true,
+      type: { select: { name: true } },
+    },
+  });
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    typeName: item.type.name,
+    preview: toContentPreview(item.description, item.content, item.url, item.fileName),
+  }));
 }
 
 // System types plus the user's custom types, each with the user's item count.

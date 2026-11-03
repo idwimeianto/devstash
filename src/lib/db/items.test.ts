@@ -9,6 +9,7 @@ import {
   getItemsByCollection,
   getItemsByType,
   getItemTypeName,
+  getSearchItems,
   isFileUrlInUse,
   updateItem,
 } from "@/lib/db/items";
@@ -55,6 +56,38 @@ const ROW = {
     { collection: { id: "col_2", name: "React Patterns" } },
   ],
 };
+
+describe("getSearchItems", () => {
+  it("lists every item of the user with a one-line preview", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { id: "a", title: "useAuth", description: null, content: "export function\n  useAuth() {}", url: null, fileName: null, type: { name: "snippet" } },
+      { id: "b", title: "Lucide", description: "Icon set", content: null, url: "https://lucide.dev", fileName: null, type: { name: "link" } },
+      { id: "c", title: "Empty", description: null, content: "", url: null, fileName: null, type: { name: "note" } },
+    ] as never);
+
+    const items = await getSearchItems(USER_ID);
+
+    expect(prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: USER_ID } })
+    );
+    expect(items).toEqual([
+      { id: "a", title: "useAuth", typeName: "snippet", preview: "export function useAuth() {}" },
+      { id: "b", title: "Lucide", typeName: "link", preview: "Icon set" },
+      { id: "c", title: "Empty", typeName: "note", preview: null },
+    ]);
+  });
+
+  it("falls back to the URL, then the file name, for the preview", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { id: "a", title: "Docs", description: null, content: null, url: "https://docs.docker.com", fileName: null, type: { name: "link" } },
+      { id: "b", title: "Notes", description: "  ", content: null, url: null, fileName: "notes.md", type: { name: "file" } },
+    ] as never);
+
+    const items = await getSearchItems(USER_ID);
+
+    expect(items.map((item) => item.preview)).toEqual(["https://docs.docker.com", "notes.md"]);
+  });
+});
 
 describe("getItemsByType", () => {
   const IMAGE_URL = "https://pub.example.r2.dev/user_1/abc.png";

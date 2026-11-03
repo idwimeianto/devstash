@@ -1,9 +1,8 @@
-import { Layers, Search } from "lucide-react";
+import { Layers } from "lucide-react";
 
 import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
 import { NewItemDialog } from "@/components/items/NewItemDialog";
-import { Input } from "@/components/ui/input";
-import { Kbd } from "@/components/ui/kbd";
+import { SearchTrigger } from "@/components/search/SearchTrigger";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function TopBar() {
@@ -17,16 +16,7 @@ export function TopBar() {
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-2 px-2 md:gap-4 md:px-4">
         <SidebarTrigger className="md:hidden" />
-        <div className="relative w-full max-w-md">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search items..."
-            aria-label="Search items"
-            className="pr-12 pl-8"
-          />
-          <Kbd className="absolute top-1/2 right-2 -translate-y-1/2">⌘K</Kbd>
-        </div>
+        <SearchTrigger />
         <div className="ml-auto flex items-center gap-2">
           <NewCollectionDialog />
           <NewItemDialog iconOnlyOnMobile />
