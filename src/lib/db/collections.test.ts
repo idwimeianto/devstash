@@ -3,17 +3,26 @@ import { describe, expect, it, vi } from "vitest";
 import {
   areUserCollections,
   createCollection,
+  deleteCollection,
   getAllCollections,
   getCollection,
   getCollectionOptions,
   getRecentCollections,
   getSidebarCollections,
+  updateCollection,
 } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    collection: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), count: vi.fn() },
+    collection: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+      updateMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
   },
 }));
 
@@ -87,13 +96,13 @@ describe("getAllCollections", () => {
 
 describe("getCollection", () => {
   it("looks the collection up by id and user", async () => {
-    const found = { id: "c1", name: "React Patterns", description: null };
+    const found = { id: "c1", name: "React Patterns", description: null, isFavorite: false };
     vi.mocked(prisma.collection.findFirst).mockResolvedValue(found as never);
 
     await expect(getCollection("user_1", "c1")).resolves.toEqual(found);
     expect(prisma.collection.findFirst).toHaveBeenCalledWith({
       where: { id: "c1", userId: "user_1" },
-      select: { id: true, name: true, description: true },
+      select: { id: true, name: true, description: true, isFavorite: true },
     });
   });
 
@@ -146,6 +155,56 @@ describe("createCollection", () => {
     expect(prisma.collection.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: { userId: "user_1", name: "Empty", description: null } }),
     );
+  });
+});
+
+describe("updateCollection", () => {
+  it("updates only the user's collection and returns its new fields", async () => {
+    vi.mocked(prisma.collection.updateMany).mockResolvedValue({ count: 1 });
+
+    const result = await updateCollection("user_1", "c1", { name: "Hooks", description: null });
+
+    expect(result).toEqual({ id: "c1", name: "Hooks", description: null });
+    expect(prisma.collection.updateMany).toHaveBeenCalledWith({
+      where: { id: "c1", userId: "user_1" },
+      data: { name: "Hooks", description: null },
+    });
+  });
+
+  it("clears a missing description", async () => {
+    vi.mocked(prisma.collection.updateMany).mockResolvedValue({ count: 1 });
+
+    const result = await updateCollection("user_1", "c1", { name: "Hooks" });
+
+    expect(result).toEqual({ id: "c1", name: "Hooks", description: null });
+    expect(prisma.collection.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { name: "Hooks", description: null } }),
+    );
+  });
+
+  it("returns null for a missing or another user's collection", async () => {
+    vi.mocked(prisma.collection.updateMany).mockResolvedValue({ count: 0 });
+
+    await expect(
+      updateCollection("user_1", "someone_elses", { name: "Hooks" }),
+    ).resolves.toBeNull();
+  });
+});
+
+describe("deleteCollection", () => {
+  it("deletes only the user's collection, leaving its items alone", async () => {
+    vi.mocked(prisma.collection.deleteMany).mockResolvedValue({ count: 1 });
+
+    await expect(deleteCollection("user_1", "c1")).resolves.toBe(true);
+    expect(prisma.collection.deleteMany).toHaveBeenCalledWith({
+      where: { id: "c1", userId: "user_1" },
+    });
+  });
+
+  it("returns false for a missing or another user's collection", async () => {
+    vi.mocked(prisma.collection.deleteMany).mockResolvedValue({ count: 0 });
+
+    await expect(deleteCollection("user_1", "someone_elses")).resolves.toBe(false);
   });
 });
 

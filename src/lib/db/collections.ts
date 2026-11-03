@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import type { CreateCollectionData } from "@/lib/validations/collections";
+import type {
+  CreateCollectionData,
+  UpdateCollectionData,
+} from "@/lib/validations/collections";
 import type {
   CollectionOption,
   CollectionRef,
@@ -89,7 +92,7 @@ export function getCollection(
 ): Promise<CollectionRef | null> {
   return prisma.collection.findFirst({
     where: { id: collectionId, userId },
-    select: { id: true, name: true, description: true },
+    select: { id: true, name: true, description: true, isFavorite: true },
   });
 }
 
@@ -138,6 +141,28 @@ export async function createCollection(
     data: { userId, name: data.name, description: data.description ?? null },
     select: { id: true, name: true, description: true },
   });
+}
+
+// The updated collection, or null when it isn't one of the user's collections.
+export async function updateCollection(
+  userId: string,
+  collectionId: string,
+  data: UpdateCollectionData
+): Promise<CreatedCollection | null> {
+  const description = data.description ?? null;
+  const { count } = await prisma.collection.updateMany({
+    where: { id: collectionId, userId },
+    data: { name: data.name, description },
+  });
+  return count === 0 ? null : { id: collectionId, name: data.name, description };
+}
+
+// Whether the user's collection was deleted. Its item links cascade; the items stay.
+export async function deleteCollection(userId: string, collectionId: string): Promise<boolean> {
+  const { count } = await prisma.collection.deleteMany({
+    where: { id: collectionId, userId },
+  });
+  return count > 0;
 }
 
 // All of the user's collections by name, for the item forms' collection picker.

@@ -1,18 +1,30 @@
-# Current Feature
+# Current Feature: Collection Actions (Edit, Delete, Favorite)
 
-<!-- Feature name and short description -->
+Edit, delete and favorite buttons on the collection page, plus a 3-dots dropdown with the same actions on collection cards.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `/collections/[id]` header gets Edit, Delete and Favorite buttons
+- Edit opens a modal to change the collection's metadata (name, description), pre-filled with the current values; saving updates the page, sidebar and cards
+- Delete opens a confirmation dialog; confirming deletes the collection only — its items are kept and simply no longer belong to it — then leaves the deleted collection's page
+- Favorite is display only for now: the icon/button shows (filled when `isFavorite`), but clicking it does nothing yet
+- Collection cards on `/collections` and the dashboard get a 3-dots (more) icon that opens a dropdown with Edit, Delete and Favorite, using the same edit modal and delete confirmation
+- Clicking anywhere else on a card goes to that collection's page; opening the dropdown or choosing an option from it does not navigate
+- Server-side: `updateCollection` and `deleteCollection` server actions scoped to the session user (another user's collection looks missing), validated with Zod, returning `{ success, data, error }`
+- Unit tests for the new actions, queries and schema changes
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Items must NOT be deleted: `ItemCollection` rows already cascade on collection delete while `Item` rows stay, so deleting the `Collection` row is enough (verify no other relation removes items)
+- Reuse existing patterns: `NewCollectionDialog` / `createCollectionSchema` / `COLLECTION_LIMITS` for the edit form, `DeleteItemDialog` (shadcn `alert-dialog`, pending state, toasts) for the confirmation, `runItemAction()` for toasts, `router.refresh()` after mutations, shadcn `dropdown-menu` (already installed)
+- `CollectionCard` (`src/components/dashboard/CollectionCard.tsx`) is currently a server component wrapped entirely in a `Link` and has no 3-dots icon yet; the dropdown trigger must not sit inside the link (e.g. an overlay link plus a `relative z-20` trigger, like `OpenItemButton` / `CopyButton` on item cards)
+- Deleting from `/collections/[id]` should redirect (e.g. to `/collections`); deleting from a card just refreshes
+- Favorite toggling (the action and the `/favorites` page) is out of scope
+- Decided at `start`: Edit changes name and description only (default type untouched); deleting from `/collections/[id]` redirects to `/collections`
 
 ## History
 

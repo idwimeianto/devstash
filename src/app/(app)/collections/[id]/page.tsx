@@ -2,6 +2,7 @@ import { FolderOpen } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { CollectionActions } from "@/components/collections/CollectionActions";
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCollection } from "@/lib/db/collections";
@@ -27,12 +28,13 @@ async function CollectionItems({ params }: Pick<PageProps<"/collections/[id]">, 
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
             <FolderOpen className="size-6 text-muted-foreground" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-3xl font-semibold">{collection.name}</h1>
             <p className="mt-1 text-muted-foreground">
               {items.length} {items.length === 1 ? "item" : "items"}
             </p>
           </div>
+          <CollectionActions collection={collection} />
         </div>
         {collection.description && (
           <p className="text-muted-foreground">{collection.description}</p>

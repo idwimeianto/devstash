@@ -22,6 +22,7 @@ export interface CollectionRef {
   id: string;
   name: string;
   description: string | null;
+  isFavorite: boolean;
 }
 
 export interface SidebarCollection {
@@ -71,3 +72,9 @@ export type CreateCollectionResult =
       error: string;
       fieldErrors?: Partial<Record<keyof CreateCollectionInput, string[]>>;
     };
+
+export type UpdateCollectionInput = CreateCollectionInput;
+
+export type UpdateCollectionResult = CreateCollectionResult;
+
+export type DeleteCollectionResult = { success: true } | { success: false; error: string };

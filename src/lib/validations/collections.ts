@@ -17,3 +17,8 @@ export const createCollectionSchema = z.object({
 });
 
 export type CreateCollectionData = z.output<typeof createCollectionSchema>;
+
+// Editing changes the same fields as creating.
+export const updateCollectionSchema = createCollectionSchema;
+
+export type UpdateCollectionData = z.output<typeof updateCollectionSchema>;
