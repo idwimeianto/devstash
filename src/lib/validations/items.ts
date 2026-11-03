@@ -13,12 +13,12 @@ export const ITEM_LIMITS = {
   tags: 20,
 } as const;
 
-function tooLong(field: string, max: number) {
+export function tooLong(field: string, max: number) {
   return `${field} must be at most ${max.toLocaleString("en-US")} characters`;
 }
 
 // Blank optional fields are stored as null, not "".
-function optionalText(field: string, max: number) {
+export function optionalText(field: string, max: number) {
   return z
     .string()
     .trim()

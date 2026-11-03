@@ -1,7 +1,7 @@
-import { FolderPlus, Layers, Search } from "lucide-react";
+import { Layers, Search } from "lucide-react";
 
+import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
 import { NewItemDialog } from "@/components/items/NewItemDialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -28,10 +28,7 @@ export function TopBar() {
           <Kbd className="absolute top-1/2 right-2 -translate-y-1/2">⌘K</Kbd>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" aria-label="New Collection">
-            <FolderPlus />
-            <span className="hidden sm:inline">New Collection</span>
-          </Button>
+          <NewCollectionDialog />
           <NewItemDialog iconOnlyOnMobile />
         </div>
       </div>

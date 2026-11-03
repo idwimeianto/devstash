@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getRecentCollections, getSidebarCollections } from "@/lib/db/collections";
+import { createCollection, getRecentCollections, getSidebarCollections } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
 
-vi.mock("@/lib/prisma", () => ({ prisma: { collection: { findMany: vi.fn() } } }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: { collection: { findMany: vi.fn(), create: vi.fn() } },
+}));
 
 const SNIPPET = { id: "t_snippet", name: "snippet", icon: "Code", color: "#3b82f6" };
 const LINK = { id: "t_link", name: "link", icon: "Link", color: "#10b981" };
@@ -67,5 +69,33 @@ describe("getSidebarCollections", () => {
     ]);
     expect(recent.map((item) => item.id)).toEqual(["r1", "r2", "r3", "r4", "r5"]);
     expect(recent[0]).toEqual({ id: "r1", name: "Collection r1", itemCount: 1, mainTypeName: "link" });
+  });
+});
+
+describe("createCollection", () => {
+  it("creates the collection for the given user and returns its id, name and description", async () => {
+    const created = { id: "c1", name: "React Patterns", description: "Hooks and more" };
+    vi.mocked(prisma.collection.create).mockResolvedValue(created as never);
+
+    const result = await createCollection("user_1", {
+      name: "React Patterns",
+      description: "Hooks and more",
+    });
+
+    expect(result).toEqual(created);
+    expect(prisma.collection.create).toHaveBeenCalledWith({
+      data: { userId: "user_1", name: "React Patterns", description: "Hooks and more" },
+      select: { id: true, name: true, description: true },
+    });
+  });
+
+  it("stores a missing description as null", async () => {
+    vi.mocked(prisma.collection.create).mockResolvedValue({} as never);
+
+    await createCollection("user_1", { name: "Empty" });
+
+    expect(prisma.collection.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { userId: "user_1", name: "Empty", description: null } }),
+    );
   });
 });

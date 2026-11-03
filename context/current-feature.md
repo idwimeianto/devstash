@@ -1,18 +1,30 @@
-# Current Feature
+# Current Feature: Collection Create
 
-<!-- Feature name and short description -->
+Create a collection (name and description) from a "New Collection" modal in the top bar.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- The "New Collection" button in `TopBar` (display only today) opens a modal to create a collection
+- Modal fields: name (required) and description (optional)
+- Create disabled until there is a name, spinner while saving, Cancel / Escape / backdrop blocked while pending; form starts empty on every open
+- Server-side Zod validation (name trimmed and required, blank description becomes `null`, length limits) with field errors shown inline
+- Collections are user-scoped: created for the signed-in user only (`getSessionUserId()`), signed-out requests rejected
+- New `createCollection(userId, data)` query in `src/lib/db/collections.ts`
+- Toast on success ("Collection created") and on failure (including network errors)
+- After saving, the dialog closes and everything shows the new collection: dashboard Recent Collections and stats, sidebar Collections list (via `router.refresh()`)
+- Unit tests for the schema, the query and the create call (happy path, validation, signed out, database error)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Follow the item create patterns: `NewItemDialog` (shadcn `dialog`, `noValidate`, server errors inline), `createItemSchema` / `ITEM_LIMITS` in `src/lib/validations/items.ts`, `createItem` action and query, `runItemAction()` toasts, `validationFailure()` in `src/lib/action-result.ts`, messages from `src/lib/messages.ts`, `{ success, data, error, fieldErrors }` result shape
+- Server components keep reading collections through `src/lib/db/collections.ts` (`getRecentCollections`, `getSidebarCollections`, `getCollectionStats`)
+- Decided at `start`: saving goes through a `createCollection` server action in `src/actions/collections.ts` (matches `createItem`; the coding standards prefer server actions for simple mutations), not `POST /api/collections`
+- Decided at `start`: name and description only, no default type picker (`defaultTypeId` stays `null`)
+- Out of scope: editing / deleting collections, adding items to collections, the `/collections` pages, favoriting, and enforcing the free-plan limit of 3 collections
 
 ## History
 

@@ -35,3 +35,22 @@ export interface CollectionStats {
   collections: number;
   favoriteCollections: number;
 }
+
+export interface CreatedCollection {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface CreateCollectionInput {
+  name: string;
+  description?: string | null;
+}
+
+export type CreateCollectionResult =
+  | { success: true; data: CreatedCollection }
+  | {
+      success: false;
+      error: string;
+      fieldErrors?: Partial<Record<keyof CreateCollectionInput, string[]>>;
+    };

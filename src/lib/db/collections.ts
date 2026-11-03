@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import type { CreateCollectionData } from "@/lib/validations/collections";
 import type {
   CollectionStats,
   CollectionSummary,
   CollectionTypeSummary,
+  CreatedCollection,
   SidebarCollection,
   SidebarCollections,
 } from "@/types/collections";
@@ -101,4 +103,14 @@ export async function getCollectionStats(
     prisma.collection.count({ where: { userId, isFavorite: true } }),
   ]);
   return { collections, favoriteCollections };
+}
+
+export async function createCollection(
+  userId: string,
+  data: CreateCollectionData
+): Promise<CreatedCollection> {
+  return prisma.collection.create({
+    data: { userId, name: data.name, description: data.description ?? null },
+    select: { id: true, name: true, description: true },
+  });
 }
