@@ -16,6 +16,7 @@ export function isCreatableItemType(typeName: string): typeName is CreatableItem
 const CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
 const URL_TYPES = new Set(["link"]);
+const MARKDOWN_TYPES = new Set(["prompt", "note"]);
 
 // The item's content kind: links store a URL, the other creatable types text.
 export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" {
@@ -25,6 +26,11 @@ export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" 
 // Snippets and commands hold code, so their content gets the code editor.
 export function isCodeItemType(typeName: string): boolean {
   return LANGUAGE_TYPES.has(typeName);
+}
+
+// Prompts and notes hold prose, so their content gets the Markdown editor.
+export function isMarkdownItemType(typeName: string): boolean {
+  return MARKDOWN_TYPES.has(typeName);
 }
 
 // Which type-specific fields an item of this type can edit; title, description and tags always can.

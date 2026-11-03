@@ -5,6 +5,7 @@ import {
   getItemContentType,
   isCodeItemType,
   isCreatableItemType,
+  isMarkdownItemType,
   parseTags,
 } from "@/lib/item-fields";
 
@@ -28,6 +29,16 @@ describe("isCodeItemType", () => {
     expect(isCodeItemType("command")).toBe(true);
     for (const typeName of ["prompt", "note", "link", "file", "image", "recipe"]) {
       expect(isCodeItemType(typeName)).toBe(false);
+    }
+  });
+});
+
+describe("isMarkdownItemType", () => {
+  it("is true for prompts and notes only", () => {
+    expect(isMarkdownItemType("prompt")).toBe(true);
+    expect(isMarkdownItemType("note")).toBe(true);
+    for (const typeName of ["snippet", "command", "link", "file", "image", "recipe"]) {
+      expect(isMarkdownItemType(typeName)).toBe(false);
     }
   });
 });

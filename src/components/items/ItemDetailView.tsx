@@ -11,10 +11,11 @@ import {
 
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { isCodeItemType } from "@/lib/item-fields";
+import { isCodeItemType, isMarkdownItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { getSafeHref } from "@/lib/safe-url";
 import { cn } from "@/lib/utils";
@@ -198,6 +199,14 @@ function ItemContent({ item }: ItemDetailViewProps) {
           readOnly
           ariaLabel={`${item.title} content`}
         />
+      </DetailSection>
+    );
+  }
+
+  if (item.content && isMarkdownItemType(item.typeName)) {
+    return (
+      <DetailSection title="Content">
+        <MarkdownEditor value={item.content} readOnly ariaLabel={`${item.title} content`} />
       </DetailSection>
     );
   }

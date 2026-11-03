@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { createItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
+import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import {
   CREATABLE_ITEM_TYPES,
   getEditableItemFields,
   isCodeItemType,
+  isMarkdownItemType,
   parseTags,
   type CreatableItemType,
 } from "@/lib/item-fields";
@@ -165,14 +167,12 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
             errors={fieldErrors?.content}
           />
         )}
-        {fields.content && !isCodeItemType(typeName) && (
-          <TextareaField
+        {fields.content && isMarkdownItemType(typeName) && (
+          <MarkdownEditorField
             label="Content"
             value={content}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={setContent}
             errors={fieldErrors?.content}
-            spellCheck={false}
-            className="max-h-80 min-h-32 font-mono text-xs leading-relaxed md:text-xs"
           />
         )}
         {fields.language && (

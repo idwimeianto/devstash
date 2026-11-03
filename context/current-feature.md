@@ -1,18 +1,32 @@
-# Current Feature
+# Current Feature: Markdown Editor
 
-<!-- Feature name and short description -->
+A Markdown editor with Write / Preview tabs for note and prompt content, styled to match the dark theme (spec in `context/features/markdown-editor-spec.md`).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- New `MarkdownEditor` component with a tabbed interface (Write / Preview)
+- Notes and prompts use `MarkdownEditor` instead of the textarea / `<pre>`; snippets and commands keep `CodeEditor` unchanged
+- GitHub Flavored Markdown rendered with `react-markdown` + `remark-gfm`
+- Dark theme container and header (spec: `bg-[#1e1e1e]` container, `bg-[#2d2d2d]` header)
+- Copy button in the header, same style and behavior as `CodeEditor`
+- Read-only mode shows only the Preview tab; edit mode defaults to Write with Preview available
+- Preview styling via a custom `.markdown-preview` class: distinct h1–h6 sizes and weights, dark monospace code blocks, subtly highlighted inline code, indented ordered / unordered lists with markers, blockquotes with a left accent border, blue links with a hover state, tables with borders and a header background
+- Fluid height capped at 400px, matching `CodeEditor`
+- Integration: `NewItemDialog` (note / prompt content), `ItemDrawer` edit mode (note / prompt content), `ItemDrawer` view mode (read-only note / prompt content)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `react-markdown` and `remark-gfm` are not installed yet; no `@tailwindcss/typography` either, so the preview styles go in `globals.css` under `.markdown-preview`
+- `CodeEditor` (`src/components/code/CodeEditor.tsx`) actually uses `bg-background` and a `bg-muted/40` header, not the spec's `#1e1e1e` / `#2d2d2d`; decided at `start`: follow the spec's hex colors; header holds the Write / Preview tabs and the copy button, no traffic-light dots
+- Reuse `CodeEditor`'s copy logic (Clipboard API, "Copied to clipboard" / error toasts, check icon for 2s, disabled when empty); consider extracting a shared copy button
+- `isCodeItemType()` in `src/lib/item-fields.ts` selects the code editor; a matching helper for note / prompt is likely needed
+- Prompts currently wrap in a `<pre>` in view mode; existing prompt / note content will now render as Markdown
+- `react-markdown` doesn't render raw HTML by default (no `rehype-raw`), which keeps user content safe; links should still go through `getSafeHref()` and open in a new tab with `noopener noreferrer`
+- Edit-mode textarea should keep content untrimmed, as the current `TextareaField` does
 
 ## History
 

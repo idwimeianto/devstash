@@ -9,9 +9,15 @@ import { updateItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
 import { ItemDrawerHeader, ItemMetaSections } from "@/components/items/ItemDetailView";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
+import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
-import { getEditableItemFields, isCodeItemType, parseTags } from "@/lib/item-fields";
+import {
+  getEditableItemFields,
+  isCodeItemType,
+  isMarkdownItemType,
+  parseTags,
+} from "@/lib/item-fields";
 import type { ItemDetailJson, UpdateItemInput, UpdateItemResult } from "@/types/items";
 
 const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
@@ -116,14 +122,12 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
             errors={fieldErrors?.content}
           />
         )}
-        {editable.content && !isCodeItemType(item.typeName) && (
-          <TextareaField
+        {editable.content && isMarkdownItemType(item.typeName) && (
+          <MarkdownEditorField
             label="Content"
             value={content}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={setContent}
             errors={fieldErrors?.content}
-            spellCheck={false}
-            className="max-h-[28rem] min-h-40 font-mono text-xs leading-relaxed md:text-xs"
           />
         )}
         {editable.language && (

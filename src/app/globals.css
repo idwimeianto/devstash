@@ -133,3 +133,126 @@
     display: none;
     }
 }
+
+/* Rendered Markdown in MarkdownEditor's preview; no typography plugin, so the elements are styled here. */
+@layer components {
+  .markdown-preview {
+    @apply text-sm leading-relaxed text-foreground break-words;
+
+    & > :first-child {
+      @apply mt-0;
+    }
+    & > :last-child {
+      @apply mb-0;
+    }
+
+    & h1,
+    & h2,
+    & h3,
+    & h4,
+    & h5,
+    & h6 {
+      @apply mt-5 mb-2 leading-tight font-semibold text-foreground;
+    }
+    & h1 {
+      @apply border-b pb-1.5 text-2xl font-bold;
+    }
+    & h2 {
+      @apply border-b pb-1 text-xl;
+    }
+    & h3 {
+      @apply text-lg;
+    }
+    & h4 {
+      @apply text-base;
+    }
+    & h5 {
+      @apply text-sm;
+    }
+    & h6 {
+      @apply text-xs tracking-wide text-muted-foreground uppercase;
+    }
+
+    & p,
+    & ul,
+    & ol,
+    & blockquote,
+    & pre,
+    & table {
+      @apply my-3;
+    }
+
+    & ul,
+    & ol {
+      @apply pl-6;
+    }
+    & ul {
+      @apply list-disc;
+    }
+    & ol {
+      @apply list-decimal;
+    }
+    & ul ul {
+      list-style-type: circle;
+    }
+    & li {
+      @apply my-1;
+    }
+    & li::marker {
+      @apply text-muted-foreground;
+    }
+    & li > ul,
+    & li > ol {
+      @apply my-1;
+    }
+    /* GFM task lists: the checkbox replaces the bullet. */
+    & li:has(> input[type="checkbox"]) {
+      @apply list-none;
+    }
+    & li > input[type="checkbox"] {
+      @apply mr-2 -ml-5 align-middle;
+    }
+
+    & blockquote {
+      @apply border-l-4 border-blue-500/60 pl-4 text-muted-foreground italic;
+    }
+
+    & a {
+      @apply text-blue-400 underline underline-offset-2 hover:text-blue-300;
+    }
+
+    & code {
+      @apply rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em];
+    }
+    & pre {
+      @apply overflow-x-auto rounded-md border bg-[#111111] p-3 font-mono text-xs leading-relaxed;
+    }
+    & pre code {
+      @apply bg-transparent p-0 text-[inherit];
+    }
+
+    & table {
+      @apply block w-max max-w-full overflow-x-auto border-collapse text-xs;
+    }
+    & th,
+    & td {
+      @apply border px-3 py-1.5 text-left;
+    }
+    & th {
+      @apply bg-[#2d2d2d] font-semibold;
+    }
+
+    & hr {
+      @apply my-5;
+    }
+    & img {
+      @apply max-w-full rounded-md;
+    }
+    & strong {
+      @apply font-semibold text-foreground;
+    }
+    & del {
+      @apply text-muted-foreground;
+    }
+  }
+}

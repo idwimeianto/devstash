@@ -1,11 +1,9 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/code/CopyButton";
 import { getMonacoLanguage } from "@/lib/code-language";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +12,6 @@ const MonacoEditor = dynamic(() => import("@/components/code/MonacoEditor"), {
   ssr: false,
   loading: () => null,
 });
-
-const COPIED_RESET_MS = 2000;
 
 interface CodeEditorProps {
   value: string;
@@ -73,24 +69,6 @@ interface CodeEditorHeaderProps {
 
 // macOS-style window bar: traffic-light dots, the language and a copy button.
 function CodeEditorHeader({ value, language }: CodeEditorHeaderProps) {
-  const [copied, setCopied] = useState(false);
-  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => () => clearTimeout(resetTimer.current), []);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch {
-      toast.error("Couldn't copy to the clipboard");
-      return;
-    }
-    toast.success("Copied to clipboard");
-    setCopied(true);
-    clearTimeout(resetTimer.current);
-    resetTimer.current = setTimeout(() => setCopied(false), COPIED_RESET_MS);
-  }
-
   return (
     <div className="flex h-9 items-center gap-3 border-b bg-muted/40 px-3">
       <div className="flex gap-1.5" aria-hidden="true">
@@ -102,16 +80,7 @@ function CodeEditorHeader({ value, language }: CodeEditorHeaderProps) {
         {language && (
           <span className="truncate font-mono text-xs text-muted-foreground">{language}</span>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          onClick={handleCopy}
-          disabled={!value}
-          aria-label={copied ? "Copied" : "Copy code"}
-        >
-          {copied ? <Check className="text-emerald-500" /> : <Copy />}
-        </Button>
+        <CopyButton value={value} label="Copy code" />
       </div>
     </div>
   );
