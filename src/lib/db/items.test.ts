@@ -5,7 +5,9 @@ import {
   createItem,
   deleteItem,
   getItemDetail,
+  getItemFile,
   getItemTypeName,
+  isFileUrlInUse,
   updateItem,
 } from "@/lib/db/items";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +20,7 @@ const tx = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    item: { findFirst: vi.fn(), delete: vi.fn() },
+    item: { findFirst: vi.fn(), delete: vi.fn(), count: vi.fn() },
     // Runs the callback against the mocked transaction client.
     $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
   },
@@ -170,6 +172,29 @@ describe("createItem", () => {
     );
   });
 
+  it("stores images with the FILE content kind and the upload's fields", async () => {
+    const file = {
+      fileUrl: "https://pub-test.r2.dev/user_1/abc.png",
+      fileName: "diagram.png",
+      fileSize: 2048,
+    };
+
+    await createItem(USER_ID, {
+      ...DATA,
+      typeName: "image",
+      content: undefined,
+      language: undefined,
+      file,
+    });
+
+    expect(tx.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ ...file, contentType: "FILE" }),
+      }),
+    );
+    expect(tx.item.create.mock.calls[0][0].data).not.toHaveProperty("file");
+  });
+
   it("returns the new item in the drawer's shape", async () => {
     const item = await createItem(USER_ID, DATA);
 
@@ -265,16 +290,18 @@ describe("updateItem", () => {
 });
 
 describe("deleteItem", () => {
-  it("only deletes the item among the user's own items", async () => {
-    vi.mocked(prisma.item.delete).mockResolvedValue({ id: ITEM_ID } as never);
+  it("only deletes the item among the user's own items and returns its file URL", async () => {
+    const fileUrl = "https://pub-test.r2.dev/user_1/abc.png";
+    vi.mocked(prisma.item.delete).mockResolvedValue({ fileUrl } as never);
 
-    await expect(deleteItem(USER_ID, ITEM_ID)).resolves.toBe(true);
-    expect(prisma.item.delete).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: ITEM_ID, userId: USER_ID } }),
-    );
+    await expect(deleteItem(USER_ID, ITEM_ID)).resolves.toEqual({ fileUrl });
+    expect(prisma.item.delete).toHaveBeenCalledWith({
+      where: { id: ITEM_ID, userId: USER_ID },
+      select: { fileUrl: true },
+    });
   });
 
-  it("returns false when the item isn't the user's", async () => {
+  it("returns null when the item isn't the user's", async () => {
     vi.mocked(prisma.item.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("No record was found for a delete.", {
         code: "P2025",
@@ -282,12 +309,55 @@ describe("deleteItem", () => {
       }),
     );
 
-    await expect(deleteItem(USER_ID, "someone_elses_item")).resolves.toBe(false);
+    await expect(deleteItem(USER_ID, "someone_elses_item")).resolves.toBeNull();
   });
 
   it("rethrows other database errors", async () => {
     vi.mocked(prisma.item.delete).mockRejectedValue(new Error("connection lost"));
 
     await expect(deleteItem(USER_ID, ITEM_ID)).rejects.toThrow("connection lost");
+  });
+});
+
+describe("isFileUrlInUse", () => {
+  it("counts only the user's items with this file URL", async () => {
+    vi.mocked(prisma.item.count).mockResolvedValue(1);
+
+    await expect(isFileUrlInUse(USER_ID, "https://x/u/a.png")).resolves.toBe(true);
+    expect(prisma.item.count).toHaveBeenCalledWith({
+      where: { userId: USER_ID, fileUrl: "https://x/u/a.png" },
+    });
+  });
+
+  it("is false when no item uses it", async () => {
+    vi.mocked(prisma.item.count).mockResolvedValue(0);
+
+    await expect(isFileUrlInUse(USER_ID, "https://x/u/a.png")).resolves.toBe(false);
+  });
+});
+
+describe("getItemFile", () => {
+  it("looks up the file among the user's own file items", async () => {
+    vi.mocked(prisma.item.findFirst).mockResolvedValue({
+      fileUrl: "https://x/u/a.pdf",
+      fileName: "spec.pdf",
+    } as never);
+
+    await expect(getItemFile(USER_ID, ITEM_ID)).resolves.toEqual({
+      fileUrl: "https://x/u/a.pdf",
+      fileName: "spec.pdf",
+    });
+    expect(prisma.item.findFirst).toHaveBeenCalledWith({
+      where: { id: ITEM_ID, userId: USER_ID, contentType: "FILE" },
+      select: { fileUrl: true, fileName: true },
+    });
+  });
+
+  it("returns null for a missing item or one without a file", async () => {
+    vi.mocked(prisma.item.findFirst).mockResolvedValue(null);
+    await expect(getItemFile(USER_ID, ITEM_ID)).resolves.toBeNull();
+
+    vi.mocked(prisma.item.findFirst).mockResolvedValue({ fileUrl: null, fileName: null } as never);
+    await expect(getItemFile(USER_ID, ITEM_ID)).resolves.toBeNull();
   });
 });

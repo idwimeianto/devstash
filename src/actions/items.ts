@@ -9,7 +9,9 @@ import {
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
+import { getStoredContentType, isUploadKind, type UploadKind } from "@/lib/file-upload";
 import { getEditableItemFields } from "@/lib/item-fields";
+import { deleteObject, getKeyFromPublicUrl, getObjectSize } from "@/lib/r2";
 import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
 import type {
   CreateItemInput,
@@ -20,8 +22,10 @@ import type {
   UpdateItemInput,
   UpdateItemResult,
 } from "@/types/items";
+import type { UploadedFile } from "@/types/uploads";
 
 const NOT_SIGNED_IN = "You're not signed in. Please sign in again.";
+const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again.";
 const NOT_FOUND = "This item doesn't exist or was deleted.";
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 
@@ -32,6 +36,20 @@ function toItemDetailJson(item: ItemDetail): ItemDetailJson {
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
   };
+}
+
+// The upload as it is stored in R2, or null when it isn't one of this user's uploads of
+// the right kind. The size comes from R2, not the client.
+async function getStoredUpload(
+  userId: string,
+  kind: UploadKind,
+  file: { fileUrl: string; fileName: string },
+): Promise<UploadedFile | null> {
+  const key = getKeyFromPublicUrl(file.fileUrl);
+  if (!key?.startsWith(`${userId}/`) || !getStoredContentType(kind, key)) return null;
+
+  const fileSize = await getObjectSize(key);
+  return fileSize === null ? null : { ...file, fileSize };
 }
 
 export async function createItem(input: CreateItemInput): Promise<CreateItemResult> {
@@ -49,15 +67,24 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
   if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
   // Drop fields this type doesn't have, even if a client sends them.
-  const { content, language, url, ...common } = parsed.data;
+  const { content, language, url, file, ...common } = parsed.data;
   const editable = getEditableItemFields(common.typeName);
 
   try {
+    let storedFile: UploadedFile | null = null;
+    if (isUploadKind(common.typeName) && file) {
+      storedFile = await getStoredUpload(userId, common.typeName, file);
+      if (!storedFile) {
+        return { success: false, error: UPLOAD_MISSING, fieldErrors: { file: [UPLOAD_MISSING] } };
+      }
+    }
+
     const item = await createItemQuery(userId, {
       ...common,
       content: editable.content ? content : undefined,
       language: editable.language ? language : undefined,
       url: editable.url ? url : undefined,
+      file: storedFile ?? undefined,
     });
     return { success: true, data: toItemDetailJson(item) };
   } catch (error) {
@@ -111,11 +138,23 @@ export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
   const userId = await getSessionUserId();
   if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
+  let deleted: Awaited<ReturnType<typeof deleteItemQuery>>;
   try {
-    const deleted = await deleteItemQuery(userId, itemId);
-    return deleted ? { success: true } : { success: false, error: NOT_FOUND };
+    deleted = await deleteItemQuery(userId, itemId);
   } catch (error) {
     console.error("Deleting item failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
+  if (!deleted) return { success: false, error: NOT_FOUND };
+
+  // The item is gone either way; a file left behind in R2 is only logged.
+  const key = deleted.fileUrl && getKeyFromPublicUrl(deleted.fileUrl);
+  if (key) {
+    try {
+      await deleteObject(key);
+    } catch (error) {
+      console.error("Deleting the item's file from R2 failed", error);
+    }
+  }
+  return { success: true };
 }

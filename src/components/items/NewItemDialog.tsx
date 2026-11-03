@@ -2,12 +2,20 @@
 
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition, type TransitionStartFunction } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+  type TransitionStartFunction,
+} from "react";
 import { toast } from "sonner";
 
 import { createItem } from "@/actions/items";
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
+import { discardUpload, FileUpload } from "@/components/items/FileUpload";
 import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import { Button } from "@/components/ui/button";
@@ -29,9 +37,11 @@ import {
   parseTags,
   type CreatableItemType,
 } from "@/lib/item-fields";
+import { isUploadKind } from "@/lib/file-upload";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { CreateItemInput, CreateItemResult } from "@/types/items";
+import type { UploadedFile } from "@/types/uploads";
 
 const NETWORK_ERROR = "Couldn't reach the server. Check your connection and try again.";
 
@@ -63,7 +73,9 @@ export function NewItemDialog({
       <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New item</DialogTitle>
-          <DialogDescription>Save a snippet, prompt, command, note or link.</DialogDescription>
+          <DialogDescription>
+            Save a snippet, prompt, command, note, file, image or link.
+          </DialogDescription>
         </DialogHeader>
         {/* Mounted only while open, so the form starts empty every time. */}
         <NewItemForm
@@ -95,8 +107,31 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
   const [language, setLanguage] = useState("");
   const [url, setUrl] = useState("");
   const [tags, setTags] = useState("");
+  const [upload, setUpload] = useState<UploadedFile | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fields = getEditableItemFields(typeName);
+  const uploadKind = isUploadKind(typeName) ? typeName : null;
+
+  // An upload that hasn't become an item yet is removed when the dialog closes.
+  const unusedUpload = useRef<UploadedFile | null>(null);
+  useEffect(() => {
+    unusedUpload.current = upload;
+  }, [upload]);
+  useEffect(
+    () => () => {
+      if (unusedUpload.current) discardUpload(unusedUpload.current.fileUrl);
+    },
+    [],
+  );
+
+  // A file uploaded as one type can't be used by another, so switching types drops it.
+  function changeType(next: CreatableItemType) {
+    if (next === typeName) return;
+    if (upload) discardUpload(upload.fileUrl);
+    setUpload(null);
+    setTypeName(next);
+  }
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,6 +144,7 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
       ...(fields.content && { content }),
       ...(fields.language && { language }),
       ...(fields.url && { url }),
+      ...(uploadKind && upload && { file: { fileUrl: upload.fileUrl, fileName: upload.fileName } }),
     };
 
     startTransition(async () => {
@@ -126,6 +162,8 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
         return;
       }
       toast.success("Item created");
+      // The upload now belongs to the item, so closing the dialog mustn't remove it.
+      unusedUpload.current = null;
       onCreated();
       // Shows the new item and updated counts behind the dialog.
       router.refresh();
@@ -141,7 +179,7 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
         noValidate
         className="flex flex-col gap-5"
       >
-        <ItemTypePicker value={typeName} onChange={setTypeName} disabled={pending} />
+        <ItemTypePicker value={typeName} onChange={changeType} disabled={pending || uploading} />
         <FormField
           name="title"
           label="Title"
@@ -173,6 +211,16 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
             value={content}
             onChange={setContent}
             errors={fieldErrors?.content}
+          />
+        )}
+        {uploadKind && (
+          <FileUpload
+            kind={uploadKind}
+            value={upload}
+            onChange={setUpload}
+            onUploadingChange={setUploading}
+            disabled={pending}
+            errors={fieldErrors?.file}
           />
         )}
         {fields.language && (
@@ -208,7 +256,11 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
       </form>
       <DialogFooter>
         <DialogClose render={<Button variant="outline" disabled={pending} />}>Cancel</DialogClose>
-        <Button type="submit" form={formId} disabled={pending || !title.trim()}>
+        <Button
+          type="submit"
+          form={formId}
+          disabled={pending || uploading || !title.trim() || (uploadKind !== null && !upload)}
+        >
           {pending && <Loader2 className="animate-spin" />}
           Create
         </Button>
@@ -231,7 +283,7 @@ function ItemTypePicker({ value, onChange, disabled }: ItemTypePickerProps) {
       <span id={labelId} className="text-sm leading-none font-medium">
         Type
       </span>
-      <div role="group" aria-labelledby={labelId} className="grid grid-cols-5 gap-1.5">
+      <div role="group" aria-labelledby={labelId} className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
         {CREATABLE_ITEM_TYPES.map((typeName) => {
           const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(typeName);
           const selected = typeName === value;

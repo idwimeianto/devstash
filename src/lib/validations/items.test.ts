@@ -63,12 +63,27 @@ describe("createItemSchema", () => {
     expect(data).toMatchObject({ typeName: "note", title: "Ideas", content: "x" });
   });
 
-  it("rejects file types and unknown types", () => {
-    for (const typeName of ["file", "image", "recipe"]) {
+  it("rejects unknown types", () => {
+    const result = createItemSchema.safeParse({ ...VALID, typeName: "recipe" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("Choose a type");
+  });
+
+  it("requires an upload for files and images", () => {
+    const file = { fileUrl: "https://pub-test.r2.dev/user_1/abc.png", fileName: " diagram.png " };
+
+    for (const typeName of ["file", "image"]) {
       const result = createItemSchema.safeParse({ ...VALID, typeName });
-      expect(result.success).toBe(false);
-      expect(result.error?.issues[0]?.message).toBe("Choose a type");
+      expect(result.error?.issues[0]).toMatchObject({ message: "Upload a file", path: ["file"] });
     }
+    expect(createItemSchema.parse({ ...VALID, typeName: "image", file }).file).toEqual({
+      fileUrl: file.fileUrl,
+      fileName: "diagram.png",
+    });
+    expect(
+      createItemSchema.safeParse({ ...VALID, typeName: "image", file: { ...file, fileUrl: "nope" } })
+        .success,
+    ).toBe(false);
   });
 
   it("requires a URL for links", () => {

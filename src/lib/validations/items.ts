@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isUploadKind } from "@/lib/file-upload";
 import { CREATABLE_ITEM_TYPES } from "@/lib/item-fields";
 
 // Blank optional fields are stored as null, not "".
@@ -34,11 +35,24 @@ export const updateItemSchema = z.object({
 
 export type UpdateItemData = z.output<typeof updateItemSchema>;
 
+// The upload a file or image item points at, as returned by POST /api/upload.
+const uploadedFileSchema = z.object({
+  fileUrl: z.url(),
+  fileName: z.string().trim().min(1).max(255),
+});
+
 export const createItemSchema = updateItemSchema
-  .extend({ typeName: z.enum(CREATABLE_ITEM_TYPES, "Choose a type") })
+  .extend({
+    typeName: z.enum(CREATABLE_ITEM_TYPES, "Choose a type"),
+    file: uploadedFileSchema.optional(),
+  })
   .refine((data) => data.typeName !== "link" || data.url, {
     message: "URL is required",
     path: ["url"],
+  })
+  .refine((data) => !isUploadKind(data.typeName) || data.file, {
+    message: "Upload a file",
+    path: ["file"],
   });
 
 export type CreateItemData = z.output<typeof createItemSchema>;

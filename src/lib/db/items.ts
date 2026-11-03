@@ -9,6 +9,7 @@ import type {
   ItemTypeRef,
   ItemTypeWithCount,
 } from "@/types/items";
+import type { UploadedFile } from "@/types/uploads";
 
 const RECENT_ITEMS_LIMIT = 10;
 const PINNED_ITEMS_LIMIT = 10;
@@ -162,10 +163,13 @@ async function ensureTags(
   });
 }
 
+// CreateItemData with the upload's size checked against R2.
+export type CreateItemRecord = Omit<CreateItemData, "file"> & { file?: UploadedFile };
+
 // Creates the item with one of the system types; fields left undefined stay empty.
 export async function createItem(
   userId: string,
-  { typeName, tags, ...fields }: CreateItemData
+  { typeName, tags, file, ...fields }: CreateItemRecord
 ): Promise<ItemDetail> {
   const item = await prisma.$transaction(async (tx) => {
     const type = await tx.itemType.findFirst({
@@ -178,6 +182,7 @@ export async function createItem(
     return tx.item.create({
       data: {
         ...fields,
+        ...file,
         contentType: getItemContentType(typeName),
         userId,
         typeId: type.id,
@@ -216,17 +221,41 @@ export async function updateItem(
 }
 
 // Collection and tag links go with the item; the tags themselves stay.
-// Returns false if the item is missing or isn't the user's.
-export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
+// Returns the deleted item's file URL (so its upload can be removed), or null if the
+// item is missing or isn't the user's.
+export async function deleteItem(
+  userId: string,
+  itemId: string
+): Promise<{ fileUrl: string | null } | null> {
   try {
-    await prisma.item.delete({ where: { id: itemId, userId }, select: { id: true } });
-    return true;
+    return await prisma.item.delete({
+      where: { id: itemId, userId },
+      select: { fileUrl: true },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return false;
+      return null;
     }
     throw error;
   }
+}
+
+// Whether one of the user's items still points at this uploaded file.
+export async function isFileUrlInUse(userId: string, fileUrl: string): Promise<boolean> {
+  const count = await prisma.item.count({ where: { userId, fileUrl } });
+  return count > 0;
+}
+
+// The stored file of one of the user's file or image items, or null.
+export async function getItemFile(
+  userId: string,
+  itemId: string
+): Promise<{ fileUrl: string; fileName: string | null } | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId, contentType: "FILE" },
+    select: { fileUrl: true, fileName: true },
+  });
+  return item?.fileUrl ? { fileUrl: item.fileUrl, fileName: item.fileName } : null;
 }
 
 // Resolves a plural route slug ("snippets") to a system type or one of the user's custom types.

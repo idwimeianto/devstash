@@ -10,14 +10,14 @@ import {
 } from "@/lib/item-fields";
 
 describe("isCreatableItemType", () => {
-  it("is true for the 5 types the New Item dialog offers", () => {
-    for (const typeName of ["snippet", "prompt", "command", "note", "link"]) {
+  it("is true for the 7 system types the New Item dialog offers", () => {
+    for (const typeName of ["snippet", "prompt", "command", "note", "file", "image", "link"]) {
       expect(isCreatableItemType(typeName)).toBe(true);
     }
   });
 
-  it("is false for file types and custom types", () => {
-    for (const typeName of ["file", "image", "recipe", "Snippet", ""]) {
+  it("is false for custom types and other spellings", () => {
+    for (const typeName of ["recipe", "Snippet", ""]) {
       expect(isCreatableItemType(typeName)).toBe(false);
     }
   });
@@ -44,8 +44,10 @@ describe("isMarkdownItemType", () => {
 });
 
 describe("getItemContentType", () => {
-  it("stores links as URLs and the other creatable types as text", () => {
+  it("stores links as URLs, files and images as uploads and the rest as text", () => {
     expect(getItemContentType("link")).toBe("URL");
+    expect(getItemContentType("file")).toBe("FILE");
+    expect(getItemContentType("image")).toBe("FILE");
     for (const typeName of ["snippet", "prompt", "command", "note"] as const) {
       expect(getItemContentType(typeName)).toBe("TEXT");
     }

@@ -8,6 +8,7 @@ import {
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
+import { deleteObject, getObjectSize } from "@/lib/r2";
 import type { CreateItemInput, ItemDetail, UpdateItemInput } from "@/types/items";
 
 vi.mock("@/lib/db/items", () => ({
@@ -17,9 +18,17 @@ vi.mock("@/lib/db/items", () => ({
   updateItem: vi.fn(),
 }));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
+// Keep the real URL helpers; only the calls to R2 are faked.
+vi.mock("@/lib/r2", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/r2")>()),
+  getObjectSize: vi.fn(),
+  deleteObject: vi.fn(),
+}));
 
 const USER_ID = "user_1";
 const ITEM_ID = "item_1";
+const PUBLIC_URL = "https://pub-test.r2.dev";
+const UPLOAD_MISSING = "The uploaded file wasn't found. Please upload it again.";
 
 const INPUT: UpdateItemInput = {
   title: "  useAuth Hook  ",
@@ -106,10 +115,79 @@ describe("createItem action", () => {
   });
 
   it("rejects a type that can't be created", async () => {
-    const result = await createItem({ ...CREATE_INPUT, typeName: "file" });
+    const result = await createItem({ ...CREATE_INPUT, typeName: "recipe" });
 
     expect(result).toMatchObject({ success: false, fieldErrors: { typeName: ["Choose a type"] } });
     expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  describe("with an upload", () => {
+    const FILE_URL = `${PUBLIC_URL}/${USER_ID}/abc-123.png`;
+    const IMAGE_INPUT: CreateItemInput = {
+      typeName: "image",
+      title: "Diagram",
+      description: "",
+      tags: [],
+      file: { fileUrl: FILE_URL, fileName: "diagram.png" },
+    };
+
+    beforeEach(() => {
+      vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
+      vi.mocked(getObjectSize).mockResolvedValue(4096);
+    });
+
+    it("stores the upload with the size read from R2", async () => {
+      await createItem(IMAGE_INPUT);
+
+      expect(getObjectSize).toHaveBeenCalledWith(`${USER_ID}/abc-123.png`);
+      expect(createItemQuery).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          typeName: "image",
+          file: { fileUrl: FILE_URL, fileName: "diagram.png", fileSize: 4096 },
+        }),
+      );
+    });
+
+    it("requires an upload for file and image items", async () => {
+      const result = await createItem({ ...IMAGE_INPUT, file: undefined });
+
+      expect(result).toMatchObject({ success: false, fieldErrors: { file: ["Upload a file"] } });
+      expect(createItemQuery).not.toHaveBeenCalled();
+    });
+
+    it("rejects another user's upload, a foreign URL or the wrong kind", async () => {
+      for (const fileUrl of [
+        `${PUBLIC_URL}/user_2/abc-123.png`,
+        "https://evil.example/user_1/abc-123.png",
+        `${PUBLIC_URL}/${USER_ID}/abc-123.pdf`,
+      ]) {
+        const result = await createItem({ ...IMAGE_INPUT, file: { fileUrl, fileName: "x.png" } });
+
+        expect(result).toMatchObject({ success: false, fieldErrors: { file: [UPLOAD_MISSING] } });
+      }
+      expect(getObjectSize).not.toHaveBeenCalled();
+      expect(createItemQuery).not.toHaveBeenCalled();
+    });
+
+    it("rejects an upload that isn't in R2", async () => {
+      vi.mocked(getObjectSize).mockResolvedValue(null);
+
+      const result = await createItem(IMAGE_INPUT);
+
+      expect(result).toMatchObject({ success: false, error: UPLOAD_MISSING });
+      expect(createItemQuery).not.toHaveBeenCalled();
+    });
+
+    it("drops an upload sent with a type that has none", async () => {
+      await createItem({ ...CREATE_INPUT, file: IMAGE_INPUT.file });
+
+      expect(getObjectSize).not.toHaveBeenCalled();
+      expect(createItemQuery).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ typeName: "snippet", file: undefined }),
+      );
+    });
   });
 
   it("rejects a signed-out user", async () => {
@@ -236,7 +314,7 @@ describe("updateItem action", () => {
 describe("deleteItem action", () => {
   beforeEach(() => {
     vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
-    vi.mocked(deleteItemQuery).mockResolvedValue(true);
+    vi.mocked(deleteItemQuery).mockResolvedValue({ fileUrl: null });
   });
 
   it("deletes the session user's item", async () => {
@@ -244,6 +322,26 @@ describe("deleteItem action", () => {
 
     expect(deleteItemQuery).toHaveBeenCalledWith(USER_ID, ITEM_ID);
     expect(result).toEqual({ success: true });
+    expect(deleteObject).not.toHaveBeenCalled();
+  });
+
+  it("also deletes the item's file from R2", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
+    vi.mocked(deleteItemQuery).mockResolvedValue({ fileUrl: `${PUBLIC_URL}/${USER_ID}/abc.pdf` });
+
+    const result = await deleteItem(ITEM_ID);
+
+    expect(deleteObject).toHaveBeenCalledWith(`${USER_ID}/abc.pdf`);
+    expect(result).toEqual({ success: true });
+  });
+
+  it("still succeeds when deleting the file from R2 fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
+    vi.mocked(deleteItemQuery).mockResolvedValue({ fileUrl: `${PUBLIC_URL}/${USER_ID}/abc.pdf` });
+    vi.mocked(deleteObject).mockRejectedValue(new Error("R2 down"));
+
+    await expect(deleteItem(ITEM_ID)).resolves.toEqual({ success: true });
   });
 
   it("rejects a missing item id without touching the database", async () => {
@@ -263,7 +361,7 @@ describe("deleteItem action", () => {
   });
 
   it("returns not found for another user's or a missing item", async () => {
-    vi.mocked(deleteItemQuery).mockResolvedValue(false);
+    vi.mocked(deleteItemQuery).mockResolvedValue(null);
 
     const result = await deleteItem("someone_elses_item");
 

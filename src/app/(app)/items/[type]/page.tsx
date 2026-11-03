@@ -36,7 +36,7 @@ async function ItemsByType({ params }: Pick<PageProps<"/items/[type]">, "params"
             {items.length} {items.length === 1 ? "item" : "items"}
           </p>
         </div>
-        {/* File, image and custom types can't be created from the dialog yet. */}
+        {/* Custom types can't be created from the dialog yet. */}
         {isCreatableItemType(type.name) && (
           <div className="ml-auto">
             <NewItemDialog

@@ -4,8 +4,18 @@ export interface EditableItemFields {
   url: boolean;
 }
 
-// Types the New Item dialog offers; File and Image need uploads and come later.
-export const CREATABLE_ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const;
+import { isUploadKind } from "@/lib/file-upload";
+
+// Types the New Item dialog offers, in sidebar order; File and Image are uploads.
+export const CREATABLE_ITEM_TYPES = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "file",
+  "image",
+  "link",
+] as const;
 
 export type CreatableItemType = (typeof CREATABLE_ITEM_TYPES)[number];
 
@@ -18,9 +28,10 @@ const LANGUAGE_TYPES = new Set(["snippet", "command"]);
 const URL_TYPES = new Set(["link"]);
 const MARKDOWN_TYPES = new Set(["prompt", "note"]);
 
-// The item's content kind: links store a URL, the other creatable types text.
-export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" {
-  return URL_TYPES.has(typeName) ? "URL" : "TEXT";
+// The item's content kind: links store a URL, files and images an upload, the rest text.
+export function getItemContentType(typeName: CreatableItemType): "TEXT" | "URL" | "FILE" {
+  if (URL_TYPES.has(typeName)) return "URL";
+  return isUploadKind(typeName) ? "FILE" : "TEXT";
 }
 
 // Snippets and commands hold code, so their content gets the code editor.

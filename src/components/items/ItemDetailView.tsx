@@ -1,6 +1,8 @@
 import {
   CalendarDays,
   Copy,
+  Download,
+  FileText,
   FolderOpen,
   Pencil,
   Pin,
@@ -13,8 +15,9 @@ import { CodeEditor } from "@/components/code/CodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { formatFileSize } from "@/lib/file-upload";
 import { isCodeItemType, isMarkdownItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { getSafeHref } from "@/lib/safe-url";
@@ -161,6 +164,57 @@ function ItemActionBar({ item, onEdit, onDeleted }: ItemDetailViewWithActionsPro
   );
 }
 
+// Image preview or file info, with a download through the app's proxy route.
+function ItemFile({ item }: ItemDetailViewProps) {
+  const isImage = item.typeName === "image";
+  const previewSrc = isImage && item.fileUrl ? getSafeHref(item.fileUrl) : null;
+
+  if (!item.fileUrl) {
+    return (
+      <DetailSection title={isImage ? "Image" : "File"}>
+        <p className="text-sm text-muted-foreground">No file</p>
+      </DetailSection>
+    );
+  }
+
+  return (
+    <DetailSection title={isImage ? "Image" : "File"}>
+      <div className="overflow-hidden rounded-lg border">
+        {previewSrc && (
+          // eslint-disable-next-line @next/next/no-img-element -- user uploads on the R2 public domain
+          <img
+            src={previewSrc}
+            alt={item.title}
+            className="max-h-80 w-full border-b bg-muted/40 object-contain"
+          />
+        )}
+        <div className="flex items-center gap-3 p-3">
+          {!isImage && (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+              <FileText className="size-5 text-muted-foreground" aria-hidden="true" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{item.fileName ?? "Untitled file"}</p>
+            {item.fileSize !== null && (
+              <p className="text-xs text-muted-foreground">{formatFileSize(item.fileSize)}</p>
+            )}
+          </div>
+          {/* A plain link: Base UI's Button would add role="button" to it. */}
+          <a
+            href={`/api/items/${encodeURIComponent(item.id)}/download`}
+            download
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Download />
+            Download
+          </a>
+        </div>
+      </div>
+    </DetailSection>
+  );
+}
+
 function ItemContent({ item }: ItemDetailViewProps) {
   if (item.contentType === "URL") {
     const href = item.url && getSafeHref(item.url);
@@ -183,11 +237,7 @@ function ItemContent({ item }: ItemDetailViewProps) {
   }
 
   if (item.contentType === "FILE") {
-    return (
-      <DetailSection title="File">
-        <p className="text-sm break-all">{item.fileName ?? "No file"}</p>
-      </DetailSection>
-    );
+    return <ItemFile item={item} />;
   }
 
   if (item.content && isCodeItemType(item.typeName)) {

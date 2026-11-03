@@ -1,3 +1,5 @@
+import type { UploadedFile } from "@/types/uploads";
+
 export interface ItemSummary {
   id: string;
   title: string;
@@ -63,6 +65,8 @@ export type UpdateItemResult =
 // Payload the New Item dialog sends; the type picks which optional fields are included.
 export interface CreateItemInput extends UpdateItemInput {
   typeName: string;
+  // File and image items: the upload from POST /api/upload; its size is read from R2.
+  file?: Omit<UploadedFile, "fileSize">;
 }
 
 export type CreateItemResult =

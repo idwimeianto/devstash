@@ -1,18 +1,39 @@
-# Current Feature
+# Current Feature: File & Image Upload (Cloudflare R2)
 
-<!-- Feature name and short description -->
+File and image items with uploads to Cloudflare R2, a download proxy and previews (spec in `context/features/file-image-spec.md`).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Upload API route that stores files in R2
+- Prisma / database functions stay in `src/lib/db/items.ts`
+- `FileUpload` component with drag-and-drop and an upload progress indicator
+- The New Item dialog offers File and Image and uses `FileUpload` for them instead of content / URL fields
+- Deleting a file or image item also deletes its object from R2
+- Download proxy API route (avoids CORS) and a Download button in the item drawer for file types
+- The drawer shows an image preview for images and file info (name, size) for files
+- File constraints enforced on the server (and checked on the client):
+  - Images, max 5 MB: `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg` (`image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/svg+xml`)
+  - Files, max 10 MB: `.pdf`, `.txt`, `.md`, `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.toml`, `.ini` (`application/pdf`, `text/plain`, `text/markdown`, `application/json`, `application/x-yaml`, `text/yaml`, `application/xml`, `text/xml`, `text/csv`, `application/toml`; `.ini` as `text/plain`)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- R2 env variables already exist in `.env` and `.env.production`: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`; no S3 SDK installed yet (likely `@aws-sdk/client-s3`, R2 is S3-compatible)
+- `Item` already has `fileUrl`, `fileName`, `fileSize` and `ContentType.FILE`, and `ItemDetail` / `ITEM_DETAIL_SELECT` include them, so no migration is expected; decide whether `fileUrl` stores the R2 object key or a full URL
+- The drawer already shows `fileName` for `FILE` items (`ItemDetailView.tsx`); `CREATABLE_ITEM_TYPES` in `src/lib/item-fields.ts` excludes file / image today, and `createItemSchema` / `createItem` only handle text and URL types
+- Upload route: the project overview suggests presigned browser-to-R2 uploads, the spec asks for an upload API route; decide at `start` (a route upload through the server is simpler and keeps validation server-side; progress works with `XMLHttpRequest` either way)
+- Download proxy: check the session and item ownership, stream from R2 with `Content-Disposition`; images can be previewed through the same route (inline); the proxy isn't covered by `src/proxy.ts`, so it must check the session itself like `/api/items/[id]`
+- SVG can carry scripts: serve SVGs only as `<img>` / attachment, never inline as a document, and set `X-Content-Type-Options: nosniff`
+- Check MIME type and extension together, and size on the server (don't trust the client's `Content-Type` alone); object keys should be generated server-side (e.g. `userId/cuid-ext`), not from the user's file name
+- Uploads abandoned before the item is created (dialog cancelled) leave orphaned objects; decide whether to clean them up or defer
+- File / image are Pro types, but per the project overview every user gets every feature during development (no gating yet)
+- R2 delete on item delete: delete the database row first, then the object, logging (not failing) if R2 delete fails
+- Out of scope unless decided otherwise: replacing the file in edit mode, collections in the form, free-plan limits
+- Decided at `start`: uploads go through an API route (server checks type / size and puts the object in R2); `fileUrl` stores the public R2 URL (`R2_PUBLIC_URL` + key, so anyone with the link can fetch it; the key is derived back from the URL for deletes and the download proxy); cancelling the dialog or removing the chosen file deletes the just-uploaded object (best effort; the endpoint only deletes keys under the user's own prefix that no item references)
+- `createItem` must check that a submitted `fileUrl` is under `R2_PUBLIC_URL` and the user's own key prefix, so users can't attach arbitrary URLs or other users' files
 
 ## History
 
