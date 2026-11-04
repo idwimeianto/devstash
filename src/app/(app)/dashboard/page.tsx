@@ -31,7 +31,7 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold">Recent Collections</h2>
           <Link
             href="/collections"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="-mr-2 inline-flex min-h-8 items-center rounded-md px-2 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             View all
           </Link>

@@ -34,7 +34,7 @@ function DashboardPreview() {
       <WindowBar />
       <div className="grid min-[441px]:grid-cols-[112px_1fr] md:h-[calc(100%-2.125rem)]">
         <div className="hidden border-r px-2.5 py-3 text-xs min-[441px]:block">
-          <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">
+          <p className="mb-1.5 text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
             Types
           </p>
           {PREVIEW_TYPES.map(({ type, label }, i) => (

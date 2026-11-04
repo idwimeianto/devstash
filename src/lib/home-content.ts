@@ -66,6 +66,13 @@ export const HOME_ACCENTS: Record<HomeAccent, HomeAccentClasses> = {
   },
 };
 
+// ───────── Nav ─────────
+
+export const HOME_NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Pricing", href: "#pricing" },
+];
+
 // ───────── Dashboard preview ─────────
 
 const PREVIEW_TYPE_ORDER: HomeAccent[] = [
@@ -214,19 +221,31 @@ interface FooterColumn {
   links: { label: string; href: string }[];
 }
 
+// "#" marks pages that don't exist yet.
 export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: "Product",
     links: [
       { label: "Features", href: "#features" },
+      { label: "AI", href: "#ai" },
       { label: "Pricing", href: "#pricing" },
     ],
   },
   {
-    heading: "Account",
+    heading: "Resources",
     links: [
-      { label: "Sign In", href: "/sign-in" },
-      { label: "Register", href: "/register" },
+      { label: "Documentation", href: "#" },
+      { label: "Changelog", href: "#" },
+      { label: "Blog", href: "#" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "About", href: "#" },
+      { label: "Contact", href: "#" },
+      { label: "Privacy", href: "#" },
+      { label: "Terms", href: "#" },
     ],
   },
 ];

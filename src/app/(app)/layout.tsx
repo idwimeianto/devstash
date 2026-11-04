@@ -19,7 +19,8 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <TopBar />
             <div className="flex flex-1">
               <AppSidebar />
-              <SidebarInset className="p-6">{children}</SidebarInset>
+              {/* min-w-0: a flex item otherwise grows to its content's min width and scrolls the page sideways. */}
+              <SidebarInset className="min-w-0 p-6">{children}</SidebarInset>
             </div>
             <GlobalSearch />
           </CommandPaletteProvider>

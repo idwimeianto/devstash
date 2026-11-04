@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { BillingToggle, ProPrice } from "@/components/home/BillingToggle";
 import { Checklist, Container, homeButton, SectionHeading } from "@/components/home/HomeShared";
 import { Reveal } from "@/components/home/Reveal";
+import { FreePlanCta } from "@/components/home/SessionLinks";
 import { Card } from "@/components/ui/card";
 import { FREE_PLAN_FEATURES, PRO_PLAN_FEATURES } from "@/lib/home-content";
 import { cn } from "@/lib/utils";
@@ -61,15 +62,11 @@ export function PricingSection() {
                       <strong className="text-5xl leading-none font-bold tracking-tight">$0</strong>
                       <span className="text-muted-foreground">/forever</span>
                     </p>
-                    <p className="mt-2 text-sm text-zinc-500">For trying DevStash out.</p>
+                    <p className="mt-2 text-sm text-zinc-400">For trying DevStash out.</p>
                   </>
                 }
                 features={FREE_PLAN_FEATURES}
-                cta={
-                  <Link href="/register" className={homeButton("outline", "default", "w-full")}>
-                    Get started
-                  </Link>
-                }
+                cta={<FreePlanCta />}
               />
             </Reveal>
             <Reveal delay={1}>

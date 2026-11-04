@@ -15,9 +15,10 @@ const Fn = ({ children }: { children: ReactNode }) => <span className="text-blue
 const Type = ({ children }: { children: ReactNode }) => <span className="text-teal-400">{children}</span>;
 const Num = ({ children }: { children: ReactNode }) => <span className="text-amber-400">{children}</span>;
 
+// Wraps on phones, where a sideways scroll has no visible cue and the lines look cut off.
 function EditorCode() {
   return (
-    <pre className="overflow-x-auto p-5 font-mono text-xs leading-[1.7] text-zinc-300 sm:text-[13px]">
+    <pre className="overflow-x-auto p-4 font-mono text-xs leading-[1.7] break-words whitespace-pre-wrap text-zinc-300 sm:p-5 sm:text-[13px] sm:whitespace-pre">
       <code>
         <Keyword>export function</Keyword> <Fn>useDebounce</Fn>&lt;<Type>T</Type>&gt;(value: <Type>T</Type>,
         delay = <Num>300</Num>) {"{"}
@@ -39,7 +40,7 @@ function EditorCode() {
 
 export function AiSection() {
   return (
-    <section className="border-b bg-white/[0.015] py-20 sm:py-28">
+    <section id="ai" className="scroll-mt-16 border-b bg-white/[0.015] py-20 sm:py-28">
       <Container className="grid items-center gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         <Reveal>
           <Badge
@@ -59,7 +60,7 @@ export function AiSection() {
             className="overflow-hidden rounded-xl border border-white/15 bg-card shadow-2xl shadow-black/45"
           >
             <WindowBar>
-              <span className="ml-2.5 font-mono text-xs text-muted-foreground">useDebounce.ts</span>
+              <span className="ml-2.5 font-mono text-xs text-zinc-300">useDebounce.ts</span>
             </WindowBar>
             <EditorCode />
             <div className="border-t bg-zinc-900 px-5 pt-4 pb-5">

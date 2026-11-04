@@ -28,7 +28,8 @@ export function ItemFavoriteButton({ itemId, title, isFavorite: saved }: ItemFav
       aria-label={`Favorite ${title}`}
       aria-pressed={isFavorite}
       onClick={toggle}
-      className="relative z-20 shrink-0"
+      // The ::after widens the tap target to about 38px without making the button look bigger.
+      className="relative z-20 shrink-0 after:absolute after:-inset-2"
     >
       <Star
         className={cn(isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")}

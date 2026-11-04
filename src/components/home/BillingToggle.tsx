@@ -22,8 +22,8 @@ function BillingOption({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1 rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-        active ? "text-foreground" : "text-zinc-500 hover:text-muted-foreground",
+        "flex min-h-9 items-center gap-1 rounded-md px-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+        active ? "text-foreground" : "text-zinc-400 hover:text-foreground",
       )}
     >
       {children}
@@ -38,7 +38,7 @@ export function BillingToggle({ children }: { children: ReactNode }) {
 
   return (
     <BillingContext value={billing}>
-      <div className="mt-7 flex items-center justify-center gap-3 text-sm">
+      <div className="mt-7 flex items-center justify-center gap-1 text-sm">
         <BillingOption active={!yearly} onClick={() => setBilling("monthly")}>
           Monthly
         </BillingOption>
@@ -50,7 +50,7 @@ export function BillingToggle({ children }: { children: ReactNode }) {
         />
         <BillingOption active={yearly} onClick={() => setBilling("yearly")}>
           Yearly
-          <span className="ml-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-semibold text-green-500">
+          <span className="ml-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-[13px] font-semibold text-green-400">
             Save {YEARLY_SAVINGS_PERCENT}%
           </span>
         </BillingOption>
@@ -69,7 +69,7 @@ export function ProPrice() {
         <strong className="text-5xl leading-none font-bold tracking-tight">{price}</strong>
         <span className="text-muted-foreground">{period}</span>
       </p>
-      <p className="mt-2 text-sm text-zinc-500" aria-live="polite">
+      <p className="mt-2 text-sm text-zinc-400" aria-live="polite">
         {note}
       </p>
     </>

@@ -51,8 +51,8 @@ function CollectionList({
   if (collections.length === 0) return null;
 
   return (
-    <Collapsible defaultOpen className="mt-2 first:mt-0">
-      <CollapsibleTrigger className="group/heading flex w-full cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground outline-hidden hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden">
+    <Collapsible defaultOpen className="mt-1 first:mt-0">
+      <CollapsibleTrigger className="group/heading flex min-h-8 w-full cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-muted-foreground outline-hidden hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden">
         {heading}
         <ChevronDown className="size-3.5 -rotate-90 transition-transform group-data-panel-open/heading:rotate-0" />
       </CollapsibleTrigger>

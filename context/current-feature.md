@@ -1,18 +1,32 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+UI Review Fixes (fix): fix the issues from the ui-reviewer pass on the homepage and dashboard (375 / 768 / 1280px).
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+Dashboard:
+
+- #1 (high) no horizontal page scroll at 768px with the sidebar expanded (main content forced to ~554px)
+- #2 larger hit areas for the item card favorite and copy icon buttons, icons unchanged
+- #3 taller hit areas for the sidebar Favorites / Recent toggles and the dashboard "View all" link
+- #4 the top bar search trigger becomes icon-only on small screens
+
+Homepage:
+
+- #1 the `useDebounce.ts` editor mockup in the AI section no longer clips its code at 375px
+- #2 a mobile nav menu, so Features, Pricing and Sign In are reachable on small screens
+- #4 footer: remove the Account column and add link columns that make sense for a product footer (`#` links where there is no page yet)
+- #5 larger touch targets for nav, billing toggle and footer text links
+- #6 more contrast for the small muted text (hero mockup "Types" label, the `useDebounce.ts` filename, the "Save 25%" chip)
+- #7 when signed in, the Free plan's button becomes a disabled "Current plan" label
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Skipped as decided: dashboard #5 (leftover test data stays on the dev branch), homepage #3 (no social proof, there are no real users yet) and the Pro plan button (still links to `/register`).
 
 ## History
 

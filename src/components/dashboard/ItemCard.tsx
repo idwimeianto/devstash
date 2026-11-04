@@ -67,11 +67,12 @@ export function ItemCard({ item }: ItemCardProps) {
             {DATE_FORMAT.format(item.date)}
           </time>
           {item.copyValue && (
-            // Above the card's open button, so a click copies instead of opening the drawer.
+            // Above the card's open button, so a click copies instead of opening the drawer;
+            // the ::after widens the tap target to about 38px.
             <CopyButton
               value={item.copyValue}
               label={`Copy ${item.title}`}
-              className="relative z-20 -mr-1 -mb-1 text-muted-foreground"
+              className="relative z-20 -mr-1 -mb-1 text-muted-foreground after:absolute after:-inset-2"
             />
           )}
         </div>
