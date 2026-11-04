@@ -3,6 +3,25 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Only when JavaScript runs, so content hidden for a scroll fade-in still shows without it. */
+@custom-variant scripting (@media (scripting: enabled));
+
+/* Homepage hero arrow; uses `scale`, so a `rotate-*` class on mobile still applies. */
+@theme {
+    --animate-arrow-pulse: arrow-pulse 2s ease-in-out infinite;
+
+    @keyframes arrow-pulse {
+        0%,
+        100% {
+            scale: 1;
+            box-shadow: 0 0 0 0 rgb(59 130 246 / 0.45);
+        }
+        50% {
+            scale: 1.1;
+            box-shadow: 0 0 0 14px rgb(59 130 246 / 0);
+        }
+    }
+}
 
 @theme inline {
     --font-heading: var(--font-sans);
@@ -128,6 +147,12 @@
   html {
     @apply font-sans;
     }
+  /* Smooth anchor scrolling on the homepage only; the root layout's data-scroll-behavior keeps navigation instant. */
+  @media (prefers-reduced-motion: no-preference) {
+    html:has([data-home-page]) {
+      scroll-behavior: smooth;
+    }
+  }
   /* Edge's built-in reveal icon would duplicate our show-password toggle. */
   input::-ms-reveal {
     display: none;

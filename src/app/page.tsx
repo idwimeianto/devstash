@@ -1,3 +1,32 @@
+import type { Metadata } from "next";
+
+import { AiSection } from "@/components/home/AiSection";
+import { CtaSection } from "@/components/home/CtaSection";
+import { FeaturesSection } from "@/components/home/FeaturesSection";
+import { Hero } from "@/components/home/Hero";
+import { HomeFooter } from "@/components/home/HomeFooter";
+import { HomeNav } from "@/components/home/HomeNav";
+import { PricingSection } from "@/components/home/PricingSection";
+
+export const metadata: Metadata = {
+  title: "DevStash · Your developer knowledge hub",
+  description:
+    "One fast, searchable, AI-enhanced hub for your snippets, prompts, commands, notes, files, images and links.",
+};
+
 export default function Home() {
-  return <h1>DevStash</h1>;
+  // `data-home-page` turns on smooth anchor scrolling (see globals.css).
+  return (
+    <div data-home-page className="flex-1 overflow-x-clip">
+      <HomeNav />
+      <main>
+        <Hero />
+        <FeaturesSection />
+        <AiSection />
+        <PricingSection />
+        <CtaSection />
+      </main>
+      <HomeFooter />
+    </div>
+  );
 }
