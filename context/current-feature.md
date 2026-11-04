@@ -1,18 +1,25 @@
-# Current Feature
+# Current Feature: Back to Homepage on Auth Pages
 
-<!-- Feature name and short description -->
+Add a visible "Back to homepage" link on the sign-in and register (sign-up) pages, so visitors who came from the marketing homepage can return without the browser's back button.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- A "Back to homepage" link (arrow-left icon plus text) to `/` on `/sign-in` and `/register`
+- Styled like the existing "Back to dashboard" links on `/profile` and `/settings` (small muted text, foreground on hover, visible focus ring)
+- Placed so it doesn't compete with the form: above the logo / card, or at the top-left of the page
+- Works at phone width (375px) with no horizontal scroll
+- Keyboard reachable, with an accessible name
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Both pages share `src/app/(auth)/layout.tsx`, which already wraps the DevStash logo in a `Link` to `/`, but nothing tells the visitor it goes home.
+- The same layout also wraps `/forgot-password`, `/reset-password` and `/verify-email`. Putting the link in the layout would add it to those pages too; the request names only sign in and sign up, so decide at `start` whether it lives in the layout (all auth pages) or only on the two pages.
+- No server actions or utilities expected, so no new unit tests.
+- Decided at `start`: the link lives in the shared auth layout (all auth pages), at the top-left of the page.
 
 ## History
 
