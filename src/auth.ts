@@ -66,6 +66,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    // Here rather than in auth.config.ts, so the proxy stays free of Prisma. isPro is re-read on
+    // every validation because a Stripe webhook changes it without touching the cookie, and
+    // `trigger === "update"` doesn't reliably refresh it.
+    async jwt(params) {
+      const token = authConfig.callbacks.jwt(params);
+      if (typeof token.id === "string") {
+        const user = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { isPro: true },
+        });
+        token.isPro = user?.isPro ?? false;
+      }
+      return token;
+    },
+  },
   providers: authConfig.providers.map((provider) =>
     typeof provider !== "function" && provider.id === "credentials"
       ? credentials

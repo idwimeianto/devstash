@@ -1,6 +1,13 @@
 import { Folder, Search, type LucideIcon } from "lucide-react";
 
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
+import {
+  FREE_COLLECTION_LIMIT,
+  FREE_ITEM_LIMIT,
+  PRO_MONTHLY_PRICE,
+  PRO_YEARLY_PRICE,
+  type Billing,
+} from "@/lib/usage-limits";
 
 // The homepage keeps the mockup's palette, which differs from the app's type colors.
 export type HomeAccent = "snippet" | "prompt" | "command" | "note" | "file" | "image" | "link";
@@ -168,12 +175,14 @@ export const AI_TAGS = ["react", "hooks", "typescript", "debounce", "performance
 
 // ───────── Pricing ─────────
 
-export const FREE_ITEM_LIMIT = 50;
-export const FREE_COLLECTION_LIMIT = 3;
-export const PRO_MONTHLY_PRICE = 8;
-export const PRO_YEARLY_PRICE = 72;
-
-export type Billing = "monthly" | "yearly";
+// Limits and prices live with the gating rules, so the copy can't drift from what's enforced.
+export {
+  FREE_COLLECTION_LIMIT,
+  FREE_ITEM_LIMIT,
+  PRO_MONTHLY_PRICE,
+  PRO_YEARLY_PRICE,
+  type Billing,
+};
 
 interface PlanPrice {
   price: string;

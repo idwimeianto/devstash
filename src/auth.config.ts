@@ -26,6 +26,8 @@ export default {
       if (typeof token.id === "string") {
         session.user.id = token.id;
       }
+      // Set by the jwt callback in auth.ts; display only, enforcement reads the database.
+      session.user.isPro = token.isPro === true;
       return session;
     },
   },
