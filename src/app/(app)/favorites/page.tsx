@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import {
-  FavoriteCollectionRow,
-  FavoriteItemRow,
-  FavoritesSection,
-} from "@/components/favorites/FavoriteRows";
+import { FavoritesList } from "@/components/favorites/FavoritesList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFavoriteCollections } from "@/lib/db/collections";
 import { getFavoriteItems } from "@/lib/db/items";
@@ -32,24 +28,7 @@ async function Favorites() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-8 font-mono text-sm">
-      {items.length > 0 && (
-        <FavoritesSection title="Items" count={items.length}>
-          {items.map((item) => (
-            <FavoriteItemRow key={item.id} item={item} />
-          ))}
-        </FavoritesSection>
-      )}
-      {collections.length > 0 && (
-        <FavoritesSection title="Collections" count={collections.length}>
-          {collections.map((collection) => (
-            <FavoriteCollectionRow key={collection.id} collection={collection} />
-          ))}
-        </FavoritesSection>
-      )}
-    </div>
-  );
+  return <FavoritesList items={items} collections={collections} />;
 }
 
 function FavoritesSkeleton() {

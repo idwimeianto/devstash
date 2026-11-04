@@ -1,18 +1,31 @@
-# Current Feature
+# Current Feature: Favorites Sorting
 
-<!-- Feature name and short description -->
+Client-side sorting on the `/favorites` page by name, date and item type.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- A sort control on `/favorites` with three options: Name, Date and Type
+- Sorting happens in the browser, with no refetch or page navigation
+- The chosen sort applies to both the Items and Collections sections
+- Name: alphabetical, case-insensitive (`localeCompare`)
+- Date: newest first by `updatedAt` (the current server order, so it's the default)
+- Type: grouped by item type name (collections by their main type, those without one last), ties broken by name
+- Existing rows, overlays (drawer / collection link) and empty states keep working
+- Unit tests for the sort utility (pure function in `src/lib`)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file
+- Data still loads on the server (`getFavoriteItems`, `getFavoriteCollections`); a small client component receives both lists and renders the sorted sections
+- `FavoriteItemRow` / `FavoriteCollectionRow` / `FavoritesSection` in `src/components/favorites/FavoriteRows.tsx` are server-safe and can be rendered from a client component; `updatedAt` is a `Date`, which serializes across the server/client boundary
+- Decided at `start`: a segmented button group (Name / Date / Type); clicking the active option again flips the direction (arrow icon shows it); the sort lives in the URL (`?sort=name&dir=asc`), updated without a refetch
+- Out of scope: server-side sorting, filtering, sorting other pages
+- Implemented: `src/lib/favorites-sort.ts` (`parseFavoriteSort`, `getNextFavoriteSort`, `getFavoriteSortSearch`, `sortFavorites` with a fixed `en` collator so server and browser agree), `FavoritesList` (client, `useSearchParams` + `window.history.replaceState`, so no history entries or refetch) and `FavoritesSortControl` (ghost `xs` buttons, `aria-pressed`, arrow plus sr-only direction); the default sort (date, newest first) drops both params
+- Verified in the browser as the demo user: Name A→Z / Z→A (case-insensitive), Type grouping, `?sort=type&dir=desc` on reload, a row still opening the drawer, Date back to default clearing the URL, 390px with no horizontal scroll, no console warnings
 
 ## History
 
