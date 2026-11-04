@@ -1,18 +1,38 @@
-# Current Feature
+# Current Feature: Homepage Mockup
 
-<!-- Feature name and short description -->
+A static marketing homepage prototype for DevStash in `prototypes/homepage/` (`index.html`, `styles.css`, `script.js`), built outside the Next.js app.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `prototypes/homepage/index.html`, `styles.css` and `script.js` (plain HTML / CSS / JS, dark theme)
+- Fixed top nav: logo, Features / Pricing links, Sign In / Get Started buttons; gets more opaque on scroll
+- Hero text: "Stop Losing Your Developer Knowledge" headline with gradient text, a subheadline about scattered knowledge, CTA buttons
+- Hero visual, "chaos to order", three parts side by side:
+  - Chaos box "Your knowledge today..." with 8 floating icons (Notion, GitHub, Slack, VS Code, browser tabs, terminal, text file, bookmark) animated with `requestAnimationFrame`: drift, bounce off the walls, subtle rotation and scale pulsing, repelled by the mouse cursor
+  - Pulsing arrow (CSS animation) pointing from chaos to order
+  - "...with DevStash" box with a simplified dashboard: sidebar nav items and a grid of item cards with colored top borders in the item type colors
+- Features: 6 cards (Code Snippets, AI Prompts, Instant Search, Commands, Files & Docs, Collections), each in its item type accent color
+- AI section: left column with a "Pro Feature" badge and a checklist of AI capabilities; right column with a code editor mockup showing "AI Generated Tags"
+- Pricing: Free ($0, 50 items, 3 collections) vs Pro ($8/mo, unlimited, AI features), Pro highlighted with a "Most Popular" badge, plus a monthly / yearly toggle ($72/year)
+- CTA: "Ready to Organize Your Knowledge?" with a button
+- Footer: logo, link columns, copyright with the current year
+- Elements fade in as they scroll into view
+- Responsive: on mobile the chaos box, arrow and dashboard stack vertically with the arrow rotated 90° to point down, and grids become single column
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/homepage-mockup-spec.md`
+- A prototype only: no changes to the Next.js app or the `/` route, so no server actions, utilities or unit tests are expected
+- Spec item type colors: Snippet `#3b82f6`, Prompt `#f59e0b`, Command `#06b6d4`, Note `#22c55e`, File `#64748b`, Image `#ec4899`, URL `#6366f1`
+- Decided at `start`:
+  - Colors follow the spec's palette, not the app's (`src/lib/item-type-display.ts` uses Prompt `#8b5cf6`, Note `#fde047`, Command `#f97316`, Link `#10b981`, File `#6b7280`)
+  - Notion, GitHub, Slack and VS Code drawn as simple inline SVG marks
+  - Every other icon is an inline Lucide-style SVG; no CDN or other dependencies
+  - `prototypes/` is committed to the repo
 
 ## History
 
