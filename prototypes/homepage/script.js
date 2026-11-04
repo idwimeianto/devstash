@@ -70,9 +70,10 @@ function initPricing() {
 
 const ICON_SIZE = 56;
 const SPEED = 0.6; // px per frame at 60fps
-const MAX_SPEED = 5;
+// A gentle push with a low cap, so icons glide away from the cursor instead of darting off.
+const MAX_SPEED = 1.8;
 const REPEL_RADIUS = 120;
-const REPEL_FORCE = 1.2;
+const REPEL_FORCE = 0.25;
 
 function initChaos() {
   const box = document.getElementById("chaos");

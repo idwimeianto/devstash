@@ -10,6 +10,7 @@
 
   --bg: #09090b;
   --bg-alt: #0e0e12;
+  --bg-raised: #111116;
   --surface: #131318;
   --surface-2: #1a1a21;
   --border: rgb(255 255 255 / 0.08);
@@ -19,7 +20,8 @@
   --subtle: #71717a;
   --primary: #3b82f6;
   --primary-hover: #2563eb;
-  --gradient: linear-gradient(90deg, var(--snippet), var(--url) 50%, var(--image));
+  /* Shades of the snippet blue only, for gradient text, the logo, the arrow and badges. */
+  --gradient: linear-gradient(90deg, var(--snippet), #60a5fa);
 
   --radius: 12px;
   --nav-height: 64px;
@@ -246,6 +248,17 @@ a {
   background: var(--bg-alt);
 }
 
+/* Lighter band that sets the features apart from the hero and the AI section. */
+.section-raised {
+  border-block: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+/* Avoid a doubled border where two banded sections meet. */
+.section-raised + .section-alt {
+  border-top: 0;
+}
+
 .section-head {
   max-width: 640px;
   margin: 0 auto 56px;
@@ -413,11 +426,11 @@ h2 {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgb(99 102 241 / 0.45);
+    box-shadow: 0 0 0 0 rgb(59 130 246 / 0.45);
   }
   50% {
     transform: scale(1.1);
-    box-shadow: 0 0 0 14px rgb(99 102 241 / 0);
+    box-shadow: 0 0 0 14px rgb(59 130 246 / 0);
   }
 }
 
@@ -555,7 +568,8 @@ h2 {
   padding: 28px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  /* One step up from the section's lighter background so the cards still stand out. */
+  background: var(--surface-2);
   transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
@@ -692,10 +706,10 @@ h2 {
 
 .ai-tags li {
   padding: 3px 10px;
-  border: 1px solid rgb(99 102 241 / 0.35);
+  border: 1px solid rgb(59 130 246 / 0.35);
   border-radius: 999px;
-  background: rgb(99 102 241 / 0.12);
-  color: #c7d2fe;
+  background: rgb(59 130 246 / 0.12);
+  color: #bfdbfe;
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -863,7 +877,7 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    radial-gradient(500px 220px at 50% 0%, rgb(99 102 241 / 0.22), transparent 70%),
+    radial-gradient(500px 220px at 50% 0%, rgb(59 130 246 / 0.22), transparent 70%),
     var(--surface);
   text-align: center;
 }
@@ -985,11 +999,11 @@ h2 {
     0%,
     100% {
       transform: rotate(90deg) scale(1);
-      box-shadow: 0 0 0 0 rgb(99 102 241 / 0.45);
+      box-shadow: 0 0 0 0 rgb(59 130 246 / 0.45);
     }
     50% {
       transform: rotate(90deg) scale(1.1);
-      box-shadow: 0 0 0 14px rgb(99 102 241 / 0);
+      box-shadow: 0 0 0 14px rgb(59 130 246 / 0);
     }
   }
 

@@ -1,18 +1,22 @@
-# Current Feature
+# Current Feature: Homepage Prototype Polish (fix)
 
-<!-- Feature name and short description -->
+Small tweaks to the homepage prototype: the hero's floating icons shoot away too fast when the cursor comes near, and the features section needs more separation from the sections around it.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Icons in `prototypes/homepage/` still move away from the cursor, but gently instead of darting off
+- Normal drifting, bouncing, rotation and pulsing unchanged
+- Features section on a slightly lighter background than the hero and the AI section, with its cards still standing out
+- Gradient text, the logo, the hero arrow, badges, AI tag chips and glows use the snippet blue (`#3b82f6`) instead of indigo / purple; code syntax colors and the URL type accent unchanged
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Repel tuning lives in `prototypes/homepage/script.js`: `REPEL_FORCE` (push per frame at the cursor) and `MAX_SPEED` (speed cap after a push); cruising `SPEED` stays 0.6px per frame
+- Prototype only, so no app code or unit tests involved
 
 ## History
 
