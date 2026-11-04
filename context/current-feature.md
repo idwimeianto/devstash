@@ -1,18 +1,34 @@
-# Current Feature
+# Current Feature: Editor Preferences Settings
 
-<!-- Feature name and short description -->
+Editor preferences section on the `/settings` page, auto-saved to the database and applied to the Monaco editor.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Editor preferences section on `/settings` with:
+  - Font size dropdown
+  - Tab size dropdown
+  - Word wrap toggle (default: on)
+  - Minimap toggle (default: off)
+  - Theme dropdown: `vs-dark`, `monokai`, `github-dark` (default: `vs-dark`)
+- Preferences stored in a JSON column `editorPreferences` on the `User` model
+- Prisma migration created and run with `npx prisma migrate dev` (never `db push`)
+- Server action to update the preferences
+- Settings applied to the Monaco editor component
+- Auto-save on every change (no save button), with a success toast on save
+- `EditorPreferencesContext` providing the preferences to client components
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/editor-settings-spec.md`
+- `/settings` (`src/app/settings/page.tsx`) is standalone (no sidebar) and currently has Change password and Delete account
+- `src/components/code/MonacoEditor.tsx` defines a custom `devstash-dark` theme (transparent background) and fixed options (12px font, no minimap, memoized on `[ariaLabel, readOnly]`); Monaco is used for snippet / command content in the drawer (read-only), the edit form and the New Item dialog
+- `monokai` and `github-dark` aren't built into Monaco, so they need `defineTheme` definitions
+- Decided at `start`: `vs-dark` keeps the current `devstash-dark` look, and `monokai` / `github-dark` get the same transparent-frame tweaks over their own colors; font sizes 10, 11, 12, 13, 14, 16, 18, 20 (default 12) with line height scaling, tab sizes 2, 4, 8 (default 2); the preferences apply everywhere, including the drawer's read-only view
+- Validate the action input with Zod and use the `{ success, data, error }` pattern; unit tests for the action and any utilities
 
 ## History
 

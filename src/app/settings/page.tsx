@@ -4,9 +4,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { EditorPreferencesProvider } from "@/components/code/EditorPreferencesProvider";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { MissingAccount } from "@/components/profile/MissingAccount";
+import { EditorPreferencesForm } from "@/components/settings/EditorPreferencesForm";
 import {
   Card,
   CardContent,
@@ -15,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSessionUserId, getUserProfile } from "@/lib/db/users";
+import { getEditorPreferences, getSessionUserId, getUserProfile } from "@/lib/db/users";
 
 export const metadata: Metadata = {
   title: "Settings · DevStash",
@@ -25,11 +27,26 @@ async function SettingsContent() {
   const userId = await getSessionUserId();
   if (!userId) redirect("/sign-in?callbackUrl=/settings");
 
-  const profile = await getUserProfile(userId);
+  const [profile, editorPreferences] = await Promise.all([
+    getUserProfile(userId),
+    getEditorPreferences(userId),
+  ]);
   if (!profile) return <MissingAccount />;
 
   return (
     <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Editor preferences</CardTitle>
+          <CardDescription>Applies to every code editor. Changes save automatically.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EditorPreferencesProvider preferencesPromise={Promise.resolve(editorPreferences)}>
+            <EditorPreferencesForm />
+          </EditorPreferencesProvider>
+        </CardContent>
+      </Card>
+
       {/* GitHub-only accounts have no password to change. */}
       {profile.hasPassword && (
         <Card>
@@ -61,6 +78,7 @@ async function SettingsContent() {
 function SettingsSkeleton() {
   return (
     <>
+      <Skeleton className="h-96 rounded-xl" />
       <Skeleton className="h-72 rounded-xl" />
       <Skeleton className="h-40 rounded-xl" />
     </>

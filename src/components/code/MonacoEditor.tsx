@@ -6,7 +6,11 @@ import Editor, { loader, type BeforeMount, type OnMount } from "@monaco-editor/r
 import * as monaco from "monaco-editor/editor";
 // Syntax highlighting for every basic language; each one loads on first use.
 import "monaco-editor/basic-languages/monaco.contribution";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import { MONACO_THEMES } from "@/components/code/editor-themes";
+import { getEditorLineHeight } from "@/lib/editor-preferences";
+import type { EditorPreferences } from "@/types/editor-preferences";
 
 // The bundled copy of Monaco instead of the wrapper's default CDN download.
 self.MonacoEnvironment = {
@@ -15,20 +19,17 @@ self.MonacoEnvironment = {
 };
 loader.config({ monaco });
 
-const THEME = "devstash-dark";
 const MAX_HEIGHT = 400;
 // Room to type in when the editor starts empty.
 const MIN_EDITABLE_HEIGHT = 120;
 
-export const LINE_HEIGHT = 18;
 export const VERTICAL_PADDING = 12;
 
 const BASE_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   automaticLayout: true,
-  minimap: { enabled: false },
   scrollBeyondLastLine: false,
-  fontSize: 12,
-  lineHeight: LINE_HEIGHT,
+  // The tab size preference wins over guessing it from the content.
+  detectIndentation: false,
   padding: { top: VERTICAL_PADDING, bottom: VERTICAL_PADDING },
   lineNumbersMinChars: 3,
   folding: false,
@@ -37,7 +38,6 @@ const BASE_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   overviewRulerBorder: false,
   hideCursorInOverviewRuler: true,
   stickyScroll: { enabled: false },
-  tabSize: 2,
   scrollbar: {
     verticalScrollbarSize: 8,
     horizontalScrollbarSize: 8,
@@ -47,26 +47,10 @@ const BASE_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   },
 };
 
-// Transparent background so the CodeEditor frame shows through; slim scrollbars in the app's grays.
-const defineTheme: BeforeMount = (instance) => {
-  instance.editor.defineTheme(THEME, {
-    base: "vs-dark",
-    inherit: true,
-    rules: [],
-    colors: {
-      "editor.background": "#00000000",
-      "editorGutter.background": "#00000000",
-      "editor.lineHighlightBackground": "#ffffff0a",
-      "editor.lineHighlightBorder": "#00000000",
-      "editorLineNumber.foreground": "#525252",
-      "editorLineNumber.activeForeground": "#a3a3a3",
-      "focusBorder": "#00000000",
-      "scrollbar.shadow": "#00000000",
-      "scrollbarSlider.background": "#ffffff1f",
-      "scrollbarSlider.hoverBackground": "#ffffff33",
-      "scrollbarSlider.activeBackground": "#ffffff4d",
-    },
-  });
+const defineThemes: BeforeMount = (instance) => {
+  for (const { id, data } of Object.values(MONACO_THEMES)) {
+    instance.editor.defineTheme(id, data);
+  }
 };
 
 // Geist Mono from next/font; Monaco measures text itself, so it needs the real family names.
@@ -82,6 +66,7 @@ export interface MonacoEditorProps {
   language: string;
   readOnly: boolean;
   ariaLabel: string;
+  preferences: EditorPreferences;
   onChange?: (value: string) => void;
   onReady: () => void;
 }
@@ -91,23 +76,35 @@ export default function MonacoEditor({
   language,
   readOnly,
   ariaLabel,
+  preferences,
   onChange,
   onReady,
 }: MonacoEditorProps) {
+  const { fontSize, tabSize, wordWrap, minimap, theme } = preferences;
   const minHeight = readOnly ? 0 : MIN_EDITABLE_HEIGHT;
   const [height, setHeight] = useState(minHeight);
+  const [model, setModel] = useState<monaco.editor.ITextModel | null>(null);
   // Stable between height changes, so the wrapper doesn't re-apply options or re-read styles.
   const options = useMemo(
     () => ({
       ...BASE_OPTIONS,
       fontFamily: getMonoFontFamily(),
+      fontSize,
+      lineHeight: getEditorLineHeight(fontSize),
+      wordWrap: wordWrap ? ("on" as const) : ("off" as const),
+      minimap: { enabled: minimap },
       ariaLabel,
       readOnly,
       domReadOnly: readOnly,
       renderLineHighlight: readOnly ? ("none" as const) : ("line" as const),
     }),
-    [ariaLabel, readOnly],
+    [ariaLabel, readOnly, fontSize, wordWrap, minimap],
   );
+
+  // Tab size belongs to the text model, not the editor options.
+  useEffect(() => {
+    model?.updateOptions({ tabSize, indentSize: tabSize });
+  }, [model, tabSize]);
 
   // Grows with the content up to MAX_HEIGHT, then scrolls.
   const handleMount: OnMount = (editor) => {
@@ -115,6 +112,7 @@ export default function MonacoEditor({
       setHeight(Math.min(Math.max(editor.getContentHeight(), minHeight), MAX_HEIGHT));
     editor.onDidContentSizeChange(fit);
     fit();
+    setModel(editor.getModel());
     onReady();
   };
 
@@ -124,10 +122,10 @@ export default function MonacoEditor({
       // fast typing and drops characters. The forms mount a fresh editor for every item anyway.
       {...(readOnly ? { value } : { defaultValue: value })}
       language={language}
-      theme={THEME}
+      theme={MONACO_THEMES[theme].id}
       height={height}
       loading={null}
-      beforeMount={defineTheme}
+      beforeMount={defineThemes}
       onMount={handleMount}
       onChange={(next) => onChange?.(next ?? "")}
       options={options}
