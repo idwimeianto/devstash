@@ -4,7 +4,7 @@ import { getAppUrl } from "@/lib/app-url";
 import { setStripeCustomerId, syncSubscription } from "@/lib/db/billing";
 import { getPriceId, getStripe } from "@/lib/stripe";
 import { isProStatus, type Billing } from "@/lib/usage-limits";
-import type { UserBilling } from "@/types/billing";
+import type { BillingSummary, UserBilling } from "@/types/billing";
 
 // Reuses the saved customer; the idempotency key keeps a retried first call from creating two.
 export async function getOrCreateCustomer(userId: string, user: UserBilling): Promise<string> {
@@ -66,4 +66,33 @@ export async function syncSubscriptionById(subscriptionId: string): Promise<void
 
 export async function cancelSubscription(subscriptionId: string): Promise<void> {
   await getStripe().subscriptions.cancel(subscriptionId);
+}
+
+// Live details for the settings Billing card; the database flags alone if Stripe can't be reached.
+export async function getBillingSummary(user: UserBilling): Promise<BillingSummary> {
+  const summary: BillingSummary = {
+    isPro: user.isPro,
+    hasCustomer: user.stripeCustomerId !== null,
+    interval: null,
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    status: null,
+  };
+  if (!user.stripeSubscriptionId) return summary;
+
+  try {
+    const subscription = await getStripe().subscriptions.retrieve(user.stripeSubscriptionId);
+    // Newer API versions keep the billing period on the item, not the subscription.
+    const item = subscription.items.data[0];
+    return {
+      ...summary,
+      interval: item?.price.recurring?.interval === "year" ? "year" : "month",
+      currentPeriodEnd: item ? new Date(item.current_period_end * 1000).toISOString() : null,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end || subscription.cancel_at !== null,
+      status: subscription.status,
+    };
+  } catch (error) {
+    console.error("Loading the Stripe subscription failed", error);
+    return summary;
+  }
 }

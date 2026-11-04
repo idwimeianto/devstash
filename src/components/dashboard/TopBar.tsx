@@ -2,7 +2,7 @@ import { Layers, Star } from "lucide-react";
 import Link from "next/link";
 
 import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
-import { NewItemDialog } from "@/components/items/NewItemDialog";
+import { NewItemButton } from "@/components/items/NewItemButton";
 import { SearchTrigger } from "@/components/search/SearchTrigger";
 import { buttonVariants } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -35,7 +35,7 @@ export function TopBar() {
             <Star />
           </Link>
           <NewCollectionDialog />
-          <NewItemDialog iconOnlyOnMobile />
+          <NewItemButton iconOnlyOnMobile />
         </div>
       </div>
     </header>

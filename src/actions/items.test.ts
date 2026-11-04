@@ -20,6 +20,8 @@ import {
 import { getSessionUserId } from "@/lib/db/users";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getObjectSize } from "@/lib/r2";
+import { checkItemCreation } from "@/lib/usage-checks";
+import { ITEM_LIMIT_REACHED, PRO_FEATURE_REQUIRED } from "@/lib/usage-limits";
 import type { CreateItemInput, ItemDetail, UpdateItemInput } from "@/types/items";
 
 vi.mock("@/lib/db/items", () => ({
@@ -39,6 +41,8 @@ vi.mock("@/lib/r2", async (importOriginal) => ({
   getObjectSize: vi.fn(),
   deleteObject: vi.fn(),
 }));
+// The plan rules themselves are covered in usage-checks.test.ts.
+vi.mock("@/lib/usage-checks", () => ({ checkItemCreation: vi.fn() }));
 
 const USER_ID = "user_1";
 const ITEM_ID = "item_1";
@@ -80,11 +84,13 @@ describe("createItem action", () => {
   beforeEach(() => {
     vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
     vi.mocked(createItemQuery).mockResolvedValue(UPDATED);
+    vi.mocked(checkItemCreation).mockResolvedValue(null);
   });
 
   it("creates the validated item for the session user and returns it with ISO dates", async () => {
     const result = await createItem(CREATE_INPUT);
 
+    expect(checkItemCreation).toHaveBeenCalledWith(USER_ID, "snippet");
     expect(createItemQuery).toHaveBeenCalledWith(USER_ID, {
       typeName: "snippet",
       title: "useAuth Hook",
@@ -116,6 +122,35 @@ describe("createItem action", () => {
         url: "https://ui.shadcn.com",
       }),
     );
+  });
+
+  it.each([
+    ["the item limit is reached", ITEM_LIMIT_REACHED, "snippet"],
+    ["a free user creates an upload type", PRO_FEATURE_REQUIRED, "image"],
+  ] as const)("refuses without saving when %s", async (_case, message, typeName) => {
+    vi.mocked(checkItemCreation).mockResolvedValue(message);
+
+    const result = await createItem({
+      ...CREATE_INPUT,
+      typeName,
+      file:
+        typeName === "image"
+          ? { fileUrl: `${PUBLIC_URL}/${USER_ID}/a.png`, fileName: "a.png" }
+          : undefined,
+    });
+
+    expect(result).toEqual({ success: false, error: message });
+    expect(checkItemCreation).toHaveBeenCalledWith(USER_ID, typeName);
+    expect(getObjectSize).not.toHaveBeenCalled();
+    expect(createItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic error when the plan check fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(checkItemCreation).mockRejectedValue(new Error("connection lost"));
+
+    expect(await createItem(CREATE_INPUT)).toEqual({ success: false, error: GENERIC_ERROR });
+    expect(createItemQuery).not.toHaveBeenCalled();
   });
 
   it("returns field errors for invalid input without touching the database", async () => {

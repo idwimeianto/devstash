@@ -13,6 +13,7 @@ import {
 } from "@/lib/file-upload";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getPublicUrl, putObject } from "@/lib/r2";
+import { checkUploadAllowed } from "@/lib/usage-checks";
 import type { DeleteUploadResponse, UploadResponse } from "@/types/uploads";
 const MAX_FILE_NAME_LENGTH = 255;
 // The largest allowed file plus room for the multipart boundaries and other fields.
@@ -29,6 +30,16 @@ function json<T extends UploadResponse | DeleteUploadResponse>(body: T, status =
 export async function POST(request: Request) {
   const userId = await getSessionUserId();
   if (!userId) return json({ success: false, error: NOT_SIGNED_IN }, 401);
+
+  // Pro-only, checked before the body is read so free users can't fill R2.
+  let notAllowed: string | null;
+  try {
+    notAllowed = await checkUploadAllowed(userId);
+  } catch (error) {
+    console.error("Checking the upload plan failed", error);
+    return json({ success: false, error: GENERIC_ERROR }, 500);
+  }
+  if (notAllowed) return json({ success: false, error: notAllowed }, 403);
 
   // Refuse oversized bodies before reading them; validateUpload checks the exact limit per kind.
   if (Number(request.headers.get("content-length")) > MAX_REQUEST_BYTES) {

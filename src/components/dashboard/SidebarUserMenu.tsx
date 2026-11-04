@@ -4,6 +4,7 @@ import { LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 
 import { signOutUser } from "@/actions/auth";
+import { ProBadge } from "@/components/dashboard/ProBadge";
 import { UserAvatar } from "@/components/user/UserAvatar";
 import {
   DropdownMenu,
@@ -37,7 +38,10 @@ export function SidebarUserMenu({ user }: SidebarUserMenuProps) {
       >
         <UserAvatar name={displayName} image={user.image} />
         <div className="grid flex-1 text-left leading-tight">
-          <span className="truncate font-medium">{displayName}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate font-medium">{displayName}</span>
+            {user.isPro && <ProBadge className="shrink-0" />}
+          </span>
           {user.email && (
             <span className="truncate text-xs text-muted-foreground">
               {user.email}

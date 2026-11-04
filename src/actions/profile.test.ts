@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { changePassword, deleteAccount } from "@/actions/profile";
 import { signOut } from "@/auth";
+import { cancelSubscription } from "@/lib/billing";
 import { getSessionUserId } from "@/lib/db/users";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { deleteObject } from "@/lib/r2";
 
 vi.mock("@/auth", () => ({ signOut: vi.fn() }));
+vi.mock("@/lib/billing", () => ({ cancelSubscription: vi.fn() }));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
 vi.mock("@/lib/db/verification-tokens", () => ({ deleteTokensForEmail: vi.fn() }));
 vi.mock("@/lib/password", () => ({ hashPassword: vi.fn(), verifyPassword: vi.fn() }));
@@ -126,19 +128,59 @@ describe("deleteAccount", () => {
     vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       email: "user@test.com",
+      stripeSubscriptionId: null,
       items: FILE_URLS.map((fileUrl) => ({ fileUrl })),
     } as never);
     vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
     vi.mocked(deleteObject).mockResolvedValue(undefined as never);
   });
 
+  function withSubscription() {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      email: "pro@test.com",
+      stripeSubscriptionId: "sub_1",
+      items: [],
+    } as never);
+  }
+
   it("deletes the user, then their uploaded files, then signs out", async () => {
     await deleteAccount();
 
+    expect(cancelSubscription).not.toHaveBeenCalled();
     expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: USER_ID } });
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(vi.mocked(deleteObject).mock.calls).toEqual([[`${USER_ID}/a.png`], [`${USER_ID}/b.pdf`]]);
     expect(signOut).toHaveBeenCalledWith({ redirectTo: "/sign-in" });
+  });
+
+  it("cancels a Pro user's subscription before deleting the account", async () => {
+    withSubscription();
+    const order: string[] = [];
+    vi.mocked(cancelSubscription).mockImplementation(async () => {
+      order.push("cancel");
+    });
+    vi.mocked(prisma.$transaction).mockImplementation(async () => {
+      order.push("delete");
+      return [] as never;
+    });
+
+    await deleteAccount();
+
+    expect(cancelSubscription).toHaveBeenCalledWith("sub_1");
+    expect(order).toEqual(["cancel", "delete"]);
+    expect(signOut).toHaveBeenCalled();
+  });
+
+  it("keeps the account when canceling the subscription fails", async () => {
+    withSubscription();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(cancelSubscription).mockRejectedValue(new Error("Stripe down"));
+
+    const result = await deleteAccount();
+
+    expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it("keeps the files when deleting the user fails", async () => {

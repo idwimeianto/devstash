@@ -1,10 +1,9 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BillingToggle, ProPrice } from "@/components/home/BillingToggle";
-import { Checklist, Container, homeButton, SectionHeading } from "@/components/home/HomeShared";
+import { Checklist, Container, SectionHeading } from "@/components/home/HomeShared";
 import { Reveal } from "@/components/home/Reveal";
-import { FreePlanCta } from "@/components/home/SessionLinks";
+import { FreePlanCta, ProPlanCta } from "@/components/home/SessionLinks";
 import { Card } from "@/components/ui/card";
 import { FREE_PLAN_FEATURES, PRO_PLAN_FEATURES } from "@/lib/home-content";
 import { cn } from "@/lib/utils";
@@ -75,11 +74,7 @@ export function PricingSection() {
                 highlighted
                 price={<ProPrice />}
                 features={PRO_PLAN_FEATURES}
-                cta={
-                  <Link href="/register" className={homeButton("primary", "default", "w-full")}>
-                    Upgrade to Pro
-                  </Link>
-                }
+                cta={<ProPlanCta />}
               />
             </Reveal>
           </div>

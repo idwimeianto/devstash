@@ -12,10 +12,10 @@ async function SidebarUserContent() {
   const session = await auth();
   if (!session?.user) return null;
 
-  const { name, email, image } = session.user;
+  const { name, email, image, isPro } = session.user;
   return (
     <SidebarUserMenu
-      user={{ name: name ?? null, email: email ?? null, image: image ?? null }}
+      user={{ name: name ?? null, email: email ?? null, image: image ?? null, isPro }}
     />
   );
 }

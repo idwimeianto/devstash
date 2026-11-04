@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Lock, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -14,7 +15,7 @@ import {
 import { createItem } from "@/actions/items";
 import { FileUpload } from "@/components/items/FileUpload";
 import { ItemFormFields } from "@/components/items/ItemFormFields";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -39,18 +40,21 @@ import { cn } from "@/lib/utils";
 import type { CreateItemInput } from "@/types/items";
 import type { UploadedFile } from "@/types/uploads";
 
-interface NewItemDialogProps {
+export interface NewItemDialogProps {
   // Type selected when the dialog opens; it can still be changed in the picker.
   defaultType?: CreatableItemType;
   label?: string;
   // The top bar shows only the icon on small screens.
   iconOnlyOnMobile?: boolean;
+  // Computed on the server; false locks the file and image types (the server enforces it too).
+  canUpload?: boolean;
 }
 
 export function NewItemDialog({
   defaultType = "snippet",
   label = "New Item",
   iconOnlyOnMobile = false,
+  canUpload = true,
 }: NewItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -72,6 +76,7 @@ export function NewItemDialog({
         {/* Mounted only while open, so the form starts empty every time. */}
         <NewItemForm
           defaultType={defaultType}
+          canUpload={canUpload}
           pending={pending}
           startTransition={startTransition}
           onCreated={() => setOpen(false)}
@@ -83,12 +88,19 @@ export function NewItemDialog({
 
 interface NewItemFormProps {
   defaultType: CreatableItemType;
+  canUpload: boolean;
   pending: boolean;
   startTransition: TransitionStartFunction;
   onCreated: () => void;
 }
 
-function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewItemFormProps) {
+function NewItemForm({
+  defaultType,
+  canUpload,
+  pending,
+  startTransition,
+  onCreated,
+}: NewItemFormProps) {
   const router = useRouter();
   const formId = useId();
 
@@ -150,7 +162,12 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
         noValidate
         className="flex flex-col gap-5"
       >
-        <ItemTypePicker value={typeName} onChange={changeType} disabled={pending || uploading} />
+        <ItemTypePicker
+          value={typeName}
+          onChange={changeType}
+          disabled={pending || uploading}
+          canUpload={canUpload}
+        />
         <ItemFormFields
           typeName={typeName}
           values={values}
@@ -158,7 +175,8 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
           fieldErrors={fieldErrors}
           autoFocusTitle
           fileField={
-            uploadKind && (
+            uploadKind &&
+            (canUpload ? (
               <FileUpload
                 kind={uploadKind}
                 value={upload}
@@ -167,7 +185,9 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
                 disabled={pending}
                 errors={fieldErrors.file}
               />
-            )
+            ) : (
+              <UploadUpgradeNotice />
+            ))
           }
         />
       </form>
@@ -188,13 +208,29 @@ function NewItemForm({ defaultType, pending, startTransition, onCreated }: NewIt
   );
 }
 
+// Shown instead of the upload zone when the plan doesn't include uploads.
+function UploadUpgradeNotice() {
+  return (
+    <div className="grid justify-items-start gap-3 rounded-lg border border-dashed p-4 text-sm">
+      <p className="flex items-center gap-2 text-muted-foreground">
+        <Lock className="size-4 shrink-0" />
+        File and image uploads are a Pro feature.
+      </p>
+      <Link href="/settings#billing" className={buttonVariants({ size: "sm" })}>
+        Upgrade
+      </Link>
+    </div>
+  );
+}
+
 interface ItemTypePickerProps {
   value: CreatableItemType;
   onChange: (typeName: CreatableItemType) => void;
   disabled: boolean;
+  canUpload: boolean;
 }
 
-function ItemTypePicker({ value, onChange, disabled }: ItemTypePickerProps) {
+function ItemTypePicker({ value, onChange, disabled, canUpload }: ItemTypePickerProps) {
   const labelId = useId();
 
   return (
@@ -206,21 +242,27 @@ function ItemTypePicker({ value, onChange, disabled }: ItemTypePickerProps) {
         {CREATABLE_ITEM_TYPES.map((typeName) => {
           const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(typeName);
           const selected = typeName === value;
+          // Still selectable, so choosing one shows how to upgrade.
+          const locked = !canUpload && isUploadKind(typeName);
           // A plain button: the outline Button's dark-mode background and border would hide the tint.
           return (
             <button
               key={typeName}
               type="button"
               aria-pressed={selected}
+              aria-label={locked ? `${typeName} (Pro)` : undefined}
               disabled={disabled}
               onClick={() => onChange(typeName)}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-xs font-medium capitalize transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+                "relative flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-xs font-medium capitalize transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
                 selected
                   ? cn("border-current", bgTint, textColor)
                   : "border-input text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
+              {locked && (
+                <Lock aria-hidden className="absolute top-1 right-1 size-3 text-muted-foreground" />
+              )}
               <Icon className={cn("size-4", textColor)} />
               {typeName}
             </button>

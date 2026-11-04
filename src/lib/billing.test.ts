@@ -6,6 +6,7 @@ import {
   cancelSubscription,
   createCheckoutUrl,
   createPortalUrl,
+  getBillingSummary,
   getOrCreateCustomer,
   syncSubscriptionById,
 } from "@/lib/billing";
@@ -177,5 +178,84 @@ describe("cancelSubscription", () => {
     await cancelSubscription("sub_1");
 
     expect(stripe.subscriptions.cancel).toHaveBeenCalledWith("sub_1");
+  });
+});
+
+describe("getBillingSummary", () => {
+  const PRO_USER = {
+    ...USER,
+    isPro: true,
+    stripeCustomerId: CUSTOMER_ID,
+    stripeSubscriptionId: "sub_1",
+  };
+  // 2026-12-05T00:00:00Z
+  const PERIOD_END = 1796428800;
+
+  function liveSubscription(fields: Record<string, unknown> = {}, interval = "month") {
+    return {
+      status: "active",
+      cancel_at_period_end: false,
+      cancel_at: null,
+      items: { data: [{ current_period_end: PERIOD_END, price: { recurring: { interval } } }] },
+      ...fields,
+    };
+  }
+
+  it("uses the database flags without calling Stripe when there's no subscription", async () => {
+    expect(await getBillingSummary({ ...USER, stripeCustomerId: CUSTOMER_ID })).toEqual({
+      isPro: false,
+      hasCustomer: true,
+      interval: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      status: null,
+    });
+    expect(stripe.subscriptions.retrieve).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["month", "month"],
+    ["year", "year"],
+  ] as const)("reads a %sly subscription's period from its item", async (interval, expected) => {
+    stripe.subscriptions.retrieve.mockResolvedValue(liveSubscription({}, interval));
+
+    expect(await getBillingSummary(PRO_USER)).toEqual({
+      isPro: true,
+      hasCustomer: true,
+      interval: expected,
+      currentPeriodEnd: "2026-12-05T00:00:00.000Z",
+      cancelAtPeriodEnd: false,
+      status: "active",
+    });
+    expect(stripe.subscriptions.retrieve).toHaveBeenCalledWith("sub_1");
+  });
+
+  it.each([
+    ["cancel_at_period_end", { cancel_at_period_end: true }],
+    ["cancel_at", { cancel_at: PERIOD_END }],
+  ])("reports a pending cancellation from %s", async (_field, fields) => {
+    stripe.subscriptions.retrieve.mockResolvedValue(liveSubscription(fields));
+
+    expect((await getBillingSummary(PRO_USER)).cancelAtPeriodEnd).toBe(true);
+  });
+
+  it("reports a past_due status", async () => {
+    stripe.subscriptions.retrieve.mockResolvedValue(liveSubscription({ status: "past_due" }));
+
+    expect((await getBillingSummary(PRO_USER)).status).toBe("past_due");
+  });
+
+  it("falls back to the database flags when Stripe fails", async () => {
+    stripe.subscriptions.retrieve.mockRejectedValue(new Error("Stripe down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(await getBillingSummary(PRO_USER)).toEqual({
+      isPro: true,
+      hasCustomer: true,
+      interval: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      status: null,
+    });
   });
 });

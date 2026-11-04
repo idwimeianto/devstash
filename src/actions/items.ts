@@ -16,6 +16,7 @@ import { getStoredContentType, isUploadKind, type UploadKind } from "@/lib/file-
 import { getEditableItemFields } from "@/lib/item-fields";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getObjectSize } from "@/lib/r2";
+import { checkItemCreation } from "@/lib/usage-checks";
 import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
 import type { SetFavoriteResult } from "@/types/favorites";
 import type {
@@ -86,6 +87,10 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
   const editable = getEditableItemFields(common.typeName);
 
   try {
+    // Free-plan limits and Pro-only types; nothing is checked while gating is off.
+    const notAllowed = await checkItemCreation(userId, common.typeName);
+    if (notAllowed) return { success: false, error: notAllowed };
+
     if (await hasUnknownCollection(userId, common.collectionIds)) return collectionNotFound();
 
     let storedFile: UploadedFile | null = null;

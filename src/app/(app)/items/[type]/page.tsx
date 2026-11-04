@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
-import { NewItemDialog } from "@/components/items/NewItemDialog";
+import { NewItemButton } from "@/components/items/NewItemButton";
 import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getItemTypeBySlug, getItemsByType } from "@/lib/db/items";
@@ -47,7 +47,7 @@ async function ItemsByType({ params, searchParams }: PageProps<"/items/[type]">)
         {/* Custom types can't be created from the dialog yet. */}
         {isCreatableItemType(type.name) && (
           <div className="ml-auto">
-            <NewItemDialog
+            <NewItemButton
               defaultType={type.name}
               label={`New ${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}`}
             />

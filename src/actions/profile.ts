@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { signOut } from "@/auth";
+import { cancelSubscription } from "@/lib/billing";
 import { getSessionUserId } from "@/lib/db/users";
 import { deleteTokensForEmail } from "@/lib/db/verification-tokens";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -75,9 +76,16 @@ export async function deleteAccount(): Promise<DeleteAccountState> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, items: { where: { fileUrl: { not: null } }, select: { fileUrl: true } } },
+      select: {
+        email: true,
+        stripeSubscriptionId: true,
+        items: { where: { fileUrl: { not: null } }, select: { fileUrl: true } },
+      },
     });
     if (user) {
+      // Canceled first: if Stripe fails, the account stays so it isn't billed after deletion.
+      if (user.stripeSubscriptionId) await cancelSubscription(user.stripeSubscriptionId);
+
       fileUrls = user.items.flatMap((item) => (item.fileUrl ? [item.fileUrl] : []));
       // Items, collections, tags, custom types and accounts cascade from the user;
       // verification tokens aren't linked to it, so they're removed by email.

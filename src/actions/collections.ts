@@ -10,6 +10,7 @@ import {
 } from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
+import { checkCollectionCreation } from "@/lib/usage-checks";
 import { createCollectionSchema, updateCollectionSchema } from "@/lib/validations/collections";
 import type {
   CollectionOptionsResult,
@@ -47,6 +48,10 @@ export async function createCollection(
   if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
   try {
+    // The free-plan limit; nothing is checked while gating is off.
+    const notAllowed = await checkCollectionCreation(userId);
+    if (notAllowed) return { success: false, error: notAllowed };
+
     const collection = await createCollectionQuery(userId, parsed.data);
     return { success: true, data: collection };
   } catch (error) {

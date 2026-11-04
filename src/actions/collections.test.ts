@@ -16,6 +16,8 @@ import {
 } from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
+import { checkCollectionCreation } from "@/lib/usage-checks";
+import { COLLECTION_LIMIT_REACHED } from "@/lib/usage-limits";
 
 vi.mock("@/lib/db/collections", () => ({
   createCollection: vi.fn(),
@@ -27,6 +29,8 @@ vi.mock("@/lib/db/collections", () => ({
 
 const NOT_FOUND = "This collection doesn't exist or was deleted.";
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
+// The plan rules themselves are covered in usage-checks.test.ts.
+vi.mock("@/lib/usage-checks", () => ({ checkCollectionCreation: vi.fn() }));
 
 const USER_ID = "user_1";
 const CREATED = { id: "c1", name: "React Patterns", description: null };
@@ -35,6 +39,28 @@ describe("createCollection action", () => {
   beforeEach(() => {
     vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
     vi.mocked(createCollectionQuery).mockResolvedValue(CREATED);
+    vi.mocked(checkCollectionCreation).mockResolvedValue(null);
+  });
+
+  it("refuses without saving when the collection limit is reached", async () => {
+    vi.mocked(checkCollectionCreation).mockResolvedValue(COLLECTION_LIMIT_REACHED);
+
+    const result = await createCollection({ name: "React Patterns" });
+
+    expect(result).toEqual({ success: false, error: COLLECTION_LIMIT_REACHED });
+    expect(checkCollectionCreation).toHaveBeenCalledWith(USER_ID);
+    expect(createCollectionQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic error when the plan check fails", async () => {
+    vi.mocked(checkCollectionCreation).mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(await createCollection({ name: "React Patterns" })).toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+    expect(createCollectionQuery).not.toHaveBeenCalled();
   });
 
   it("creates the collection for the session user with the validated input", async () => {

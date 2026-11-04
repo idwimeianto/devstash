@@ -4,8 +4,12 @@ import { DELETE, POST } from "@/app/api/upload/route";
 import { isFileUrlInUse } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
 import { deleteObject, putObject } from "@/lib/r2";
+import { checkUploadAllowed } from "@/lib/usage-checks";
+import { PRO_FEATURE_REQUIRED } from "@/lib/usage-limits";
 
 vi.mock("@/lib/db/items", () => ({ isFileUrlInUse: vi.fn() }));
+// The plan rules themselves are covered in usage-checks.test.ts.
+vi.mock("@/lib/usage-checks", () => ({ checkUploadAllowed: vi.fn() }));
 vi.mock("@/lib/db/users", () => ({ getSessionUserId: vi.fn() }));
 // Keep the real URL helpers; only the calls to R2 are faked.
 vi.mock("@/lib/r2", async (importOriginal) => ({
@@ -34,6 +38,7 @@ beforeEach(() => {
   vi.stubEnv("R2_PUBLIC_URL", PUBLIC_URL);
   vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
   vi.mocked(isFileUrlInUse).mockResolvedValue(false);
+  vi.mocked(checkUploadAllowed).mockResolvedValue(null);
 });
 
 describe("POST /api/upload", () => {
@@ -41,6 +46,7 @@ describe("POST /api/upload", () => {
     const response = await upload("image", new File(["png-bytes"], "My Photo.PNG", { type: "image/png" }));
 
     expect(response.status).toBe(201);
+    expect(checkUploadAllowed).toHaveBeenCalledWith(USER_ID);
     const body = await response.json();
     expect(body).toEqual({
       success: true,
@@ -52,6 +58,29 @@ describe("POST /api/upload", () => {
     expect(put.key).toMatch(new RegExp(`^${USER_ID}/[\\w-]+\\.png$`));
     expect(put.contentType).toBe("image/png");
     expect(put.contentDisposition).toBeUndefined();
+  });
+
+  it("returns 403 for a free user before reading the body", async () => {
+    vi.mocked(checkUploadAllowed).mockResolvedValue(PRO_FEATURE_REQUIRED);
+    const request = new Request("http://localhost/api/upload", { method: "POST", body: "x" });
+    const formData = vi.spyOn(request, "formData");
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ success: false, error: PRO_FEATURE_REQUIRED });
+    expect(formData).not.toHaveBeenCalled();
+    expect(putObject).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when the plan check fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(checkUploadAllowed).mockRejectedValue(new Error("db down"));
+
+    const response = await upload("image", new File(["png"], "a.png", { type: "image/png" }));
+
+    expect(response.status).toBe(500);
+    expect(putObject).not.toHaveBeenCalled();
   });
 
   it("stores SVGs as attachments", async () => {
