@@ -39,6 +39,17 @@ export interface SidebarCollections {
   recent: SidebarCollection[];
 }
 
+// A row on the favorites page.
+export interface FavoriteCollection {
+  id: string;
+  name: string;
+  itemCount: number;
+  // Most-used type, falling back to the collection's default type when empty.
+  mainTypeName: string | null;
+  // Stands in for when it was favorited, since there's no separate timestamp.
+  updatedAt: Date;
+}
+
 export interface CollectionStats {
   collections: number;
   favoriteCollections: number;

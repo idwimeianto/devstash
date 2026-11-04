@@ -1,18 +1,31 @@
-# Current Feature
+# Current Feature: Favorites Page
 
-<!-- Feature name and short description -->
+A `/favorites` page listing all favorited items and collections in a compact, dev-focused list.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Star icon button in `TopBar` linking to `/favorites`
+- Protected `/favorites` route (added to the `src/proxy.ts` matcher)
+- Fetch all of the signed-in user's favorited items and collections
+- Compact list view (VS Code / terminal style), not cards
+- Each row: type icon, title, type badge, date added
+- Separate Items and Collections sections, each with its count
+- Clicking an item opens the `ItemDrawer`; clicking a collection navigates to `/collections/[id]`
+- Empty state when there are no favorites
+- Sorted by most recently favorited (`updatedAt`, newest first)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/favorites-spec.md`
+- UI style: monospace or semi-monospace font, minimal padding, high density, subtle hover states, no cards or heavy borders (clean lines only)
+- `isFavorite` already exists on `Item` and `Collection`, so no migration is expected
+- There is no favorite toggle yet (the drawer's and collection actions' Favorite buttons are display only), so favorites can only come from the seed (React Patterns and AI Workflows) or the database; `updatedAt` stands in for "date favorited" and also changes on any edit
+- Collections have no single type: the row's icon / badge could use the collection's most-used type (falling back to the default type), as on the cards — decide at `start`
+- Reuse existing pieces where they fit: `OpenItemButton` / `ItemDrawerProvider`, `getItemTypeDisplay()`, `ItemMarkers`, the `(app)` route group shell
 
 ## History
 

@@ -20,6 +20,15 @@ export interface ItemSummary {
   createdAt: Date;
 }
 
+// A row on the favorites page.
+export interface FavoriteItem {
+  id: string;
+  title: string;
+  typeName: string;
+  // Stands in for when it was favorited, since there's no separate timestamp.
+  updatedAt: Date;
+}
+
 // The sections of a collection page, each paginated on its own.
 export type CollectionSection = "items" | "files" | "images";
 

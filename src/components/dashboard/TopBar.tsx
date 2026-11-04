@@ -1,8 +1,10 @@
-import { Layers } from "lucide-react";
+import { Layers, Star } from "lucide-react";
+import Link from "next/link";
 
 import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
 import { NewItemDialog } from "@/components/items/NewItemDialog";
 import { SearchTrigger } from "@/components/search/SearchTrigger";
+import { buttonVariants } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function TopBar() {
@@ -18,6 +20,14 @@ export function TopBar() {
         <SidebarTrigger className="md:hidden" />
         <SearchTrigger />
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/favorites"
+            aria-label="Favorites"
+            title="Favorites"
+            className={buttonVariants({ variant: "ghost", size: "icon" })}
+          >
+            <Star />
+          </Link>
           <NewCollectionDialog />
           <NewItemDialog iconOnlyOnMobile />
         </div>

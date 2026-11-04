@@ -16,6 +16,7 @@ import type {
   CollectionSummary,
   CollectionTypeSummary,
   CreatedCollection,
+  FavoriteCollection,
   SidebarCollection,
   SidebarCollections,
 } from "@/types/collections";
@@ -142,6 +143,26 @@ export async function getSidebarCollections(
       .slice(0, SIDEBAR_RECENT_LIMIT)
       .map(toSidebarCollection),
   };
+}
+
+// Every favorite collection of the user, most recently updated first.
+export async function getFavoriteCollections(userId: string): Promise<FavoriteCollection[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, name: true, updatedAt: true, ...ITEM_TYPES_SELECT },
+  });
+
+  return collections.map((collection) => {
+    const { itemCount, mainTypeName } = summarizeItemTypes(collection);
+    return {
+      id: collection.id,
+      name: collection.name,
+      itemCount,
+      mainTypeName,
+      updatedAt: collection.updatedAt,
+    };
+  });
 }
 
 export async function getCollectionStats(

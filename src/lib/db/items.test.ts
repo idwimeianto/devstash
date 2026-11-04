@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import {
   createItem,
   deleteItem,
+  getFavoriteItems,
   getItemDetail,
   getItemFile,
   getItemsByCollection,
@@ -57,6 +58,26 @@ const ROW = {
     { collection: { id: "col_2", name: "React Patterns" } },
   ],
 };
+
+describe("getFavoriteItems", () => {
+  it("lists the user's favorite items, most recently updated first, with their type name", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([
+      { id: "a", title: "useAuth", updatedAt: UPDATED_AT, type: { name: "snippet" } },
+    ] as never);
+
+    const items = await getFavoriteItems(USER_ID);
+
+    expect(prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, isFavorite: true },
+        orderBy: { updatedAt: "desc" },
+      })
+    );
+    expect(items).toEqual([
+      { id: "a", title: "useAuth", typeName: "snippet", updatedAt: UPDATED_AT },
+    ]);
+  });
+});
 
 describe("getSearchItems", () => {
   it("lists every item of the user with a one-line preview", async () => {

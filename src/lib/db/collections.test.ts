@@ -8,6 +8,7 @@ import {
   getCollection,
   getCollectionOptions,
   getCollectionsPage,
+  getFavoriteCollections,
   getRecentCollections,
   getSidebarCollections,
   updateCollection,
@@ -136,6 +137,29 @@ describe("getCollection", () => {
     vi.mocked(prisma.collection.findFirst).mockResolvedValue(null);
 
     await expect(getCollection("user_1", "someone_elses")).resolves.toBeNull();
+  });
+});
+
+describe("getFavoriteCollections", () => {
+  it("lists the user's favorite collections, most recently updated first, with count and main type", async () => {
+    const updatedAt = new Date("2026-11-01T00:00:00Z");
+    vi.mocked(prisma.collection.findMany).mockResolvedValue([
+      { ...collection("f1", true, [LINK, SNIPPET, LINK]), updatedAt },
+      { ...collection("f2", true, [], "prompt"), updatedAt },
+    ] as never);
+
+    const favorites = await getFavoriteCollections("user_1");
+
+    expect(prisma.collection.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user_1", isFavorite: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+    );
+    expect(favorites).toEqual([
+      { id: "f1", name: "Collection f1", itemCount: 3, mainTypeName: "link", updatedAt },
+      { id: "f2", name: "Collection f2", itemCount: 0, mainTypeName: "prompt", updatedAt },
+    ]);
   });
 });
 

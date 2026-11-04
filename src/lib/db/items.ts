@@ -11,6 +11,7 @@ import { toContentPreview } from "@/lib/search";
 import type { CreateItemData, UpdateItemData } from "@/lib/validations/items";
 import type {
   CollectionSection,
+  FavoriteItem,
   ItemDetail,
   ItemStats,
   ItemSummary,
@@ -355,6 +356,21 @@ export function getItemsByCollection(
     },
     page
   );
+}
+
+// Every favorite item of the user, most recently updated first.
+export async function getFavoriteItems(userId: string): Promise<FavoriteItem[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, title: true, updatedAt: true, type: { select: { name: true } } },
+  });
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    typeName: item.type.name,
+    updatedAt: item.updatedAt,
+  }));
 }
 
 // Every item of the user, recent first, in the light shape the command palette searches.

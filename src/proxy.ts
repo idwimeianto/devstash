@@ -30,6 +30,7 @@ export const config = {
     "/dashboard/:path*",
     "/items/:path*",
     "/collections/:path*",
+    "/favorites",
     "/profile",
     "/settings",
     "/sign-in",
