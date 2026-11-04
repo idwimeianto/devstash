@@ -3,29 +3,31 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { NETWORK_ERROR } from "@/lib/messages";
-import type { SetFavoriteResult } from "@/types/favorites";
 
-// Flips the star at once, saves in the background, and rolls back with an error toast if the
-// save fails. On success the page refreshes so the sidebar, stats and /favorites follow.
-export function useFavoriteToggle(
+type ToggleResult = { success: true } | { success: false; error: string };
+
+// Flips a saved on / off value (favorite, pin) at once, saves in the background, and rolls
+// back with an error toast if the save fails. On success the page refreshes so the sidebar,
+// stats and listings follow.
+export function useOptimisticToggle(
   saved: boolean,
-  save: (isFavorite: boolean) => Promise<SetFavoriteResult>,
+  save: (next: boolean) => Promise<ToggleResult>,
 ) {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(saved);
+  const [checked, setChecked] = useState(saved);
   const [previousSaved, setPreviousSaved] = useState(saved);
 
   // Follow the server's value when it changes, e.g. after a toggle elsewhere and a refresh.
   if (saved !== previousSaved) {
     setPreviousSaved(saved);
-    setIsFavorite(saved);
+    setChecked(saved);
   }
 
   async function toggle() {
-    const next = !isFavorite;
-    setIsFavorite(next);
+    const next = !checked;
+    setChecked(next);
 
-    let result: SetFavoriteResult;
+    let result: ToggleResult;
     try {
       result = await save(next);
     } catch {
@@ -33,12 +35,12 @@ export function useFavoriteToggle(
     }
 
     if (!result.success) {
-      setIsFavorite(!next);
+      setChecked(!next);
       toast.error(result.error);
       return;
     }
     router.refresh();
   }
 
-  return { isFavorite, toggle };
+  return { checked, toggle };
 }

@@ -78,6 +78,7 @@ function ItemPanel({ item, onItemUpdated, onItemDeleted }: ItemPanelProps) {
         onEdit={() => setEditing(true)}
         onDeleted={onItemDeleted}
         onFavoriteSaved={(isFavorite) => onItemUpdated({ ...item, isFavorite })}
+        onPinnedSaved={(isPinned) => onItemUpdated({ ...item, isPinned })}
       />
     );
   }

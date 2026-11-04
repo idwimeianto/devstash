@@ -1,18 +1,35 @@
-# Current Feature
+# Current Feature: Pinned Items
 
-<!-- Feature name and short description -->
+Make the item drawer's Pin button work, with pinned items at the top of listings and in the dashboard's Pinned Items section.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `setItemPinned(itemId, isPinned)` server action that pins / unpins one of the signed-in user's items
+- The Pin button in the item drawer (`ItemDetailView`, currently display only) toggles the item's pin state
+- Optimistic UI: the Pin button flips at once and rolls back if the save fails
+- Error toast (with rollback) on a failed save; no success toast
+- Pinned items sort to the top of `/items/[type]` and the `/collections/[id]` sections
+- The dashboard's Recent Items leaves out pinned items (they have their own Pinned section)
+- Pinned / unpinned items appear in / leave the dashboard's Pinned Items section
+- Follows the Favorite Toggle pattern (server action, `updateMany` query, `useFavoriteToggle`-style hook, `router.refresh()`)
+- Items only, not collections
+- The pin icon on `ItemCard` (via `ItemMarkers`) stays a static indicator, not a button
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Spec: `context/features/pinned-spec.md`
+- Favorite Toggle reference: `setItemFavorite(itemId, isFavorite)` sends the target value rather than flipping, so repeated clicks can't drift; `useFavoriteToggle(saved, save)` in `src/hooks/use-favorite-toggle.ts` (optimistic flip, rollback with error toast, `router.refresh()`); `ItemPanel`'s `onFavoriteSaved` keeps the drawer's item in sync so Edit → Cancel doesn't show the old state
+- Decided at `start`:
+  - `setItemPinned(itemId, isPinned)` (sends the target value, mirroring `setItemFavorite`) instead of the spec's `toggleItemPin`
+  - Toasts on errors only, like the favorite toggle (the spec asked for success toasts too)
+  - Pinned first on `/items/[type]` and the `/collections/[id]` sections; `/favorites` and the command palette unchanged
+  - Changed after the browser check: dashboard Recent Items excludes pinned items instead of listing them first (they showed twice)
+  - `useFavoriteToggle` generalized into a shared `useOptimisticToggle`, used by both favorite and pin
+- Current ordering: `RECENT_ORDER` in `src/lib/db/items.ts` (`lastUsedAt` desc nulls last, then `createdAt` desc); `getPinnedItems` filters `isPinned: true`, capped by `PINNED_ITEMS_LIMIT` (10); pagination (`findItemsPage()`) uses `RECENT_ORDER`, so a pinned-first order must be stable across pages
 
 ## History
 

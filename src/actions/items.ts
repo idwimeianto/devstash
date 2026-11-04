@@ -8,6 +8,7 @@ import {
   getItemTypeName,
   isFileUrlInUse,
   setItemFavorite as setItemFavoriteQuery,
+  setItemPinned as setItemPinnedQuery,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
@@ -23,6 +24,7 @@ import type {
   DeleteItemResult,
   ItemDetail,
   ItemDetailJson,
+  SetPinnedResult,
   UpdateItemInput,
   UpdateItemResult,
 } from "@/types/items";
@@ -166,6 +168,23 @@ export async function setItemFavorite(
     return updated ? { success: true, data: { isFavorite } } : { success: false, error: NOT_FOUND };
   } catch (error) {
     console.error("Updating item favorite failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
+}
+
+// Sets rather than flips, so repeated clicks can't drift from what the UI shows.
+export async function setItemPinned(itemId: string, isPinned: boolean): Promise<SetPinnedResult> {
+  if (typeof itemId !== "string" || !itemId) return { success: false, error: NOT_FOUND };
+  if (typeof isPinned !== "boolean") return { success: false, error: GENERIC_ERROR };
+
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  try {
+    const updated = await setItemPinnedQuery(userId, itemId, isPinned);
+    return updated ? { success: true, data: { isPinned } } : { success: false, error: NOT_FOUND };
+  } catch (error) {
+    console.error("Updating item pin failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
 }

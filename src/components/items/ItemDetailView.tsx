@@ -2,7 +2,7 @@
 
 import { Copy, Download, FileText, Pencil, Pin, Star, Tag } from "lucide-react";
 
-import { setItemFavorite } from "@/actions/items";
+import { setItemFavorite, setItemPinned } from "@/actions/items";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import {
@@ -13,7 +13,7 @@ import {
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { useOptimisticToggle } from "@/hooks/use-optimistic-toggle";
 import { formatFileSize } from "@/lib/file-upload";
 import { isCodeItemType, isMarkdownItemType } from "@/lib/item-fields";
 import { getSafeHref } from "@/lib/safe-url";
@@ -27,8 +27,9 @@ interface ItemDetailViewProps {
 interface ItemDetailViewWithActionsProps extends ItemDetailViewProps {
   onEdit: () => void;
   onDeleted: () => void;
-  // Keeps the drawer's copy of the item in step, so switching to edit and back shows it.
+  // Keep the drawer's copy of the item in step, so switching to edit and back shows it.
   onFavoriteSaved: (isFavorite: boolean) => void;
+  onPinnedSaved: (isPinned: boolean) => void;
 }
 
 export function ItemDetailView({
@@ -36,6 +37,7 @@ export function ItemDetailView({
   onEdit,
   onDeleted,
   onFavoriteSaved,
+  onPinnedSaved,
 }: ItemDetailViewWithActionsProps) {
   return (
     <>
@@ -45,6 +47,7 @@ export function ItemDetailView({
           onEdit={onEdit}
           onDeleted={onDeleted}
           onFavoriteSaved={onFavoriteSaved}
+          onPinnedSaved={onPinnedSaved}
         />
       </ItemDrawerHeader>
 
@@ -72,19 +75,26 @@ export function ItemDetailView({
   );
 }
 
-// Favorite, Edit and Delete work so far; Pin and Copy come with later item features.
+// Favorite, Pin, Edit and Delete work so far; Copy comes with a later item feature.
 function ItemActionBar({
   item,
   onEdit,
   onDeleted,
   onFavoriteSaved,
+  onPinnedSaved,
 }: ItemDetailViewWithActionsProps) {
-  const { isPinned } = item;
-  const { isFavorite, toggle } = useFavoriteToggle(item.isFavorite, async (next) => {
+  const favorite = useOptimisticToggle(item.isFavorite, async (next) => {
     const result = await setItemFavorite(item.id, next);
     if (result.success) onFavoriteSaved(next);
     return result;
   });
+  const pin = useOptimisticToggle(item.isPinned, async (next) => {
+    const result = await setItemPinned(item.id, next);
+    if (result.success) onPinnedSaved(next);
+    return result;
+  });
+  const isFavorite = favorite.checked;
+  const isPinned = pin.checked;
   return (
     <div className="flex flex-wrap items-center gap-1">
       <Button
@@ -92,7 +102,7 @@ function ItemActionBar({
         size="sm"
         aria-pressed={isFavorite}
         className={cn(isFavorite && "text-yellow-400")}
-        onClick={toggle}
+        onClick={favorite.toggle}
       >
         <Star className={cn(isFavorite && "fill-yellow-400")} />
         Favorite
@@ -102,6 +112,7 @@ function ItemActionBar({
         size="sm"
         aria-pressed={isPinned}
         className={cn(!isPinned && "text-muted-foreground")}
+        onClick={pin.toggle}
       >
         <Pin className={cn(isPinned && "fill-current")} />
         Pin

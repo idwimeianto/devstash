@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createItem, deleteItem, setItemFavorite, updateItem } from "@/actions/items";
+import {
+  createItem,
+  deleteItem,
+  setItemFavorite,
+  setItemPinned,
+  updateItem,
+} from "@/actions/items";
 import { areUserCollections } from "@/lib/db/collections";
 import {
   createItem as createItemQuery,
@@ -8,6 +14,7 @@ import {
   getItemTypeName,
   isFileUrlInUse,
   setItemFavorite as setItemFavoriteQuery,
+  setItemPinned as setItemPinnedQuery,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
@@ -21,6 +28,7 @@ vi.mock("@/lib/db/items", () => ({
   getItemTypeName: vi.fn(),
   isFileUrlInUse: vi.fn(),
   setItemFavorite: vi.fn(),
+  setItemPinned: vi.fn(),
   updateItem: vi.fn(),
 }));
 vi.mock("@/lib/db/collections", () => ({ areUserCollections: vi.fn() }));
@@ -567,6 +575,61 @@ describe("setItemFavorite action", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(setItemFavorite(ITEM_ID, true)).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+  });
+});
+
+describe("setItemPinned action", () => {
+  const NOT_FOUND = "This item doesn't exist or was deleted.";
+
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(setItemPinnedQuery).mockResolvedValue(true);
+  });
+
+  it("sets the pin on the session user's item and returns the new value", async () => {
+    await expect(setItemPinned(ITEM_ID, true)).resolves.toEqual({
+      success: true,
+      data: { isPinned: true },
+    });
+    expect(setItemPinnedQuery).toHaveBeenCalledWith(USER_ID, ITEM_ID, true);
+  });
+
+  it("rejects an empty id or a non-boolean value without touching the database", async () => {
+    await expect(setItemPinned("", true)).resolves.toEqual({ success: false, error: NOT_FOUND });
+    await expect(setItemPinned(ITEM_ID, "yes" as never)).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+    expect(setItemPinnedQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    await expect(setItemPinned(ITEM_ID, true)).resolves.toEqual({
+      success: false,
+      error: NOT_SIGNED_IN,
+    });
+    expect(setItemPinnedQuery).not.toHaveBeenCalled();
+  });
+
+  it("reports a missing or another user's item as not found", async () => {
+    vi.mocked(setItemPinnedQuery).mockResolvedValue(false);
+
+    await expect(setItemPinned("someone_elses", false)).resolves.toEqual({
+      success: false,
+      error: NOT_FOUND,
+    });
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.mocked(setItemPinnedQuery).mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(setItemPinned(ITEM_ID, true)).resolves.toEqual({
       success: false,
       error: GENERIC_ERROR,
     });

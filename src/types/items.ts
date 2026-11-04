@@ -97,6 +97,10 @@ export type CreateItemResult =
 
 export type DeleteItemResult = { success: true } | { success: false; error: string };
 
+export type SetPinnedResult =
+  | { success: true; data: { isPinned: boolean } }
+  | { success: false; error: string };
+
 export interface ItemTypeRef {
   id: string;
   name: string;

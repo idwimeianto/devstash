@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { useOptimisticToggle } from "@/hooks/use-optimistic-toggle";
 import { cn } from "@/lib/utils";
 import type { CollectionSummary } from "@/types/collections";
 
@@ -26,7 +26,7 @@ interface CollectionCardMenuProps {
 export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { isFavorite, toggle } = useFavoriteToggle(collection.isFavorite, (next) =>
+  const { checked: isFavorite, toggle } = useOptimisticToggle(collection.isFavorite, (next) =>
     setCollectionFavorite(collection.id, next),
   );
 

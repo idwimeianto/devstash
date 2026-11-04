@@ -10,9 +10,11 @@ import {
   getItemsByCollection,
   getItemsByType,
   getItemTypeName,
+  getRecentItems,
   getSearchItems,
   isFileUrlInUse,
   setItemFavorite,
+  setItemPinned,
   updateItem,
 } from "@/lib/db/items";
 import { ITEMS_PER_PAGE } from "@/lib/pagination";
@@ -40,6 +42,8 @@ vi.mock("@/lib/prisma", () => ({
 
 const USER_ID = "user_1";
 const ITEM_ID = "item_1";
+const RECENT_ORDER = [{ lastUsedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }];
+const PINNED_FIRST_ORDER = [{ isPinned: "desc" }, ...RECENT_ORDER];
 const CREATED_AT = new Date("2026-01-15T00:00:00Z");
 const UPDATED_AT = new Date("2026-01-16T00:00:00Z");
 
@@ -78,6 +82,38 @@ describe("setItemFavorite", () => {
 
     vi.mocked(prisma.item.updateMany).mockResolvedValue({ count: 0 });
     await expect(setItemFavorite(USER_ID, "someone_elses", false)).resolves.toBe(false);
+  });
+});
+
+describe("setItemPinned", () => {
+  it("updates only the user's item and reports whether it was found", async () => {
+    vi.mocked(prisma.item.updateMany).mockResolvedValue({ count: 1 });
+
+    await expect(setItemPinned(USER_ID, ITEM_ID, true)).resolves.toBe(true);
+    expect(prisma.item.updateMany).toHaveBeenCalledWith({
+      where: { id: ITEM_ID, userId: USER_ID },
+      data: { isPinned: true },
+    });
+
+    vi.mocked(prisma.item.updateMany).mockResolvedValue({ count: 0 });
+    await expect(setItemPinned(USER_ID, "someone_elses", false)).resolves.toBe(false);
+  });
+});
+
+describe("getRecentItems", () => {
+  it("lists the user's unpinned items, most recently used first, up to the limit", async () => {
+    vi.mocked(prisma.item.findMany).mockResolvedValue([{ ...ROW, isPinned: false }] as never);
+
+    const items = await getRecentItems(USER_ID, 5);
+
+    expect(items).toEqual([expect.objectContaining({ id: ITEM_ID, isPinned: false })]);
+    expect(prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, isPinned: false },
+        orderBy: RECENT_ORDER,
+        take: 5,
+      })
+    );
   });
 });
 
@@ -158,7 +194,11 @@ describe("getItemsByType", () => {
     const page = await getItemsByType(USER_ID, "type_snippet", 2);
 
     expect(prisma.item.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: ITEMS_PER_PAGE, take: ITEMS_PER_PAGE })
+      expect.objectContaining({
+        orderBy: PINNED_FIRST_ORDER,
+        skip: ITEMS_PER_PAGE,
+        take: ITEMS_PER_PAGE,
+      })
     );
     expect(page).toEqual(
       expect.objectContaining({ total: 50, page: 2, pageCount: 3, rows: [expect.objectContaining({ id: ITEM_ID })] })
@@ -228,7 +268,7 @@ describe("getItemsByCollection", () => {
     vi.mocked(prisma.item.count).mockResolvedValue(2);
   });
 
-  it("lists the user's regular items in that collection, most recently used first", async () => {
+  it("lists the user's regular items in that collection, pinned then most recently used first", async () => {
     vi.mocked(prisma.item.findMany).mockResolvedValue([
       { ...ROW, lastUsedAt: null },
       { ...ROW, id: "link_1", type: { name: "link" }, lastUsedAt: null },
@@ -248,7 +288,7 @@ describe("getItemsByCollection", () => {
           collections: { some: { collectionId: "col_1" } },
           type: { name: { notIn: ["file", "image"] } },
         },
-        orderBy: [{ lastUsedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+        orderBy: PINNED_FIRST_ORDER,
         skip: 0,
         take: ITEMS_PER_PAGE,
       })

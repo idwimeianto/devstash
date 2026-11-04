@@ -7,7 +7,7 @@ import { setCollectionFavorite } from "@/actions/collections";
 import { DeleteCollectionDialog } from "@/components/collections/DeleteCollectionDialog";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
 import { Button } from "@/components/ui/button";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { useOptimisticToggle } from "@/hooks/use-optimistic-toggle";
 import { cn } from "@/lib/utils";
 import type { CollectionRef } from "@/types/collections";
 
@@ -19,7 +19,7 @@ interface CollectionActionsProps {
 export function CollectionActions({ collection }: CollectionActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { isFavorite, toggle } = useFavoriteToggle(collection.isFavorite, (next) =>
+  const { checked: isFavorite, toggle } = useOptimisticToggle(collection.isFavorite, (next) =>
     setCollectionFavorite(collection.id, next),
   );
 

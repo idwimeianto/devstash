@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 
 import { setItemFavorite } from "@/actions/items";
 import { Button } from "@/components/ui/button";
-import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { useOptimisticToggle } from "@/hooks/use-optimistic-toggle";
 import { cn } from "@/lib/utils";
 
 interface ItemFavoriteButtonProps {
@@ -16,7 +16,9 @@ interface ItemFavoriteButtonProps {
 // The star on item cards and rows. Sits above the card's open button, so a click toggles
 // the favorite instead of opening the drawer.
 export function ItemFavoriteButton({ itemId, title, isFavorite: saved }: ItemFavoriteButtonProps) {
-  const { isFavorite, toggle } = useFavoriteToggle(saved, (next) => setItemFavorite(itemId, next));
+  const { checked: isFavorite, toggle } = useOptimisticToggle(saved, (next) =>
+    setItemFavorite(itemId, next),
+  );
 
   return (
     <Button

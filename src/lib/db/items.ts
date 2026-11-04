@@ -62,6 +62,12 @@ const RECENT_ORDER = [
   { createdAt: "desc" },
 ] satisfies Prisma.ItemOrderByWithRelationInput[];
 
+// Pinned items first, each group in RECENT_ORDER.
+const PINNED_FIRST_ORDER = [
+  { isPinned: "desc" },
+  ...RECENT_ORDER,
+] satisfies Prisma.ItemOrderByWithRelationInput[];
+
 type ItemSummaryRow = Prisma.ItemGetPayload<{
   select: typeof ITEM_SUMMARY_SELECT;
 }>;
@@ -99,7 +105,8 @@ export async function getRecentItems(
   limit = DASHBOARD_RECENT_ITEMS_LIMIT
 ): Promise<ItemSummary[]> {
   const items = await prisma.item.findMany({
-    where: { userId },
+    // Pinned items already have their own dashboard section.
+    where: { userId, isPinned: false },
     orderBy: RECENT_ORDER,
     take: limit,
     select: ITEM_SUMMARY_SELECT,
@@ -308,7 +315,7 @@ export async function getItemTypeBySlug(
   });
 }
 
-// One page of the matching items, recent first, with the total count.
+// One page of the matching items, pinned then recent first, with the total count.
 function findItemsPage(where: Prisma.ItemWhereInput, page: number): Promise<Page<ItemSummary>> {
   return paginate(
     page,
@@ -317,7 +324,7 @@ function findItemsPage(where: Prisma.ItemWhereInput, page: number): Promise<Page
     async (skip, take) => {
       const items = await prisma.item.findMany({
         where,
-        orderBy: RECENT_ORDER,
+        orderBy: PINNED_FIRST_ORDER,
         skip,
         take,
         select: ITEM_SUMMARY_SELECT,
@@ -367,6 +374,19 @@ export async function setItemFavorite(
   const { count } = await prisma.item.updateMany({
     where: { id: itemId, userId },
     data: { isFavorite },
+  });
+  return count > 0;
+}
+
+// Whether the user's item was updated; another user's item looks missing.
+export async function setItemPinned(
+  userId: string,
+  itemId: string,
+  isPinned: boolean
+): Promise<boolean> {
+  const { count } = await prisma.item.updateMany({
+    where: { id: itemId, userId },
+    data: { isPinned },
   });
   return count > 0;
 }
