@@ -31,6 +31,7 @@ export const config = {
     "/items/:path*",
     "/collections/:path*",
     "/profile",
+    "/settings",
     "/sign-in",
     "/register",
     "/forgot-password",

@@ -1,18 +1,28 @@
-# Current Feature
+# Current Feature: Settings Page
 
-<!-- Feature name and short description -->
+A protected `/settings` page that holds the account actions, reached from the sidebar's user menu.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- New `/settings` page
+- `/settings` is protected: signed-out visitors are redirected to `/sign-in` with a `callbackUrl`
+- A "Settings" link in the user dropdown at the bottom of the sidebar (`SidebarUserMenu`)
+- The account actions move from `/profile` to `/settings`: Change password and Delete account
+- `/profile` keeps the profile info and usage stats only
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Decided at `start`: "forgot password" in the description means the **Change password** card (`ChangePasswordForm`, shown only for users with a password); no link to `/forgot-password` is added
+- Decided at `start`: `/settings` is a standalone page like `/profile` ("Back to dashboard", no sidebar)
+- Protection follows `/profile`: add `/settings` to the `src/proxy.ts` matcher, plus a `getSessionUserId()` redirect in the page as a fallback
+- Reuse the existing components as they are: `ChangePasswordForm` and `DeleteAccountDialog` (`src/components/profile/`), the `changePassword` / `deleteAccount` actions in `src/actions/profile.ts`, and `getUserProfile()` for `hasPassword`
+- `/settings` should handle a session whose account no longer exists, like `/profile`'s `MissingAccount`
+- The menu currently has Profile and Sign out; the settings icon next to the user is decorative
+- The project overview's routes table lists `/settings` as "Profile, billing, export"; billing and export are out of scope here
 
 ## History
 

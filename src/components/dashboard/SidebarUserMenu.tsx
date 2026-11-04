@@ -55,6 +55,10 @@ export function SidebarUserMenu({ user }: SidebarUserMenuProps) {
           <User />
           Profile
         </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/settings" />}>
+          <Settings />
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => signOutUser()}>
           <LogOut />
           Sign out
