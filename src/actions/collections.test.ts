@@ -4,12 +4,14 @@ import {
   createCollection,
   deleteCollection,
   getCollectionOptions,
+  setCollectionFavorite,
   updateCollection,
 } from "@/actions/collections";
 import {
   createCollection as createCollectionQuery,
   deleteCollection as deleteCollectionQuery,
   getCollectionOptions as getCollectionOptionsQuery,
+  setCollectionFavorite as setCollectionFavoriteQuery,
   updateCollection as updateCollectionQuery,
 } from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
@@ -19,6 +21,7 @@ vi.mock("@/lib/db/collections", () => ({
   createCollection: vi.fn(),
   deleteCollection: vi.fn(),
   getCollectionOptions: vi.fn(),
+  setCollectionFavorite: vi.fn(),
   updateCollection: vi.fn(),
 }));
 
@@ -176,6 +179,62 @@ describe("deleteCollection action", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(deleteCollection("c1")).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+  });
+});
+
+describe("setCollectionFavorite action", () => {
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(setCollectionFavoriteQuery).mockResolvedValue(true);
+  });
+
+  it("sets the favorite on the session user's collection and returns the new value", async () => {
+    await expect(setCollectionFavorite("c1", true)).resolves.toEqual({
+      success: true,
+      data: { isFavorite: true },
+    });
+    expect(setCollectionFavoriteQuery).toHaveBeenCalledWith(USER_ID, "c1", true);
+  });
+
+  it("rejects an empty id or a non-boolean value without touching the database", async () => {
+    await expect(setCollectionFavorite("", true)).resolves.toEqual({
+      success: false,
+      error: NOT_FOUND,
+    });
+    await expect(setCollectionFavorite("c1", "yes" as never)).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+    expect(setCollectionFavoriteQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    await expect(setCollectionFavorite("c1", true)).resolves.toEqual({
+      success: false,
+      error: NOT_SIGNED_IN,
+    });
+    expect(setCollectionFavoriteQuery).not.toHaveBeenCalled();
+  });
+
+  it("reports a missing or another user's collection as not found", async () => {
+    vi.mocked(setCollectionFavoriteQuery).mockResolvedValue(false);
+
+    await expect(setCollectionFavorite("c9", false)).resolves.toEqual({
+      success: false,
+      error: NOT_FOUND,
+    });
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.mocked(setCollectionFavoriteQuery).mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(setCollectionFavorite("c1", true)).resolves.toEqual({
       success: false,
       error: GENERIC_ERROR,
     });

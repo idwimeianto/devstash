@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createItem, deleteItem, updateItem } from "@/actions/items";
+import { createItem, deleteItem, setItemFavorite, updateItem } from "@/actions/items";
 import { areUserCollections } from "@/lib/db/collections";
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   getItemTypeName,
   isFileUrlInUse,
+  setItemFavorite as setItemFavoriteQuery,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
+import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getObjectSize } from "@/lib/r2";
 import type { CreateItemInput, ItemDetail, UpdateItemInput } from "@/types/items";
 
@@ -18,6 +20,7 @@ vi.mock("@/lib/db/items", () => ({
   deleteItem: vi.fn(),
   getItemTypeName: vi.fn(),
   isFileUrlInUse: vi.fn(),
+  setItemFavorite: vi.fn(),
   updateItem: vi.fn(),
 }));
 vi.mock("@/lib/db/collections", () => ({ areUserCollections: vi.fn() }));
@@ -512,5 +515,60 @@ describe("deleteItem action", () => {
     const result = await deleteItem(ITEM_ID);
 
     expect(result).toEqual({ success: false, error: "Something went wrong. Please try again." });
+  });
+});
+
+describe("setItemFavorite action", () => {
+  const NOT_FOUND = "This item doesn't exist or was deleted.";
+
+  beforeEach(() => {
+    vi.mocked(getSessionUserId).mockResolvedValue(USER_ID);
+    vi.mocked(setItemFavoriteQuery).mockResolvedValue(true);
+  });
+
+  it("sets the favorite on the session user's item and returns the new value", async () => {
+    await expect(setItemFavorite(ITEM_ID, false)).resolves.toEqual({
+      success: true,
+      data: { isFavorite: false },
+    });
+    expect(setItemFavoriteQuery).toHaveBeenCalledWith(USER_ID, ITEM_ID, false);
+  });
+
+  it("rejects an empty id or a non-boolean value without touching the database", async () => {
+    await expect(setItemFavorite("", true)).resolves.toEqual({ success: false, error: NOT_FOUND });
+    await expect(setItemFavorite(ITEM_ID, 1 as never)).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
+    expect(setItemFavoriteQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects a signed-out user", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+
+    await expect(setItemFavorite(ITEM_ID, true)).resolves.toEqual({
+      success: false,
+      error: NOT_SIGNED_IN,
+    });
+    expect(setItemFavoriteQuery).not.toHaveBeenCalled();
+  });
+
+  it("reports a missing or another user's item as not found", async () => {
+    vi.mocked(setItemFavoriteQuery).mockResolvedValue(false);
+
+    await expect(setItemFavorite("someone_elses", true)).resolves.toEqual({
+      success: false,
+      error: NOT_FOUND,
+    });
+  });
+
+  it("returns a generic error when the database fails", async () => {
+    vi.mocked(setItemFavoriteQuery).mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(setItemFavorite(ITEM_ID, true)).resolves.toEqual({
+      success: false,
+      error: GENERIC_ERROR,
+    });
   });
 });

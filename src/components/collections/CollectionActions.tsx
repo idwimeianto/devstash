@@ -3,9 +3,11 @@
 import { Pencil, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { setCollectionFavorite } from "@/actions/collections";
 import { DeleteCollectionDialog } from "@/components/collections/DeleteCollectionDialog";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
 import { Button } from "@/components/ui/button";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { cn } from "@/lib/utils";
 import type { CollectionRef } from "@/types/collections";
 
@@ -17,17 +19,20 @@ interface CollectionActionsProps {
 export function CollectionActions({ collection }: CollectionActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { isFavorite, toggle } = useFavoriteToggle(collection.isFavorite, (next) =>
+    setCollectionFavorite(collection.id, next),
+  );
 
   return (
     <div className="flex shrink-0 items-center gap-1">
-      {/* Display only until favorites are implemented. */}
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={collection.isFavorite ? "Unfavorite collection" : "Favorite collection"}
-        aria-pressed={collection.isFavorite}
+        aria-label="Favorite collection"
+        aria-pressed={isFavorite}
+        onClick={toggle}
       >
-        <Star className={cn(collection.isFavorite && "fill-yellow-400 text-yellow-400")} />
+        <Star className={cn(isFavorite && "fill-yellow-400 text-yellow-400")} />
       </Button>
       <Button
         variant="ghost"

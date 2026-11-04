@@ -12,6 +12,7 @@ import {
   getItemTypeName,
   getSearchItems,
   isFileUrlInUse,
+  setItemFavorite,
   updateItem,
 } from "@/lib/db/items";
 import { ITEMS_PER_PAGE } from "@/lib/pagination";
@@ -25,7 +26,13 @@ const tx = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    item: { findFirst: vi.fn(), findMany: vi.fn(), delete: vi.fn(), count: vi.fn() },
+    item: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+      updateMany: vi.fn(),
+    },
     // Runs the callback against the mocked transaction client.
     $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
   },
@@ -58,6 +65,21 @@ const ROW = {
     { collection: { id: "col_2", name: "React Patterns" } },
   ],
 };
+
+describe("setItemFavorite", () => {
+  it("updates only the user's item and reports whether it was found", async () => {
+    vi.mocked(prisma.item.updateMany).mockResolvedValue({ count: 1 });
+
+    await expect(setItemFavorite(USER_ID, ITEM_ID, true)).resolves.toBe(true);
+    expect(prisma.item.updateMany).toHaveBeenCalledWith({
+      where: { id: ITEM_ID, userId: USER_ID },
+      data: { isFavorite: true },
+    });
+
+    vi.mocked(prisma.item.updateMany).mockResolvedValue({ count: 0 });
+    await expect(setItemFavorite(USER_ID, "someone_elses", false)).resolves.toBe(false);
+  });
+});
 
 describe("getFavoriteItems", () => {
   it("lists the user's favorite items, most recently updated first, with their type name", async () => {

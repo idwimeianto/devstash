@@ -1,18 +1,29 @@
-# Current Feature
+# Current Feature: Favorite Toggle
 
-<!-- Feature name and short description -->
+Make the Favorite buttons in the item drawer, on the collection page and on cards toggle `isFavorite` for real.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Item drawer: the action bar's Favorite (star) button toggles the item's `isFavorite`, filled yellow when on
+- Collection page (`/collections/[id]`): the header's Favorite star in `CollectionActions` toggles the collection's `isFavorite`
+- Cards: the collection card menu's Favorite / Unfavorite item toggles the collection's `isFavorite`
+- Server actions (e.g. `toggleItemFavorite` / `toggleCollectionFavorite`) that only touch the signed-in user's own item or collection and return the `{ success, data, error }` shape
+- The UI updates right away (star state and label), with a toast on error, and `router.refresh()` so the sidebar Favorites list, dashboard stats and `/favorites` stay in sync
+- Unit tests for the new actions and queries
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file
+- The buttons already exist but are display only: drawer action bar (`ItemDetailView`), `CollectionActions` (collection page header) and `CollectionCardMenu` (collection cards on `/collections` and the dashboard)
+- "Cards" is ambiguous: collection cards already have a Favorite menu item; item cards (`ItemCard`, `ImageCard`, `FileRow`) only show a star marker via `ItemMarkers` — decide at `start` whether item cards get a toggle too
+- Decide at `start`: optimistic update vs. waiting for the server, and whether toasts show on success or only on error
+- Toggling changes `updatedAt`, which `/favorites` uses as the "date favorited", so a newly favorited entry moves to the top there
+- `isFavorite` already exists on `Item` and `Collection`, so no migration is expected
+- Use `updateMany` with `{ id, userId }` like the existing collection queries, so another user's record looks missing
 
 ## History
 

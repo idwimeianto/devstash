@@ -5,6 +5,7 @@ import {
   createCollection as createCollectionQuery,
   deleteCollection as deleteCollectionQuery,
   getCollectionOptions as getCollectionOptionsQuery,
+  setCollectionFavorite as setCollectionFavoriteQuery,
   updateCollection as updateCollectionQuery,
 } from "@/lib/db/collections";
 import { getSessionUserId } from "@/lib/db/users";
@@ -18,6 +19,7 @@ import type {
   UpdateCollectionInput,
   UpdateCollectionResult,
 } from "@/types/collections";
+import type { SetFavoriteResult } from "@/types/favorites";
 
 const NOT_FOUND = "This collection doesn't exist or was deleted.";
 
@@ -72,6 +74,28 @@ export async function updateCollection(
     return { success: true, data: collection };
   } catch (error) {
     console.error("Updating collection failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
+}
+
+// Sets rather than flips, so repeated clicks can't drift from what the UI shows.
+export async function setCollectionFavorite(
+  collectionId: string,
+  isFavorite: boolean,
+): Promise<SetFavoriteResult> {
+  if (typeof collectionId !== "string" || !collectionId) {
+    return { success: false, error: NOT_FOUND };
+  }
+  if (typeof isFavorite !== "boolean") return { success: false, error: GENERIC_ERROR };
+
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  try {
+    const updated = await setCollectionFavoriteQuery(userId, collectionId, isFavorite);
+    return updated ? { success: true, data: { isFavorite } } : { success: false, error: NOT_FOUND };
+  } catch (error) {
+    console.error("Updating collection favorite failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
 }

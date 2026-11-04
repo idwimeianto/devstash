@@ -3,6 +3,7 @@
 import { MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { setCollectionFavorite } from "@/actions/collections";
 import { DeleteCollectionDialog } from "@/components/collections/DeleteCollectionDialog";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
+import { cn } from "@/lib/utils";
 import type { CollectionSummary } from "@/types/collections";
 
 interface CollectionCardMenuProps {
@@ -23,6 +26,9 @@ interface CollectionCardMenuProps {
 export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { isFavorite, toggle } = useFavoriteToggle(collection.isFavorite, (next) =>
+    setCollectionFavorite(collection.id, next),
+  );
 
   return (
     <>
@@ -44,10 +50,9 @@ export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
             <Pencil />
             Edit
           </DropdownMenuItem>
-          {/* Display only until favorites are implemented. */}
-          <DropdownMenuItem>
-            <Star />
-            {collection.isFavorite ? "Unfavorite" : "Favorite"}
+          <DropdownMenuItem onClick={toggle}>
+            <Star className={cn(isFavorite && "fill-yellow-400 text-yellow-400")} />
+            {isFavorite ? "Unfavorite" : "Favorite"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>

@@ -1,5 +1,8 @@
+"use client";
+
 import { Copy, Download, FileText, Pencil, Pin, Star, Tag } from "lucide-react";
 
+import { setItemFavorite } from "@/actions/items";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import {
@@ -10,6 +13,7 @@ import {
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useFavoriteToggle } from "@/hooks/use-favorite-toggle";
 import { formatFileSize } from "@/lib/file-upload";
 import { isCodeItemType, isMarkdownItemType } from "@/lib/item-fields";
 import { getSafeHref } from "@/lib/safe-url";
@@ -23,13 +27,25 @@ interface ItemDetailViewProps {
 interface ItemDetailViewWithActionsProps extends ItemDetailViewProps {
   onEdit: () => void;
   onDeleted: () => void;
+  // Keeps the drawer's copy of the item in step, so switching to edit and back shows it.
+  onFavoriteSaved: (isFavorite: boolean) => void;
 }
 
-export function ItemDetailView({ item, onEdit, onDeleted }: ItemDetailViewWithActionsProps) {
+export function ItemDetailView({
+  item,
+  onEdit,
+  onDeleted,
+  onFavoriteSaved,
+}: ItemDetailViewWithActionsProps) {
   return (
     <>
       <ItemDrawerHeader item={item}>
-        <ItemActionBar item={item} onEdit={onEdit} onDeleted={onDeleted} />
+        <ItemActionBar
+          item={item}
+          onEdit={onEdit}
+          onDeleted={onDeleted}
+          onFavoriteSaved={onFavoriteSaved}
+        />
       </ItemDrawerHeader>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
@@ -56,9 +72,19 @@ export function ItemDetailView({ item, onEdit, onDeleted }: ItemDetailViewWithAc
   );
 }
 
-// Only Edit and Delete work so far; the other actions come with later item features.
-function ItemActionBar({ item, onEdit, onDeleted }: ItemDetailViewWithActionsProps) {
-  const { isFavorite, isPinned } = item;
+// Favorite, Edit and Delete work so far; Pin and Copy come with later item features.
+function ItemActionBar({
+  item,
+  onEdit,
+  onDeleted,
+  onFavoriteSaved,
+}: ItemDetailViewWithActionsProps) {
+  const { isPinned } = item;
+  const { isFavorite, toggle } = useFavoriteToggle(item.isFavorite, async (next) => {
+    const result = await setItemFavorite(item.id, next);
+    if (result.success) onFavoriteSaved(next);
+    return result;
+  });
   return (
     <div className="flex flex-wrap items-center gap-1">
       <Button
@@ -66,6 +92,7 @@ function ItemActionBar({ item, onEdit, onDeleted }: ItemDetailViewWithActionsPro
         size="sm"
         aria-pressed={isFavorite}
         className={cn(isFavorite && "text-yellow-400")}
+        onClick={toggle}
       >
         <Star className={cn(isFavorite && "fill-yellow-400")} />
         Favorite

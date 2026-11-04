@@ -41,7 +41,7 @@ export function ImageCard({ item, eager = false }: ImageCardProps) {
       </div>
       <CardContent className="flex items-center gap-2 py-3">
         <h3 className="truncate font-medium">{item.title}</h3>
-        <ItemMarkers isPinned={item.isPinned} isFavorite={item.isFavorite} />
+        <ItemMarkers item={item} />
         <time
           dateTime={item.date.toISOString()}
           className="ml-auto shrink-0 text-xs text-muted-foreground"

@@ -42,7 +42,7 @@ export function ItemCard({ item }: ItemCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate font-medium">{item.title}</h3>
-            <ItemMarkers isPinned={item.isPinned} isFavorite={item.isFavorite} />
+            <ItemMarkers item={item} />
           </div>
           {item.description && (
             <p className="mt-1 truncate text-muted-foreground">

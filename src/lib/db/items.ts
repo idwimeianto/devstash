@@ -358,6 +358,19 @@ export function getItemsByCollection(
   );
 }
 
+// Whether the user's item was updated; another user's item looks missing.
+export async function setItemFavorite(
+  userId: string,
+  itemId: string,
+  isFavorite: boolean
+): Promise<boolean> {
+  const { count } = await prisma.item.updateMany({
+    where: { id: itemId, userId },
+    data: { isFavorite },
+  });
+  return count > 0;
+}
+
 // Every favorite item of the user, most recently updated first.
 export async function getFavoriteItems(userId: string): Promise<FavoriteItem[]> {
   const items = await prisma.item.findMany({

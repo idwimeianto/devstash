@@ -73,7 +73,12 @@ function ItemPanel({ item, onItemUpdated, onItemDeleted }: ItemPanelProps) {
 
   if (!editing) {
     return (
-      <ItemDetailView item={item} onEdit={() => setEditing(true)} onDeleted={onItemDeleted} />
+      <ItemDetailView
+        item={item}
+        onEdit={() => setEditing(true)}
+        onDeleted={onItemDeleted}
+        onFavoriteSaved={(isFavorite) => onItemUpdated({ ...item, isFavorite })}
+      />
     );
   }
 

@@ -11,6 +11,7 @@ import {
   getFavoriteCollections,
   getRecentCollections,
   getSidebarCollections,
+  setCollectionFavorite,
   updateCollection,
 } from "@/lib/db/collections";
 import { COLLECTIONS_PER_PAGE } from "@/lib/pagination";
@@ -137,6 +138,21 @@ describe("getCollection", () => {
     vi.mocked(prisma.collection.findFirst).mockResolvedValue(null);
 
     await expect(getCollection("user_1", "someone_elses")).resolves.toBeNull();
+  });
+});
+
+describe("setCollectionFavorite", () => {
+  it("updates only the user's collection and reports whether it was found", async () => {
+    vi.mocked(prisma.collection.updateMany).mockResolvedValue({ count: 1 });
+
+    await expect(setCollectionFavorite("user_1", "c1", true)).resolves.toBe(true);
+    expect(prisma.collection.updateMany).toHaveBeenCalledWith({
+      where: { id: "c1", userId: "user_1" },
+      data: { isFavorite: true },
+    });
+
+    vi.mocked(prisma.collection.updateMany).mockResolvedValue({ count: 0 });
+    await expect(setCollectionFavorite("user_1", "someone_elses", false)).resolves.toBe(false);
   });
 });
 

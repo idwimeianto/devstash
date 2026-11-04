@@ -145,6 +145,19 @@ export async function getSidebarCollections(
   };
 }
 
+// Whether the user's collection was updated; another user's collection looks missing.
+export async function setCollectionFavorite(
+  userId: string,
+  collectionId: string,
+  isFavorite: boolean
+): Promise<boolean> {
+  const { count } = await prisma.collection.updateMany({
+    where: { id: collectionId, userId },
+    data: { isFavorite },
+  });
+  return count > 0;
+}
+
 // Every favorite collection of the user, most recently updated first.
 export async function getFavoriteCollections(userId: string): Promise<FavoriteCollection[]> {
   const collections = await prisma.collection.findMany({

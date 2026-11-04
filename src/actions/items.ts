@@ -7,6 +7,7 @@ import {
   deleteItem as deleteItemQuery,
   getItemTypeName,
   isFileUrlInUse,
+  setItemFavorite as setItemFavoriteQuery,
   updateItem as updateItemQuery,
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
@@ -15,6 +16,7 @@ import { getEditableItemFields } from "@/lib/item-fields";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getObjectSize } from "@/lib/r2";
 import { createItemSchema, updateItemSchema } from "@/lib/validations/items";
+import type { SetFavoriteResult } from "@/types/favorites";
 import type {
   CreateItemInput,
   CreateItemResult,
@@ -144,6 +146,26 @@ export async function updateItem(
     return { success: true, data: toItemDetailJson(item) };
   } catch (error) {
     console.error("Updating item failed", error);
+    return { success: false, error: GENERIC_ERROR };
+  }
+}
+
+// Sets rather than flips, so repeated clicks can't drift from what the UI shows.
+export async function setItemFavorite(
+  itemId: string,
+  isFavorite: boolean,
+): Promise<SetFavoriteResult> {
+  if (typeof itemId !== "string" || !itemId) return { success: false, error: NOT_FOUND };
+  if (typeof isFavorite !== "boolean") return { success: false, error: GENERIC_ERROR };
+
+  const userId = await getSessionUserId();
+  if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+  try {
+    const updated = await setItemFavoriteQuery(userId, itemId, isFavorite);
+    return updated ? { success: true, data: { isFavorite } } : { success: false, error: NOT_FOUND };
+  } catch (error) {
+    console.error("Updating item favorite failed", error);
     return { success: false, error: GENERIC_ERROR };
   }
 }

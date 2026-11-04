@@ -1,16 +1,18 @@
-import { Pin, Star } from "lucide-react";
+import { Pin } from "lucide-react";
+
+import { ItemFavoriteButton } from "@/components/items/ItemFavoriteButton";
+import type { ItemSummary } from "@/types/items";
 
 interface ItemMarkersProps {
-  isPinned: boolean;
-  isFavorite: boolean;
+  item: Pick<ItemSummary, "id" | "title" | "isPinned" | "isFavorite">;
 }
 
-// The pin and favorite icons shown after an item's title on cards and rows.
-export function ItemMarkers({ isPinned, isFavorite }: ItemMarkersProps) {
+// The pin icon and favorite toggle shown after an item's title on cards and rows.
+export function ItemMarkers({ item }: ItemMarkersProps) {
   return (
     <>
-      {isPinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" />}
-      {isFavorite && <Star className="size-3.5 shrink-0 fill-yellow-400 text-yellow-400" />}
+      {item.isPinned && <Pin className="size-3.5 shrink-0 text-muted-foreground" />}
+      <ItemFavoriteButton itemId={item.id} title={item.title} isFavorite={item.isFavorite} />
     </>
   );
 }
