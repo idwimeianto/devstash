@@ -1,23 +1,18 @@
 # Current Feature
 
-**Upgrade Page** — a ghost "Upgrade" button in the top bar for free users that leads to a new `/upgrade` page, where they pick monthly or yearly Pro and start Stripe Checkout.
+<!-- Feature name and short description -->
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Completed -->
 
 ## Goals
 
-- Free users see a subtle ghost "Upgrade" button in the top bar (hidden for Pro users)
-- The button goes to a new protected `/upgrade` page instead of straight to Stripe Checkout
-- `/upgrade` shows the Free and Pro plans with their features, like the homepage pricing section
-- Users pick $8 monthly or $72 yearly, then click to upgrade, which starts Stripe Checkout (`startCheckout`)
+<!-- Goals and Requirements -->
 
 ## Notes
 
-- Pro users and users with an inactive subscription see a link to Billing in `/settings` instead of the checkout button (`startCheckout` refuses a second subscription)
-- Existing upgrade links (`UPGRADE_HREF`: upgrade toast, New Item dialog, Pro type upsell, homepage Pro card) point to `/upgrade`
-- The settings Billing card keeps its own checkout; the monthly / yearly picker and the checkout hook are shared
+<!-- Any Extra Notes -->
 
 ## History
 
@@ -83,3 +78,4 @@ In Progress
 - **Free-Plan Limit Upgrade Toast** (fix) — `createItem` and `createCollection` mark free-plan limit errors with `upgradeRequired` (added to the result types in `src/types/items.ts` and `src/types/collections.ts`); `runItemAction()` shows those through the new `showUpgradeToast()` (`src/lib/upgrade-toast.tsx`): a red, top-center error toast with an "Upgrade" action link that closes the toast, while other toasts keep their default position and colors; the link target lives in `UPGRADE_HREF` in `src/lib/usage-limits.ts` (then `/settings#billing`); tests: `src/lib/upgrade-toast.test.ts` (2), new `runItemAction` cases and updated action cases. (Completed)
 - **Upgrade Page for Files & Images** — free users on `/items/files` and `/items/images` see the new `ProTypeUpsell` (`src/components/items/`: the type icon with a lock, the Pro upload benefits, "Upgrade to Pro" and "Back to dashboard") instead of the list, decided in `src/app/(app)/items/[type]/page.tsx` before any items are queried; it uses `checkUploadAllowed()`, so it only applies while Pro gating is on; the New Item dialog's upload lock and the homepage Pro button now link through `UPGRADE_HREF`. (Completed)
 - **Pro Gating On by Default** (fix) — `isProGatingEnabled()` in `src/lib/usage-limits.ts` now returns true unless `PRO_GATING_ENABLED` is exactly `false` (was: off unless exactly `true`), the same rule as `EMAIL_VERIFICATION_ENABLED`, so a missing variable in production can't unlock Pro for everyone; local development keeps everything open with `PRO_GATING_ENABLED=false` in `.env`; client code only imports constants from `usage-limits.ts`, never `isProGatingEnabled()`, so the browser (where the variable is undefined) isn't affected; tests: `src/lib/usage-limits.test.ts` now starts each test with gating off (`"false"`) and checks it is on when the variable is missing, empty, `"true"`, `"FALSE"`, `"0"` or `"no"`, 431 tests in total pass; not checked in the browser; no migration; type-check, lint and build pass. (Completed)
+- **Upgrade Page** — a clear upgrade path for free users (inline description, no spec file); the server `UpgradeButton` (`src/components/billing/`) in `TopBar`, before the Favorites star, renders a ghost "Upgrade" link (sparkles icon, `text-muted-foreground`, text hidden below `sm`, `aria-label="Upgrade to Pro"`) only when the session user isn't Pro per `getUserPlan()` (database, not the JWT), inside a `<Suspense>` with a `null` fallback so Pro users never see it flash; new protected `/upgrade` page (`src/app/(app)/upgrade/page.tsx`, in the `(app)` sidebar shell, added to the `src/proxy.ts` matcher, "Upgrade · DevStash" title, partially prerendered) loads `getUserBilling()` inside `<Suspense>` with a two-card skeleton (`MissingAccount` when the user is gone) and renders the client `UpgradePlans` (`src/components/billing/`): a Free card ("Current plan", or "Included" for Pro users) and a highlighted blue Pro card, both listing the homepage's `FREE_PLAN_FEATURES` / `PRO_PLAN_FEATURES`, the Pro price following the chosen period via `getProPlanPrice()`; free users pick Monthly ($8) or Yearly ($72) in the new shared `BillingOptionPicker` (`src/components/billing/`, radio cards with a "Save 25%" chip on Yearly, `BILLING_LABELS` moved here) and click "Upgrade to Pro", which calls `startCheckout(billing)` through the new shared `useBillingAction()` hook (`src/hooks/use-billing-action.ts`, `useTransition` plus `unstable_rethrow()` for the redirect, error toasts), both moved out of `BillingCard`, which now uses them (its picker gains the chip); Pro users and free users with a lapsed subscription get a status notice and a "Manage billing" link to `/settings#billing` instead, decided by `getUpgradeStatus()` in `src/lib/usage-limits.ts` (`UpgradeStatus` `free` / `pro` / `inactive` in `src/types/billing.ts`), which mirrors `startCheckout`'s refusals; `UPGRADE_HREF` changed from `/settings#billing` to `/upgrade`, so the upgrade toast, the New Item dialog's upload lock, `ProTypeUpsell` and the homepage Pro button for free users now lead to the upgrade page; Stripe's success / cancel URLs still return to `/settings#billing`; tests: `getUpgradeStatus` (3) and the `UPGRADE_HREF` assertion in `src/lib/upgrade-toast.test.ts` updated, 434 tests in total pass; verified in the browser: signed-out `/upgrade` → 307, the demo user (Pro on the dev branch) without the header link and with the "already on Pro" state, then a new free user `upgrade-test@test.com` (registered on the dev branch, still there) seeing the muted Upgrade link, reaching `/upgrade`, Yearly switching the price to $72/year with the savings note, a 38×32 icon-only link and no horizontal scroll at 390px, and the settings Billing card still rendering the picker; no console errors or warnings on those pages; **not tested**: clicking "Upgrade to Pro" through to Stripe Checkout, and the inactive-subscription state; no migration; type-check, lint and build pass; `/feature review` and `/feature test` skipped; the same cleanup pass added the missing history entries for the demo seed, upgrade toast and files / images upsell commits. (Completed)
