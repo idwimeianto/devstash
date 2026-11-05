@@ -6,6 +6,7 @@ import { HomeMobileMenu } from "@/components/home/HomeMobileMenu";
 import { homeButton } from "@/components/home/HomeShared";
 import { getUserPlan } from "@/lib/db/billing";
 import { getSessionUserId } from "@/lib/db/users";
+import { UPGRADE_HREF } from "@/lib/usage-limits";
 
 async function isSignedIn(): Promise<boolean> {
   return (await getSessionUserId()) !== null;
@@ -113,7 +114,7 @@ function ProPlanCtaContent({ visitor }: { visitor: Visitor }) {
   if (visitor === "pro") return <PlanLabel variant="primary">Current plan</PlanLabel>;
   return (
     <Link
-      href={visitor === "free" ? "/settings#billing" : "/register"}
+      href={visitor === "free" ? UPGRADE_HREF : "/register"}
       className={homeButton("primary", "default", "w-full")}
     >
       Upgrade to Pro

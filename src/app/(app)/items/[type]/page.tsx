@@ -3,13 +3,16 @@ import { Suspense } from "react";
 
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { NewItemButton } from "@/components/items/NewItemButton";
+import { ProTypeUpsell } from "@/components/items/ProTypeUpsell";
 import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getItemTypeBySlug, getItemsByType } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
+import { isUploadKind } from "@/lib/file-upload";
 import { isCreatableItemType } from "@/lib/item-fields";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { parsePage } from "@/lib/pagination";
+import { checkUploadAllowed } from "@/lib/usage-checks";
 import { cn } from "@/lib/utils";
 
 const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
@@ -25,6 +28,12 @@ async function ItemsByType({ params, searchParams }: PageProps<"/items/[type]">)
   const userId = await getCurrentUserId();
   const type = await getItemTypeBySlug(userId, slug);
   if (!type) notFound();
+
+  // Files and images are Pro-only: free users get the upgrade page instead of the list.
+  // Nothing is checked while gating is off.
+  if (isUploadKind(type.name) && (await checkUploadAllowed(userId))) {
+    return <ProTypeUpsell typeName={type.name} />;
+  }
 
   const items = await getItemsByType(userId, type.id, parsePage(query.page));
   const { icon: Icon, textColor, bgTint } = getItemTypeDisplay(type.name);

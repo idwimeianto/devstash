@@ -36,6 +36,7 @@ import {
 import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { runItemAction } from "@/lib/run-item-action";
 import { discardUpload } from "@/lib/upload-client";
+import { UPGRADE_HREF } from "@/lib/usage-limits";
 import { cn } from "@/lib/utils";
 import type { CreateItemInput } from "@/types/items";
 import type { UploadedFile } from "@/types/uploads";
@@ -216,7 +217,7 @@ function UploadUpgradeNotice() {
         <Lock className="size-4 shrink-0" />
         File and image uploads are a Pro feature.
       </p>
-      <Link href="/settings#billing" className={buttonVariants({ size: "sm" })}>
+      <Link href={UPGRADE_HREF} className={buttonVariants({ size: "sm" })}>
         Upgrade
       </Link>
     </div>
