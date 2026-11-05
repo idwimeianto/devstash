@@ -24,7 +24,7 @@ function enableGating() {
 
 // Stubbed in every test so a value in the shell or .env can't leak in.
 beforeEach(() => {
-  vi.stubEnv("PRO_GATING_ENABLED", "");
+  vi.stubEnv("PRO_GATING_ENABLED", "false");
 });
 
 describe("isProStatus", () => {
@@ -41,18 +41,17 @@ describe("isProStatus", () => {
 });
 
 describe("isProGatingEnabled", () => {
-  it.each(["", "false", "TRUE", "1", "yes"])("is off for %j", (value) => {
+  it('is off only for exactly "false"', () => {
+    expect(isProGatingEnabled()).toBe(false);
+  });
+
+  it.each(["true", "", "FALSE", "0", "no"])("is on for %j", (value) => {
     vi.stubEnv("PRO_GATING_ENABLED", value);
-    expect(isProGatingEnabled()).toBe(false);
+    expect(isProGatingEnabled()).toBe(true);
   });
 
-  it("is off when the variable is missing", () => {
+  it("is on when the variable is missing", () => {
     vi.stubEnv("PRO_GATING_ENABLED", undefined);
-    expect(isProGatingEnabled()).toBe(false);
-  });
-
-  it('is on only for exactly "true"', () => {
-    enableGating();
     expect(isProGatingEnabled()).toBe(true);
   });
 });

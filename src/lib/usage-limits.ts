@@ -29,10 +29,10 @@ export function isProStatus(status: string): boolean {
   return PRO_STATUSES.has(status);
 }
 
-// Off unless exactly "true", so every user can use everything during development.
-// Not a NEXT_PUBLIC_ variable: in the browser this is always false.
+// On unless exactly "false", so a missing variable can't unlock Pro for everyone in production.
+// Server-only in practice: not a NEXT_PUBLIC_ variable, so the browser can't read it.
 export function isProGatingEnabled(): boolean {
-  return process.env.PRO_GATING_ENABLED === "true";
+  return process.env.PRO_GATING_ENABLED !== "false";
 }
 
 // Pro users, and everyone while gating is off, have no limits.
