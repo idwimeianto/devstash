@@ -1,18 +1,22 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+Language Dropdown: choose an item's language from a dropdown above the content, with highlighting as you type.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Language is chosen from a dropdown instead of typed, in the New Item dialog and the drawer's edit form (snippets and commands)
+- The dropdown sits above the Content field
+- Selecting a language re-highlights the Monaco editor immediately, keeping what was typed
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `language` stays a free-text column and the Zod rule is unchanged, so no migration
+- An existing value that isn't in the list (e.g. `ts`, `Zig`) stays selected as an extra option, so saving doesn't lose it
+- Plain text is stored as no language (`null`), as a blank field was before
 
 ## History
 

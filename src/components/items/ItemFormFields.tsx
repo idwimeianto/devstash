@@ -3,6 +3,7 @@
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
 import { CollectionPicker } from "@/components/items/CollectionPicker";
+import { LanguageSelect } from "@/components/items/LanguageSelect";
 import { MarkdownEditorField } from "@/components/items/MarkdownEditorField";
 import { TextareaField } from "@/components/items/TextareaField";
 import type { ItemFieldErrors, SetItemField } from "@/hooks/use-item-form";
@@ -53,6 +54,13 @@ export function ItemFormFields({
         errors={fieldErrors.description}
         rows={2}
       />
+      {fields.language && (
+        <LanguageSelect
+          value={values.language}
+          onChange={(language) => onChange("language", language)}
+          errors={fieldErrors.language}
+        />
+      )}
       {fields.content && isCodeItemType(typeName) && (
         <CodeEditorField
           label="Content"
@@ -71,16 +79,6 @@ export function ItemFormFields({
         />
       )}
       {fileField}
-      {fields.language && (
-        <FormField
-          name="language"
-          label="Language"
-          placeholder="e.g. typescript"
-          value={values.language}
-          onChange={(event) => onChange("language", event.target.value)}
-          errors={fieldErrors.language}
-        />
-      )}
       {fields.url && (
         <FormField
           name="url"
