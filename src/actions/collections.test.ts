@@ -47,7 +47,11 @@ describe("createCollection action", () => {
 
     const result = await createCollection({ name: "React Patterns" });
 
-    expect(result).toEqual({ success: false, error: COLLECTION_LIMIT_REACHED });
+    expect(result).toEqual({
+      success: false,
+      error: COLLECTION_LIMIT_REACHED,
+      upgradeRequired: true,
+    });
     expect(checkCollectionCreation).toHaveBeenCalledWith(USER_ID);
     expect(createCollectionQuery).not.toHaveBeenCalled();
   });

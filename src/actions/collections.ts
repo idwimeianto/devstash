@@ -50,7 +50,7 @@ export async function createCollection(
   try {
     // The free-plan limit; nothing is checked while gating is off.
     const notAllowed = await checkCollectionCreation(userId);
-    if (notAllowed) return { success: false, error: notAllowed };
+    if (notAllowed) return { success: false, error: notAllowed, upgradeRequired: true };
 
     const collection = await createCollectionQuery(userId, parsed.data);
     return { success: true, data: collection };

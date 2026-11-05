@@ -93,7 +93,13 @@ export interface CreateItemInput extends UpdateItemInput {
 
 export type CreateItemResult =
   | { success: true; data: ItemDetailJson }
-  | { success: false; error: string; fieldErrors?: Partial<Record<keyof CreateItemInput, string[]>> };
+  | {
+      success: false;
+      error: string;
+      fieldErrors?: Partial<Record<keyof CreateItemInput, string[]>>;
+      // Set when the free plan blocked it, so the client can point to the upgrade.
+      upgradeRequired?: boolean;
+    };
 
 export type DeleteItemResult = { success: true } | { success: false; error: string };
 

@@ -3,8 +3,10 @@ import { toast } from "sonner";
 
 import { NETWORK_ERROR } from "@/lib/messages";
 import { runItemAction } from "@/lib/run-item-action";
+import { showUpgradeToast } from "@/lib/upgrade-toast";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@/lib/upgrade-toast", () => ({ showUpgradeToast: vi.fn() }));
 
 const OPTIONS = { successMessage: "Item saved", onFieldErrors: vi.fn() };
 
@@ -31,6 +33,19 @@ describe("runItemAction", () => {
     expect(OPTIONS.onFieldErrors).toHaveBeenCalledWith({ title: ["Title is required"] });
     expect(toast.error).toHaveBeenCalledWith("Title is required");
     expect(toast.success).not.toHaveBeenCalled();
+    expect(showUpgradeToast).not.toHaveBeenCalled();
+  });
+
+  it("shows the upgrade toast instead of the plain error for a free-plan limit", async () => {
+    const message = "The free plan includes 3 collections.";
+    const data = await runItemAction(
+      async () => ({ success: false, error: message, upgradeRequired: true }),
+      OPTIONS,
+    );
+
+    expect(data).toBeNull();
+    expect(showUpgradeToast).toHaveBeenCalledWith(message);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("clears field errors when a failure has none", async () => {

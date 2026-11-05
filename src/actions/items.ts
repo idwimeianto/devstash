@@ -89,7 +89,7 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
   try {
     // Free-plan limits and Pro-only types; nothing is checked while gating is off.
     const notAllowed = await checkItemCreation(userId, common.typeName);
-    if (notAllowed) return { success: false, error: notAllowed };
+    if (notAllowed) return { success: false, error: notAllowed, upgradeRequired: true };
 
     if (await hasUnknownCollection(userId, common.collectionIds)) return collectionNotFound();
 

@@ -5,6 +5,9 @@ export const FREE_COLLECTION_LIMIT = 3;
 export const PRO_MONTHLY_PRICE = 8;
 export const PRO_YEARLY_PRICE = 72;
 
+// Where every upgrade prompt sends free users: the settings Billing card.
+export const UPGRADE_HREF = "/settings#billing";
+
 export const BILLING_OPTIONS = ["monthly", "yearly"] as const;
 
 export type Billing = (typeof BILLING_OPTIONS)[number];

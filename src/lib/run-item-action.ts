@@ -1,12 +1,13 @@
 import { toast } from "sonner";
 
 import { NETWORK_ERROR } from "@/lib/messages";
+import { showUpgradeToast } from "@/lib/upgrade-toast";
 
 type FieldErrors = Partial<Record<string, string[]>>;
 
 export type ItemActionResult<T, F extends FieldErrors> =
   | { success: true; data: T }
-  | { success: false; error: string; fieldErrors?: F };
+  | { success: false; error: string; fieldErrors?: F; upgradeRequired?: boolean };
 
 interface RunItemActionOptions<F extends FieldErrors> {
   successMessage: string;
@@ -14,7 +15,8 @@ interface RunItemActionOptions<F extends FieldErrors> {
 }
 
 // Runs an item form's server action with the shared toasts: success, the action's error
-// (with its field errors handed back for inline display), or a failure to reach the server.
+// (with its field errors handed back for inline display; a free-plan limit gets the upgrade
+// toast instead), or a failure to reach the server.
 // Returns the action's data, or null when it didn't succeed.
 export async function runItemAction<T, F extends FieldErrors>(
   action: () => Promise<ItemActionResult<T, F>>,
@@ -30,7 +32,11 @@ export async function runItemAction<T, F extends FieldErrors>(
 
   if (!result.success) {
     onFieldErrors(result.fieldErrors ?? ({} as F));
-    toast.error(result.error);
+    if (result.upgradeRequired) {
+      showUpgradeToast(result.error);
+    } else {
+      toast.error(result.error);
+    }
     return null;
   }
   toast.success(successMessage);

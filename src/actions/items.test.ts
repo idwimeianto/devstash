@@ -139,7 +139,7 @@ describe("createItem action", () => {
           : undefined,
     });
 
-    expect(result).toEqual({ success: false, error: message });
+    expect(result).toEqual({ success: false, error: message, upgradeRequired: true });
     expect(checkItemCreation).toHaveBeenCalledWith(USER_ID, typeName);
     expect(getObjectSize).not.toHaveBeenCalled();
     expect(createItemQuery).not.toHaveBeenCalled();

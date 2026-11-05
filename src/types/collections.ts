@@ -82,6 +82,8 @@ export type CreateCollectionResult =
       success: false;
       error: string;
       fieldErrors?: Partial<Record<keyof CreateCollectionInput, string[]>>;
+      // Set when the free plan blocked it, so the client can point to the upgrade.
+      upgradeRequired?: boolean;
     };
 
 export type UpdateCollectionInput = CreateCollectionInput;
