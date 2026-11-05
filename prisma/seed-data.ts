@@ -190,6 +190,8 @@ CMD ["node", "server.js"]`;
 
 const DEPLOY_COMMAND = `npm ci && npx prisma migrate deploy && npm run build && npm run start`;
 
+// The demo user is on the free plan, so the seed stays within its limits
+// (FREE_COLLECTION_LIMIT and FREE_ITEM_LIMIT in src/lib/usage-limits.ts).
 export const SEED_COLLECTIONS: SeedCollection[] = [
   {
     name: "React Patterns",
@@ -250,7 +252,7 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
   },
   {
     name: "DevOps",
-    description: "Infrastructure and deployment resources",
+    description: "Infrastructure, deployment and everyday shell commands",
     defaultType: "snippet",
     items: [
       {
@@ -279,13 +281,6 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
         description: "Workflows, runners and CI/CD with GitHub Actions",
         url: "https://docs.github.com/en/actions",
       },
-    ],
-  },
-  {
-    name: "Terminal Commands",
-    description: "Useful shell commands for everyday development",
-    defaultType: "command",
-    items: [
       {
         type: "command",
         title: "Undo Last Commit",
@@ -313,37 +308,6 @@ export const SEED_COLLECTIONS: SeedCollection[] = [
         description: "List outdated npm dependencies and update within semver ranges",
         content: "npm outdated && npm update",
         language: "bash",
-      },
-    ],
-  },
-  {
-    name: "Design Resources",
-    description: "UI/UX resources and references",
-    defaultType: "link",
-    items: [
-      {
-        type: "link",
-        title: "Tailwind CSS Docs",
-        description: "Utility classes, theming and configuration reference",
-        url: "https://tailwindcss.com/docs",
-      },
-      {
-        type: "link",
-        title: "shadcn/ui",
-        description: "Accessible components you copy into your project",
-        url: "https://ui.shadcn.com/",
-      },
-      {
-        type: "link",
-        title: "Material Design 3",
-        description: "Google's open-source design system",
-        url: "https://m3.material.io/",
-      },
-      {
-        type: "link",
-        title: "Lucide Icons",
-        description: "Open-source icon library with React components",
-        url: "https://lucide.dev/icons/",
       },
     ],
   },
