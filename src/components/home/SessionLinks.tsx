@@ -126,8 +126,8 @@ async function SessionProPlanCta() {
   return <ProPlanCtaContent visitor={await getVisitor()} />;
 }
 
-// The Pro plan card's button: `/register` when signed out, the settings Billing card for free
-// users, and a "Current plan" label for Pro users.
+// The Pro plan card's button: `/register` when signed out, the upgrade page for free users,
+// and a "Current plan" label for Pro users.
 export function ProPlanCta() {
   return (
     <Suspense fallback={<ProPlanCtaContent visitor="signedOut" />}>

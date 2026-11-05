@@ -1,12 +1,14 @@
 // Free-plan limits, Pro features and the gating switch. Pure, so client code can import it too.
 
+import type { UpgradeStatus } from "@/types/billing";
+
 export const FREE_ITEM_LIMIT = 50;
 export const FREE_COLLECTION_LIMIT = 3;
 export const PRO_MONTHLY_PRICE = 8;
 export const PRO_YEARLY_PRICE = 72;
 
-// Where every upgrade prompt sends free users: the settings Billing card.
-export const UPGRADE_HREF = "/settings#billing";
+// Where every upgrade prompt sends free users: the upgrade page.
+export const UPGRADE_HREF = "/upgrade";
 
 export const BILLING_OPTIONS = ["monthly", "yearly"] as const;
 
@@ -27,6 +29,16 @@ const PRO_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export function isProStatus(status: string): boolean {
   return PRO_STATUSES.has(status);
+}
+
+// Mirrors `startCheckout`, which refuses Pro users and anyone who still has a subscription.
+export function getUpgradeStatus(user: {
+  isPro: boolean;
+  stripeSubscriptionId: string | null;
+}): UpgradeStatus {
+  if (user.isPro) return "pro";
+  if (user.stripeSubscriptionId) return "inactive";
+  return "free";
 }
 
 // On unless exactly "false", so a missing variable can't unlock Pro for everyone in production.

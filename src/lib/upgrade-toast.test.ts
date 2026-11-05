@@ -24,11 +24,11 @@ describe("showUpgradeToast", () => {
     expect(options?.classNames?.toast).toContain("bg-red-600");
   });
 
-  it("links to the Billing card and closes the toast when clicked", () => {
+  it("links to the upgrade page and closes the toast when clicked", () => {
     showUpgradeToast("Upgrade needed");
 
     const { link } = shownToast();
-    expect(UPGRADE_HREF).toBe("/settings#billing");
+    expect(UPGRADE_HREF).toBe("/upgrade");
     expect(link.props.href).toBe(UPGRADE_HREF);
     expect(link.props.children).toBe("Upgrade");
 

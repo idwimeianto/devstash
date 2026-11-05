@@ -1,23 +1,16 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { unstable_rethrow } from "next/navigation";
-import { useState, useTransition, type ReactNode } from "react";
-import { toast } from "sonner";
+import { useState, type ReactNode } from "react";
 
 import { openBillingPortal, startCheckout } from "@/actions/billing";
+import { BillingOptionPicker } from "@/components/billing/BillingOptionPicker";
 import { ProBadge } from "@/components/dashboard/ProBadge";
 import { Button } from "@/components/ui/button";
-import { getProPlanPrice } from "@/lib/home-content";
-import { NETWORK_ERROR } from "@/lib/messages";
-import {
-  BILLING_OPTIONS,
-  FREE_COLLECTION_LIMIT,
-  FREE_ITEM_LIMIT,
-  type Billing,
-} from "@/lib/usage-limits";
+import { useBillingAction } from "@/hooks/use-billing-action";
+import { FREE_COLLECTION_LIMIT, FREE_ITEM_LIMIT, type Billing } from "@/lib/usage-limits";
 import { cn } from "@/lib/utils";
-import type { BillingActionResult, BillingSummary } from "@/types/billing";
+import type { BillingSummary } from "@/types/billing";
 
 export type CheckoutResult = "success" | "cancelled" | null;
 
@@ -33,27 +26,6 @@ const RENEWAL_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   timeZone: "UTC",
 });
-
-const BILLING_LABELS: Record<Billing, string> = { monthly: "Monthly", yearly: "Yearly" };
-
-// Runs a billing action that redirects to Stripe on success, so only failures come back.
-function useBillingAction() {
-  const [pending, startTransition] = useTransition();
-
-  const run = (action: () => Promise<BillingActionResult>) =>
-    startTransition(async () => {
-      try {
-        const result = await action();
-        toast.error(result.error);
-      } catch (error) {
-        // The redirect to Stripe arrives as a thrown router error; let Next.js handle it.
-        unstable_rethrow(error);
-        toast.error(NETWORK_ERROR);
-      }
-    });
-
-  return { pending, run };
-}
 
 function Notice({ tone, children }: { tone: "success" | "muted" | "warning"; children: ReactNode }) {
   return (
@@ -98,34 +70,7 @@ function FreePlan({ usage }: { usage: BillingCardProps["usage"] }) {
         </p>
       </div>
 
-      <fieldset className="grid gap-2 sm:grid-cols-2">
-        <legend className="mb-2 text-sm font-medium">Upgrade to Pro</legend>
-        {BILLING_OPTIONS.map((option) => {
-          const { price, period, note } = getProPlanPrice(option);
-          return (
-            <label
-              key={option}
-              className="flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/40 has-checked:border-blue-500/60 has-checked:bg-blue-500/8 has-focus-visible:ring-2 has-focus-visible:ring-ring"
-            >
-              <input
-                type="radio"
-                name="billing"
-                value={option}
-                checked={billing === option}
-                onChange={() => setBilling(option)}
-                className="mt-1 accent-blue-500"
-              />
-              <span className="grid gap-0.5">
-                <span className="text-sm font-medium">
-                  {BILLING_LABELS[option]} · {price}
-                  <span className="font-normal text-muted-foreground">{period}</span>
-                </span>
-                <span className="text-xs text-muted-foreground">{note}</span>
-              </span>
-            </label>
-          );
-        })}
-      </fieldset>
+      <BillingOptionPicker value={billing} onChange={setBilling} legend="Upgrade to Pro" />
 
       <Button
         className="justify-self-start"

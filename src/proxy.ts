@@ -33,6 +33,7 @@ export const config = {
     "/favorites",
     "/profile",
     "/settings",
+    "/upgrade",
     "/sign-in",
     "/register",
     "/forgot-password",

@@ -1,6 +1,7 @@
 import { Layers, Star } from "lucide-react";
 import Link from "next/link";
 
+import { UpgradeButton } from "@/components/billing/UpgradeButton";
 import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
 import { NewItemButton } from "@/components/items/NewItemButton";
 import { SearchTrigger } from "@/components/search/SearchTrigger";
@@ -26,6 +27,7 @@ export function TopBar() {
         <SidebarTrigger className="md:hidden" />
         <SearchTrigger />
         <div className="ml-auto flex items-center gap-2">
+          <UpgradeButton />
           <Link
             href="/favorites"
             aria-label="Favorites"

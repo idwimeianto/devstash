@@ -7,6 +7,7 @@ import {
   COLLECTION_LIMIT_REACHED,
   FREE_COLLECTION_LIMIT,
   FREE_ITEM_LIMIT,
+  getUpgradeStatus,
   isBillingOption,
   isProGatingEnabled,
   isProStatus,
@@ -38,6 +39,20 @@ describe("isProStatus", () => {
       expect(isProStatus(status)).toBe(false);
     },
   );
+});
+
+describe("getUpgradeStatus", () => {
+  it("offers checkout to a free user without a subscription", () => {
+    expect(getUpgradeStatus({ isPro: false, stripeSubscriptionId: null })).toBe("free");
+  });
+
+  it("reports Pro users as pro", () => {
+    expect(getUpgradeStatus({ isPro: true, stripeSubscriptionId: "sub_1" })).toBe("pro");
+  });
+
+  it("reports a free user who still has a subscription as inactive", () => {
+    expect(getUpgradeStatus({ isPro: false, stripeSubscriptionId: "sub_1" })).toBe("inactive");
+  });
 });
 
 describe("isProGatingEnabled", () => {
