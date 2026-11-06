@@ -81,7 +81,7 @@ export function MarkdownEditor({
             onChange={(event) => onChange?.(event.target.value)}
             placeholder="Write in Markdown…"
             spellCheck={false}
-            className="block field-sizing-content max-h-[400px] min-h-[120px] w-full resize-none bg-transparent px-4 py-3 font-mono text-xs leading-relaxed outline-none placeholder:text-muted-foreground"
+            className="block field-sizing-content max-h-[400px] min-h-[120px] w-full resize-none bg-transparent px-4 py-3 font-mono text-base leading-relaxed outline-none md:text-sm placeholder:text-muted-foreground"
           />
         ) : (
           <div

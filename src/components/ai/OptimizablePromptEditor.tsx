@@ -157,7 +157,7 @@ function SuggestionChoice({ changes, saving, disabled, onUse, onKeep }: Suggesti
   return (
     <div className="grid gap-3 border-t bg-[#2d2d2d]/50 px-4 py-3">
       {changes.length > 0 && (
-        <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+        <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
           {changes.map((change) => (
             <li key={change}>{change}</li>
           ))}
@@ -169,12 +169,19 @@ function SuggestionChoice({ changes, saving, disabled, onUse, onKeep }: Suggesti
           type="button"
           variant="ghost"
           size="sm"
+          className="text-sm"
           disabled={saving || disabled}
           onClick={onKeep}
         >
           Keep current
         </Button>
-        <Button type="button" size="sm" disabled={saving || disabled} onClick={onUse}>
+        <Button
+          type="button"
+          size="sm"
+          className="text-sm"
+          disabled={saving || disabled}
+          onClick={onUse}
+        >
           {saving && <Loader2 className="animate-spin" />}
           Use optimized
         </Button>

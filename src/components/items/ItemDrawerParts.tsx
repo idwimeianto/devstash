@@ -37,7 +37,7 @@ export function ItemDrawerHeader({ item, children }: ItemDrawerHeaderProps) {
           <Icon className={cn("size-6", textColor)} />
         </div>
         <div className="min-w-0">
-          <SheetTitle className="text-lg font-semibold break-words">{item.title}</SheetTitle>
+          <SheetTitle className="text-xl font-semibold break-words">{item.title}</SheetTitle>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">{getItemTypeLabel(item.typeName)}</Badge>
             {item.language && <Badge variant="outline">{item.language}</Badge>}

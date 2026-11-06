@@ -1,18 +1,23 @@
-# Current Feature
+# Current Feature: Item Drawer Font Sizes
 
-<!-- Feature name and short description -->
+Make the item drawer and Markdown text easier to read, and fix code blocks in Markdown rendering too small.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Markdown text (prompts, notes, Explain) at 16px, with inline and fenced code and tables at 14px
+- Fenced code no longer shrunk by the inline code rule (10.2px today)
+- Content editor when editing at 14px instead of 12px
+- In the drawer: title 20px, description and URL 16px, action buttons and Optimize's list of changes 14px
+- Code editor, section labels, dates, badges, editor header controls and the sidebar unchanged
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- From a Playwright review of the drawer's font sizes; 14px stays the size for labels and controls
+- The shared `sm` button size stays as it is, so only the drawer's buttons change
 
 ## History
 

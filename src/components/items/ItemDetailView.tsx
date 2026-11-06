@@ -57,7 +57,7 @@ export function ItemDetailView({
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
         {item.description && (
           <DetailSection title="Description">
-            <p className="text-sm">{item.description}</p>
+            <p className="text-base">{item.description}</p>
           </DetailSection>
         )}
         <ItemContent item={item} onContentSaved={onContentSaved} />
@@ -104,7 +104,7 @@ function ItemActionBar({
         variant="ghost"
         size="sm"
         aria-pressed={isFavorite}
-        className={cn(isFavorite && "text-yellow-400")}
+        className={cn("text-sm", isFavorite && "text-yellow-400")}
         onClick={favorite.toggle}
       >
         <Star className={cn(isFavorite && "fill-yellow-400")} />
@@ -114,18 +114,18 @@ function ItemActionBar({
         variant="ghost"
         size="sm"
         aria-pressed={isPinned}
-        className={cn(!isPinned && "text-muted-foreground")}
+        className={cn("text-sm", !isPinned && "text-muted-foreground")}
         onClick={pin.toggle}
       >
         <Pin className={cn(isPinned && "fill-current")} />
         Pin
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" className="text-sm">
         <Copy />
         Copy
       </Button>
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={onEdit}>
+        <Button variant="ghost" size="sm" className="text-sm" onClick={onEdit}>
           <Pencil />
           Edit
         </Button>
@@ -199,12 +199,12 @@ function ItemContent({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm break-all text-primary underline-offset-4 hover:underline"
+            className="text-base break-all text-primary underline-offset-4 hover:underline"
           >
             {item.url}
           </a>
         ) : (
-          <p className="text-sm break-all">{item.url ?? "No URL"}</p>
+          <p className="text-base break-all">{item.url ?? "No URL"}</p>
         )}
       </DetailSection>
     );

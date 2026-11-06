@@ -54,11 +54,24 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
     <>
       <ItemDrawerHeader item={item}>
         <div className="flex items-center gap-2">
-          <Button type="submit" form={formId} size="sm" disabled={pending || !values.title.trim()}>
+          <Button
+            type="submit"
+            form={formId}
+            size="sm"
+            className="text-sm"
+            disabled={pending || !values.title.trim()}
+          >
             {pending && <Loader2 className="animate-spin" />}
             Save
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={pending}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-sm"
+            onClick={onCancel}
+            disabled={pending}
+          >
             Cancel
           </Button>
         </div>
