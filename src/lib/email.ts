@@ -5,7 +5,7 @@ import { renderResetPasswordEmail } from "@/emails/reset-password";
 import { renderVerifyEmail } from "@/emails/verify-email";
 
 // Resend's shared sender; it only delivers to the Resend account owner until a domain is verified.
-const DEFAULT_FROM = "DevStash <onboarding@resend.dev>";
+const DEFAULT_FROM = "DevStash <noreply@devstash.idwimeianto.com>";
 
 let resend: Resend | undefined;
 

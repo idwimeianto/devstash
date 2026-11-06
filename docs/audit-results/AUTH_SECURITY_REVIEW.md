@@ -116,7 +116,7 @@ None found.
 - ✅ Reset is single-use and atomic. The token is deleted first inside an interactive transaction, and `count === 0` stops a concurrent request. The password update is in the same transaction (`resetPasswordWithToken`).
 - ✅ Forgot password gives the same response for known and unknown emails, and send errors are only logged (`src/actions/auth.ts`).
 - ✅ New passwords use the same shared `newPassword` rule for register, reset and change (`src/lib/validations/auth.ts`).
-- ✅ Email links use `APP_URL`, never the Host header, and production throws if it is unset (`src/lib/app-url.ts`).
+- ✅ Email links use `NEXT_PUBLIC_APP_URL`, never the Host header, and production throws if it is unset (`src/lib/app-url.ts`).
 - ✅ The link URL in emails is HTML-escaped, and no user-supplied text such as name is rendered into the templates (`src/emails/layout.ts`).
 - ✅ No open redirect. `getRedirectTo` accepts only paths starting with `/` and rejects `//` and `/\`. NextAuth's redirect callback also prefixes the base URL. The proxy and profile page build their redirects from fixed or internal values (`src/actions/auth.ts`, `src/proxy.ts`, `src/app/profile/page.tsx`).
 - ✅ Every action and route validates with Zod on the server: sign-in, forgot, reset, change, register (`src/actions/*.ts`, `src/app/api/auth/register/route.ts`).

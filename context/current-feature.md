@@ -1,18 +1,21 @@
-# Current Feature
+# Current Feature: Rename APP_URL to NEXT_PUBLIC_APP_URL
 
-<!-- Feature name and short description -->
+Renames the app's base URL environment variable.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `getAppUrl()` reads `NEXT_PUBLIC_APP_URL`, with its error message and comments updated
+- `.env.production` renamed (key only, value unchanged); `.env` already uses the new name
+- Current docs updated; completed History entries left as written
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `NEXT_PUBLIC_` values are inlined at build time, so the variable must be set when building, not only at runtime.
+- `DEV_APP_URL` is a local constant, not an environment variable, so it keeps its name.
 
 ## History
 

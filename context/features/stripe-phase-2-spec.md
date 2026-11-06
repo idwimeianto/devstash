@@ -102,7 +102,7 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 Put the printed `whsec_…` into `.env` as `STRIPE_WEBHOOK_SECRET` and restart `npm run dev`.
 
-Production (later, at launch): live-mode product and prices, webhook endpoint `https://<domain>/api/webhooks/stripe` with the four events above, and `STRIPE_*`, `APP_URL`, `PRO_GATING_ENABLED` in `.env.production`.
+Production (later, at launch): live-mode product and prices, webhook endpoint `https://<domain>/api/webhooks/stripe` with the four events above, and `STRIPE_*`, `NEXT_PUBLIC_APP_URL`, `PRO_GATING_ENABLED` in `.env.production`.
 
 ## Testing
 

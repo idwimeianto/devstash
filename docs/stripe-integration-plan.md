@@ -141,7 +141,7 @@ A Stripe webhook is the textbook API-route case in `context/coding-standards.md`
 
 - Read lazily inside functions so builds and tests don't need them: `requireEnv(name)` in `src/lib/r2.ts` throws `"<NAME> is not set"`; clients created on first use (`client ??= new S3Client(...)`).
 - Feature toggles get one reader function in its own file: `isEmailVerificationEnabled()` in `src/lib/email-verification.ts` (on unless exactly `"false"`).
-- Absolute URLs come from `getAppUrl()` (`src/lib/app-url.ts`, `APP_URL`, `http://localhost:3000` fallback outside production) — never from the Host header. Use it for Checkout / Portal return URLs.
+- Absolute URLs come from `getAppUrl()` (`src/lib/app-url.ts`, `NEXT_PUBLIC_APP_URL`, `http://localhost:3000` fallback outside production) — never from the Host header. Use it for Checkout / Portal return URLs.
 - No `.env.example` exists.
 
 ---
@@ -767,7 +767,7 @@ No change needed: `/settings` is already protected and `/api/webhooks/stripe` mu
 | `STRIPE_PRICE_ID_MONTHLY` | ✅ exists | add | Live-mode price ids differ from test-mode ones |
 | `STRIPE_PRICE_ID_YEARLY` | ✅ exists | add | |
 | `STRIPE_PUBLISHABLE_KEY` | ✅ exists | — | Unused with hosted Checkout; can be removed |
-| `APP_URL` | — | add | Required by `getAppUrl()` in production (Checkout return URLs) |
+| `NEXT_PUBLIC_APP_URL` | — | add | Required by `getAppUrl()` in production (Checkout return URLs) |
 | `PRO_GATING_ENABLED` | add (`false`) | add when launching | `"true"` turns on limits and Pro-only features |
 
 ---
@@ -783,7 +783,7 @@ Do everything in **Test mode** first, then repeat in Live mode at launch.
 3. **API keys** — Developers → API keys: copy the secret key into `STRIPE_SECRET_KEY` (consider a restricted key with write access to Customers, Checkout Sessions, Billing Portal, Subscriptions).
 4. **Customer Portal** — Settings → Billing → Customer portal:
    - Allow: update payment methods, view invoice history, cancel subscriptions (**at end of billing period**), switch plans between the two DevStash Pro prices.
-   - Set the default return URL to `<APP_URL>/settings`.
+   - Set the default return URL to `<NEXT_PUBLIC_APP_URL>/settings`.
    - Add terms / privacy links once those pages exist (footer links are `#` today).
 5. **Checkout** — Settings → Checkout: branding (logo, blue `#3b82f6` accent), optionally enable promotion codes and automatic tax.
 6. **Emails** — Settings → Customer emails: enable successful-payment receipts and failed-payment emails; Settings → Billing → Subscriptions and emails: smart retries and "after all retries fail → cancel subscription" (the webhook then sees `canceled` and removes Pro).
@@ -874,7 +874,7 @@ Each step is small enough for its own `/feature` cycle (branch → implement →
 6. **Account deletion** — cancel the subscription in `deleteAccount` (+ tests).
 7. **Server-side gating** — `createItem`, `createCollection`, `POST /api/upload` (+ tests); verify with `PRO_GATING_ENABLED=true` locally.
 8. **UI hints** — homepage pricing CTAs, New Item dialog locks, PRO badge in the user menu.
-9. **Launch** — Live-mode product / prices / portal / webhook, production env vars (incl. `APP_URL`), `PRO_GATING_ENABLED=true` when ready.
+9. **Launch** — Live-mode product / prices / portal / webhook, production env vars (incl. `NEXT_PUBLIC_APP_URL`), `PRO_GATING_ENABLED=true` when ready.
 
 ---
 

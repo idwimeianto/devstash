@@ -18,7 +18,7 @@ export async function getOrCreateCustomer(userId: string, user: UserBilling): Pr
   return customer.id;
 }
 
-// Return URLs come from APP_URL, never the request's Host header.
+// Return URLs come from NEXT_PUBLIC_APP_URL, never the request's Host header.
 export async function createCheckoutUrl(
   userId: string,
   customerId: string,
