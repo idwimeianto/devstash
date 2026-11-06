@@ -19,6 +19,13 @@ describe("runItemAction", () => {
     expect(OPTIONS.onFieldErrors).not.toHaveBeenCalled();
   });
 
+  it("shows no toast on success without a message", async () => {
+    const data = await runItemAction(async () => ({ success: true, data: { tags: ["react"] } }));
+
+    expect(data).toEqual({ tags: ["react"] });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
   it("hands back field errors and shows the action's error", async () => {
     const data = await runItemAction(
       async () => ({

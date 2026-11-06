@@ -64,4 +64,17 @@ describe("checkRateLimit", () => {
       reset: 0,
     });
   });
+
+  it("refuses the request when failing closed without Upstash", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    vi.resetModules();
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+
+    const result = await checkRateLimit("ai", "user_1", { failClosed: true });
+
+    expect(result.success).toBe(false);
+    expect(result.remaining).toBe(0);
+    expect(result.reset).toBeGreaterThan(Date.now());
+  });
 });

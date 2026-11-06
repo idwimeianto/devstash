@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { countUserCollections, countUserItems, getUserPlan } from "@/lib/db/billing";
 import {
+  checkAiAllowed,
   checkCollectionCreation,
   checkItemCreation,
   checkUploadAllowed,
 } from "@/lib/usage-checks";
 import {
+  AI_PRO_REQUIRED,
   COLLECTION_LIMIT_REACHED,
   ITEM_LIMIT_REACHED,
   PRO_FEATURE_REQUIRED,
@@ -33,6 +35,22 @@ beforeEach(() => {
   asFree();
   vi.mocked(countUserItems).mockResolvedValue(0);
   vi.mocked(countUserCollections).mockResolvedValue(0);
+});
+
+describe("checkAiAllowed", () => {
+  it("refuses free users and allows Pro users", async () => {
+    expect(await checkAiAllowed(USER_ID)).toBe(AI_PRO_REQUIRED);
+
+    asPro();
+    expect(await checkAiAllowed(USER_ID)).toBeNull();
+  });
+
+  it("allows everyone without a query while gating is off", async () => {
+    vi.stubEnv("PRO_GATING_ENABLED", "false");
+
+    expect(await checkAiAllowed(USER_ID)).toBeNull();
+    expect(getUserPlan).not.toHaveBeenCalled();
+  });
 });
 
 describe("while gating is off", () => {

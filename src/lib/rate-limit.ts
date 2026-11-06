@@ -7,6 +7,7 @@ const RATE_LIMITS = {
   forgotPassword: { requests: 3, window: "1 h" },
   resetPassword: { requests: 5, window: "15 m" },
   resendVerification: { requests: 3, window: "15 m" },
+  ai: { requests: 20, window: "1 h" },
 } satisfies Record<string, { requests: number; window: Duration }>;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;
@@ -40,21 +41,29 @@ function getLimiter(action: RateLimitAction) {
   return limiter;
 }
 
-// Fails open: auth keeps working when Upstash is unreachable or not configured.
+const FAILED_CLOSED_RETRY_MS = 60_000;
+
+// Fails open by default: auth keeps working when Upstash is unreachable or not configured.
+// `failClosed` refuses instead, for actions where every allowed request costs money.
 export async function checkRateLimit(
   action: RateLimitAction,
   identifier: string,
+  { failClosed = false }: { failClosed?: boolean } = {},
 ): Promise<RateLimitResult> {
-  const allowed = { success: true, remaining: RATE_LIMITS[action].requests, reset: 0 };
+  const unavailable = failClosed
+    ? { success: false, remaining: 0, reset: Date.now() + FAILED_CLOSED_RETRY_MS }
+    : { success: true, remaining: RATE_LIMITS[action].requests, reset: 0 };
   const limiter = getLimiter(action);
-  if (!limiter) return allowed;
+  if (!limiter) return unavailable;
 
   try {
-    const { success, remaining, reset } = await limiter.limit(identifier);
+    const { success, remaining, reset, reason } = await limiter.limit(identifier);
+    // The library allows the request itself when Redis doesn't answer in time.
+    if (reason === "timeout") return unavailable;
     return { success, remaining, reset };
   } catch (error) {
     console.error(`Rate limit check failed for ${action}`, error);
-    return allowed;
+    return unavailable;
   }
 }
 

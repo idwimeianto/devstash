@@ -1,14 +1,33 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addTag,
   buildItemInput,
   getEditableItemFields,
   getItemContentType,
+  getNewTags,
   isCodeItemType,
   isCreatableItemType,
   isMarkdownItemType,
   parseTags,
 } from "@/lib/item-fields";
+
+describe("addTag", () => {
+  it("adds to empty and existing tags", () => {
+    expect(addTag("", "react")).toBe("react");
+    expect(addTag("react,  hooks,", "auth")).toBe("react, hooks, auth");
+  });
+
+  it("doesn't repeat a tag", () => {
+    expect(addTag("react", "react")).toBe("react");
+  });
+});
+
+describe("getNewTags", () => {
+  it("leaves out tags the form already has, ignoring case", () => {
+    expect(getNewTags(["react", "hooks", "auth"], "React, auth")).toEqual(["hooks"]);
+  });
+});
 
 describe("isCreatableItemType", () => {
   it("is true for the 7 system types the New Item dialog offers", () => {

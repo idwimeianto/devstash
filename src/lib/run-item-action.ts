@@ -10,8 +10,9 @@ export type ItemActionResult<T, F extends FieldErrors> =
   | { success: false; error: string; fieldErrors?: F; upgradeRequired?: boolean };
 
 interface RunItemActionOptions<F extends FieldErrors> {
-  successMessage: string;
-  onFieldErrors: (fieldErrors: F) => void;
+  // No toast on success when left out, e.g. when the result itself appears on screen.
+  successMessage?: string;
+  onFieldErrors?: (fieldErrors: F) => void;
 }
 
 // Runs an item form's server action with the shared toasts: success, the action's error
@@ -20,7 +21,7 @@ interface RunItemActionOptions<F extends FieldErrors> {
 // Returns the action's data, or null when it didn't succeed.
 export async function runItemAction<T, F extends FieldErrors>(
   action: () => Promise<ItemActionResult<T, F>>,
-  { successMessage, onFieldErrors }: RunItemActionOptions<F>,
+  { successMessage, onFieldErrors }: RunItemActionOptions<F> = {},
 ): Promise<T | null> {
   let result: ItemActionResult<T, F>;
   try {
@@ -31,7 +32,7 @@ export async function runItemAction<T, F extends FieldErrors>(
   }
 
   if (!result.success) {
-    onFieldErrors(result.fieldErrors ?? ({} as F));
+    onFieldErrors?.(result.fieldErrors ?? ({} as F));
     if (result.upgradeRequired) {
       showUpgradeToast(result.error);
     } else {
@@ -39,6 +40,6 @@ export async function runItemAction<T, F extends FieldErrors>(
     }
     return null;
   }
-  toast.success(successMessage);
+  if (successMessage) toast.success(successMessage);
   return result.data;
 }

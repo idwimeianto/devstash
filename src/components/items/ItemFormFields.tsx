@@ -1,5 +1,6 @@
 "use client";
 
+import { SuggestTags } from "@/components/ai/SuggestTags";
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
 import { CollectionPicker } from "@/components/items/CollectionPicker";
@@ -98,6 +99,13 @@ export function ItemFormFields({
         value={values.tags}
         onChange={(event) => onChange("tags", event.target.value)}
         errors={fieldErrors.tags}
+      />
+      <SuggestTags
+        title={values.title}
+        // Switching types keeps typed content, but only send it when this type has content.
+        content={fields.content ? values.content : ""}
+        tags={values.tags}
+        onTagsChange={(tags) => onChange("tags", tags)}
       />
       <CollectionPicker
         value={values.collectionIds}

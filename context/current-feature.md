@@ -1,18 +1,33 @@
-# Current Feature
+# Current Feature: AI Auto-Tagging
 
-<!-- Feature name and short description -->
+AI-powered tag suggestions using OpenAI `gpt-5-nano`: a "Suggest Tags" button returns 3-5 freeform tags to accept or reject. First AI feature, so it also sets up the OpenAI foundation. Spec: `context/features/ai-auto-tag-spec.md`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- OpenAI client utility with an `AI_MODEL` constant, using the standard `openai` SDK and kept simple
+- `generateAutoTags` server action with auth, Pro gating, Zod validation and rate limiting
+- AI rate limit of 20 requests / hour per user in the existing rate limit utility
+- "Suggest Tags" button (Sparkles icon, ghost variant) near the tags input in the New Item dialog and the drawer's edit mode
+- Suggested tags shown as badges with accept (check) and reject (X) controls per tag
+- Accepted tags are added to the item's tag list; tags are freeform, not limited to existing ones
+- Content truncated to 2000 characters before the API call
+- Button hidden for free users, with the action enforcing Pro on the server too
+- Errors shown via toast (Pro gating, rate limit, AI service errors)
+- Unit tests for the server action
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Use the **Responses API** (`client.responses.create`, `instructions` + `input`, read `response.output_text`). Chat Completions returns empty content with `gpt-5-nano`
+- Use `text: { format: { type: "json_object" } }` and parse manually; `zodResponseFormat` uses too many tokens with this model and hits length limits
+- The model may return `{"tags": [...]}` or `[...]`: handle both, and always lowercase the tags
+- The spec overrides `docs/ai-integration-plan.md` where they differ: `json_object` instead of `zodTextFormat`, 20 / hour instead of 30 / hour plus a daily cap, 2000 characters instead of 8000, hiding the button instead of a locked state, and suggesting in the New Item dialog too
+- Because the New Item dialog has no saved item, the action takes title and content rather than the plan's `itemId`
+- `openai` isn't installed yet; the spec says `OPENAI_API_KEY` is already in `.env`
+- `isPro` isn't passed to the create / edit UI, so the button's visibility needs a prop or a client fetch; enforcement stays on the server, reading the plan from the database as `usage-checks.ts` does
 
 ## History
 

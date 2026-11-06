@@ -68,3 +68,4 @@ export function canCreateCollection(user: PlanUser, collectionCount: number): bo
 export const ITEM_LIMIT_REACHED = `The free plan includes ${FREE_ITEM_LIMIT} items. Upgrade to Pro for unlimited items.`;
 export const COLLECTION_LIMIT_REACHED = `The free plan includes ${FREE_COLLECTION_LIMIT} collections. Upgrade to Pro for unlimited collections.`;
 export const PRO_FEATURE_REQUIRED = "File and image uploads are a Pro feature. Upgrade to Pro to use them.";
+export const AI_PRO_REQUIRED = "AI features are part of Pro. Upgrade to Pro to use them.";

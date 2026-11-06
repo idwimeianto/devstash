@@ -63,6 +63,17 @@ export function parseTags(input: string): string[] {
   return [...new Set(tags)];
 }
 
+// The form's tags text with one more tag.
+export function addTag(tags: string, tag: string): string {
+  return [...new Set([...parseTags(tags), tag])].join(", ");
+}
+
+// Suggestions the form's tags text doesn't already have, ignoring case.
+export function getNewTags(suggestions: string[], tags: string): string[] {
+  const existing = new Set(parseTags(tags).map((tag) => tag.toLowerCase()));
+  return suggestions.filter((tag) => !existing.has(tag.toLowerCase()));
+}
+
 // What the item forms hold: every field as typed, tags as one comma-separated string.
 export interface ItemFormValues {
   title: string;

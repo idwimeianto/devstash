@@ -1,6 +1,7 @@
 import { countUserCollections, countUserItems, getUserPlan } from "@/lib/db/billing";
 import { isUploadKind } from "@/lib/file-upload";
 import {
+  AI_PRO_REQUIRED,
   canCreateCollection,
   canCreateItem,
   canUse,
@@ -16,6 +17,11 @@ import {
 export async function checkUploadAllowed(userId: string): Promise<string | null> {
   if (!isProGatingEnabled()) return null;
   return canUse("uploads", await getUserPlan(userId)) ? null : PRO_FEATURE_REQUIRED;
+}
+
+export async function checkAiAllowed(userId: string): Promise<string | null> {
+  if (!isProGatingEnabled()) return null;
+  return canUse("ai", await getUserPlan(userId)) ? null : AI_PRO_REQUIRED;
 }
 
 export async function checkItemCreation(userId: string, typeName: string): Promise<string | null> {
