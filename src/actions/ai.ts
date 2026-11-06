@@ -57,6 +57,36 @@ async function checkAiRequest(userId: string) {
   return success ? null : { success: false as const, error: getRateLimitMessage(reset) };
 }
 
+interface ModelRequest {
+  instructions: string;
+  input: string;
+  maxOutputTokens: number;
+  json?: boolean;
+  verbosity?: "low" | "medium";
+}
+
+// The settings every AI action shares, so cost and data storage can't drift between them.
+async function runModel({
+  instructions,
+  input,
+  maxOutputTokens,
+  json = false,
+  verbosity = "low",
+}: ModelRequest): Promise<string> {
+  const response = await getOpenAI().responses.create({
+    model: AI_MODEL,
+    instructions,
+    input,
+    reasoning: { effort: "minimal" },
+    text: json ? { format: { type: "json_object" }, verbosity } : { verbosity },
+    max_output_tokens: maxOutputTokens,
+    store: false,
+  });
+  // Plain text can be cut off mid-sentence and still look valid.
+  if (response.status === "incomplete") throw new Error("The AI reply was cut off");
+  return response.output_text;
+}
+
 export async function generateAutoTags(
   input: GenerateAutoTagsInput,
 ): Promise<GenerateAutoTagsResult> {
@@ -71,16 +101,13 @@ export async function generateAutoTags(
     const refused = await checkAiRequest(userId);
     if (refused) return refused;
 
-    const response = await getOpenAI().responses.create({
-      model: AI_MODEL,
+    const reply = await runModel({
       instructions: AUTO_TAG_INSTRUCTIONS,
       input: buildAutoTagInput(parsed.data.title, parsed.data.content),
-      reasoning: { effort: "minimal" },
-      text: { format: { type: "json_object" }, verbosity: "low" },
-      max_output_tokens: 500,
-      store: false,
+      maxOutputTokens: 500,
+      json: true,
     });
-    return { success: true, data: { tags: parseTagSuggestions(response.output_text) } };
+    return { success: true, data: { tags: parseTagSuggestions(reply) } };
   } catch (error) {
     console.error("Generating tags failed", error);
     return { success: false, error: TAGS_SERVICE_ERROR };
@@ -101,18 +128,12 @@ export async function generateDescription(
     const refused = await checkAiRequest(userId);
     if (refused) return refused;
 
-    const response = await getOpenAI().responses.create({
-      model: AI_MODEL,
+    const reply = await runModel({
       instructions: DESCRIPTION_INSTRUCTIONS,
       input: buildDescriptionInput(parsed.data),
-      reasoning: { effort: "minimal" },
-      text: { verbosity: "low" },
-      max_output_tokens: 500,
-      store: false,
+      maxOutputTokens: 500,
     });
-    // Plain text can be cut off mid-sentence and still look valid.
-    if (response.status === "incomplete") throw new Error("The AI reply was cut off");
-    return { success: true, data: { description: parseDescription(response.output_text) } };
+    return { success: true, data: { description: parseDescription(reply) } };
   } catch (error) {
     console.error("Generating a description failed", error);
     return { success: false, error: DESCRIPTION_SERVICE_ERROR };
@@ -131,18 +152,12 @@ export async function explainCode(input: ExplainSource): Promise<ExplainCodeResu
     const refused = await checkAiRequest(userId);
     if (refused) return refused;
 
-    const response = await getOpenAI().responses.create({
-      model: AI_MODEL,
+    const reply = await runModel({
       instructions: EXPLAIN_INSTRUCTIONS,
       input: buildExplainInput(parsed.data),
-      reasoning: { effort: "minimal" },
-      text: { verbosity: "low" },
-      max_output_tokens: 1500,
-      store: false,
+      maxOutputTokens: 1500,
     });
-    // Plain text can be cut off mid-sentence and still look valid.
-    if (response.status === "incomplete") throw new Error("The AI reply was cut off");
-    return { success: true, data: { explanation: parseExplanation(response.output_text) } };
+    return { success: true, data: { explanation: parseExplanation(reply) } };
   } catch (error) {
     console.error("Explaining code failed", error);
     return { success: false, error: EXPLAIN_SERVICE_ERROR };
@@ -163,17 +178,15 @@ export async function optimizePrompt(input: { content: string }): Promise<Optimi
     if (refused) return refused;
 
     const { content } = parsed.data;
-    const response = await getOpenAI().responses.create({
-      model: AI_MODEL,
+    const reply = await runModel({
       instructions: OPTIMIZE_INSTRUCTIONS,
       input: buildOptimizeInput(content),
-      reasoning: { effort: "minimal" },
-      text: { format: { type: "json_object" }, verbosity: "medium" },
       // Room for the longest allowed prompt (about 2,000 tokens) to grow.
-      max_output_tokens: 4000,
-      store: false,
+      maxOutputTokens: 4000,
+      json: true,
+      verbosity: "medium",
     });
-    return { success: true, data: parseOptimizedPrompt(response.output_text, content) };
+    return { success: true, data: parseOptimizedPrompt(reply, content) };
   } catch (error) {
     console.error("Optimizing a prompt failed", error);
     return { success: false, error: OPTIMIZE_SERVICE_ERROR };

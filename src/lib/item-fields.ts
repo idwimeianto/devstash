@@ -54,6 +54,25 @@ export function getEditableItemFields(typeName: string): EditableItemFields {
   };
 }
 
+interface TypeSpecificValues {
+  content?: string | null;
+  language?: string | null;
+  url?: string | null;
+}
+
+// Drops fields this type doesn't have, even if a client sends them.
+export function pickEditableFields(
+  typeName: string,
+  { content, language, url }: TypeSpecificValues,
+): TypeSpecificValues {
+  const editable = getEditableItemFields(typeName);
+  return {
+    content: editable.content ? content : undefined,
+    language: editable.language ? language : undefined,
+    url: editable.url ? url : undefined,
+  };
+}
+
 // "react, hooks, react" -> ["react", "hooks"]
 export function parseTags(input: string): string[] {
   const tags = input

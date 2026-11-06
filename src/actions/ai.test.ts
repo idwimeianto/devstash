@@ -29,6 +29,35 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
+describe("model settings", () => {
+  const JSON_FORMAT = { type: "json_object" };
+
+  it.each([
+    ["generateAutoTags", () => generateAutoTags(INPUT), 500, "low", JSON_FORMAT],
+    ["generateDescription", () => generateDescription(INPUT), 500, "low", undefined],
+    ["explainCode", () => explainCode({ content: "const a = 1;" }), 1500, "low", undefined],
+    ["optimizePrompt", () => optimizePrompt({ content: "fix it" }), 4000, "medium", JSON_FORMAT],
+  ])("sends the expected request for %s", async (_name, run, maxTokens, verbosity, format) => {
+    await run();
+
+    expect(create.mock.calls[0][0]).toMatchObject({
+      model: "gpt-5-nano",
+      reasoning: { effort: "minimal" },
+      max_output_tokens: maxTokens,
+      store: false,
+    });
+    expect(create.mock.calls[0][0].text.verbosity).toBe(verbosity);
+    expect(create.mock.calls[0][0].text.format).toEqual(format);
+  });
+
+  it("treats a cut-off reply as a failure even when its JSON parses", async () => {
+    create.mockResolvedValue({ status: "incomplete", output_text: '{"tags": ["react"]}' });
+
+    await expect(generateAutoTags(INPUT)).resolves.toMatchObject({ success: false });
+    expect(console.error).toHaveBeenCalled();
+  });
+});
+
 describe("generateAutoTags", () => {
   it("returns normalized tags from the Responses API", async () => {
     await expect(generateAutoTags(INPUT)).resolves.toEqual({

@@ -1,18 +1,22 @@
-# Current Feature
+# Current Feature: Actions Duplicates Refactor
 
-<!-- Feature name and short description -->
+Removes the duplication the `refactor-scanner` found in `src/actions`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Private `runModel()` in `src/actions/ai.ts` holding the shared OpenAI settings (model, minimal reasoning, `store: false`) for all four AI actions
+- `pickEditableFields()` in `src/lib/item-fields.ts`, used by `createItem` and `updateItem`
+- No change to what users see
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- `runModel()` applies the cut-off check to every call. The JSON actions already failed on a cut-off reply through their parsers, so only the point of failure moves.
+- Session and plan checks and each action's error message stay in the action.
+- The scanner's other finding (a helper for the favorite and pin actions) is left out: it would need about as many parameters as the copies have differences.
 
 ## History
 

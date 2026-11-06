@@ -13,7 +13,7 @@ import {
 } from "@/lib/db/items";
 import { getSessionUserId } from "@/lib/db/users";
 import { getStoredContentType, isUploadKind, type UploadKind } from "@/lib/file-upload";
-import { getEditableItemFields } from "@/lib/item-fields";
+import { pickEditableFields } from "@/lib/item-fields";
 import { GENERIC_ERROR, NOT_SIGNED_IN } from "@/lib/messages";
 import { deleteObject, getKeyFromPublicUrl, getObjectSize } from "@/lib/r2";
 import { checkItemCreation } from "@/lib/usage-checks";
@@ -82,9 +82,7 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
   const userId = await getSessionUserId();
   if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
-  // Drop fields this type doesn't have, even if a client sends them.
   const { content, language, url, file, ...common } = parsed.data;
-  const editable = getEditableItemFields(common.typeName);
 
   try {
     // Free-plan limits and Pro-only types; nothing is checked while gating is off.
@@ -107,9 +105,7 @@ export async function createItem(input: CreateItemInput): Promise<CreateItemResu
 
     const item = await createItemQuery(userId, {
       ...common,
-      content: editable.content ? content : undefined,
-      language: editable.language ? language : undefined,
-      url: editable.url ? url : undefined,
+      ...pickEditableFields(common.typeName, { content, language, url }),
       file: storedFile ?? undefined,
     });
     return { success: true, data: toItemDetailJson(item) };
@@ -134,8 +130,6 @@ export async function updateItem(
     const typeName = await getItemTypeName(userId, itemId);
     if (!typeName) return { success: false, error: NOT_FOUND };
 
-    // Drop fields this type doesn't have, even if a client sends them.
-    const editable = getEditableItemFields(typeName);
     const { content, language, url, ...common } = parsed.data;
     // Same rule as creating: a link can't be saved without its URL (undefined leaves it as is).
     if (typeName === "link" && url === null) {
@@ -144,9 +138,7 @@ export async function updateItem(
     if (await hasUnknownCollection(userId, common.collectionIds)) return collectionNotFound();
     const item = await updateItemQuery(userId, itemId, {
       ...common,
-      content: editable.content ? content : undefined,
-      language: editable.language ? language : undefined,
-      url: editable.url ? url : undefined,
+      ...pickEditableFields(typeName, { content, language, url }),
     });
     if (!item) return { success: false, error: NOT_FOUND };
 

@@ -10,7 +10,43 @@ import {
   isCreatableItemType,
   isMarkdownItemType,
   parseTags,
+  pickEditableFields,
 } from "@/lib/item-fields";
+
+describe("pickEditableFields", () => {
+  const VALUES = { content: "code", language: "ts", url: "https://example.com" };
+
+  it("keeps only the fields the type has", () => {
+    expect(pickEditableFields("snippet", VALUES)).toEqual({
+      content: "code",
+      language: "ts",
+      url: undefined,
+    });
+    expect(pickEditableFields("note", VALUES)).toEqual({
+      content: "code",
+      language: undefined,
+      url: undefined,
+    });
+    expect(pickEditableFields("link", VALUES)).toEqual({
+      content: undefined,
+      language: undefined,
+      url: "https://example.com",
+    });
+    expect(pickEditableFields("file", VALUES)).toEqual({
+      content: undefined,
+      language: undefined,
+      url: undefined,
+    });
+  });
+
+  it("keeps null, which clears a field, apart from undefined, which leaves it as is", () => {
+    expect(pickEditableFields("snippet", { content: null })).toEqual({
+      content: null,
+      language: undefined,
+      url: undefined,
+    });
+  });
+});
 
 describe("addTag", () => {
   it("adds to empty and existing tags", () => {
