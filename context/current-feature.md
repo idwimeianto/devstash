@@ -1,18 +1,25 @@
-# Current Feature
+# Current Feature: AI Description Summary
 
-<!-- Feature name and short description -->
+An icon button generates a good, concise 1-2 sentence description with AI from what is currently in the form, with no need to save first.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- An icon button at the Description field generates a summary and puts it in the field
+- The summary is 1-2 sentences, good and concise
+- It reads the current, unsaved form inputs, so it works in the New Item dialog and the drawer's edit form
+- It works for all item types, using whatever information is available (title and content, plus the URL for links and the file name for files and images)
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file
+- Reuse the AI Auto-Tagging foundation: `getOpenAI()` / `AI_MODEL`, `checkAiAllowed()`, the `ai` rate limit, `useCanUseAi()` and `runItemAction()`; Pro-only with the same hidden button and server check
+- Use the Responses API (`instructions` + `input`, `response.output_text`), plain text rather than JSON mode, with content cut to `AI_CONTENT_LIMIT`
+- The result must fit `ITEM_LIMITS.description` and still goes through the normal Save / Create
+- Link pages and file contents aren't fetched: only the URL and file name are sent
 
 ## History
 

@@ -7,7 +7,7 @@ const RATE_LIMITS = {
   forgotPassword: { requests: 3, window: "1 h" },
   resetPassword: { requests: 5, window: "15 m" },
   resendVerification: { requests: 3, window: "15 m" },
-  ai: { requests: 20, window: "1 h" },
+  ai: { requests: 100, window: "1 h" },
 } satisfies Record<string, { requests: number; window: Duration }>;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

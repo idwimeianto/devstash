@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { generateAutoTags } from "@/actions/ai";
+import { generateAutoTags, generateDescription } from "@/actions/ai";
 import { getSessionUserId } from "@/lib/db/users";
 import { NOT_SIGNED_IN } from "@/lib/messages";
 import { getOpenAI } from "@/lib/openai";
@@ -145,5 +145,116 @@ describe("generateAutoTags", () => {
     });
 
     await expect(generateAutoTags(INPUT)).resolves.toMatchObject({ success: false });
+  });
+});
+
+describe("generateDescription", () => {
+  const SERVICE_ERROR = "The AI service couldn't write a description right now. Please try again.";
+
+  beforeEach(() => {
+    create.mockResolvedValue({ status: "completed", output_text: " A debounce hook.\n" });
+  });
+
+  it("returns the cleaned description from plain text, without JSON mode", async () => {
+    await expect(generateDescription({ typeName: "snippet", ...INPUT })).resolves.toEqual({
+      success: true,
+      data: { description: "A debounce hook." },
+    });
+
+    const request = create.mock.calls[0][0];
+    expect(request.model).toBe("gpt-5-nano");
+    expect(request.text.format).toBeUndefined();
+    expect(request.input).toContain("<type>snippet</type>");
+    expect(request.input).toContain(`<content>${INPUT.content}</content>`);
+  });
+
+  it("works from a URL or file name alone", async () => {
+    await generateDescription({ url: "https://lucide.dev" });
+    await generateDescription({ fileName: "report.pdf" });
+
+    expect(create.mock.calls[0][0].input).toContain("<url>https://lucide.dev</url>");
+    expect(create.mock.calls[1][0].input).toContain("<file_name>report.pdf</file_name>");
+  });
+
+  it("truncates content to 2000 characters before the call", async () => {
+    await generateDescription({ content: `${"a".repeat(2000)}OVERFLOW` });
+
+    expect(create.mock.calls[0][0].input).toContain("a".repeat(2000));
+    expect(create.mock.calls[0][0].input).not.toContain("OVERFLOW");
+  });
+
+  it("rejects input with nothing to describe without calling the API", async () => {
+    await expect(
+      generateDescription({ typeName: "snippet", title: "  ", content: "\n", language: "go" }),
+    ).resolves.toMatchObject({ success: false, error: "Add a title or content first" });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("rejects a too long title without calling the API", async () => {
+    await expect(generateDescription({ title: "a".repeat(201) })).resolves.toMatchObject({
+      success: false,
+      error: "Title must be at most 200 characters",
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refuses when signed out", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null as never);
+
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: NOT_SIGNED_IN,
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("asks free users to upgrade, without using up the rate limit or the API", async () => {
+    vi.mocked(checkAiAllowed).mockResolvedValue(AI_PRO_REQUIRED);
+
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: AI_PRO_REQUIRED,
+      upgradeRequired: true,
+    });
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("shares the AI rate limit and reports the wait", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValue({
+      success: false,
+      remaining: 0,
+      reset: Date.now() + 10 * 60_000,
+    });
+
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: "Too many attempts. Please try again in 10 minutes.",
+    });
+    expect(checkRateLimit).toHaveBeenCalledWith("ai", "user_1", { failClosed: false });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("never returns a reply that was cut off", async () => {
+    create.mockResolvedValue({ status: "incomplete", output_text: "A debounce hook that" });
+
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: SERVICE_ERROR,
+    });
+  });
+
+  it("reports an AI service error on an empty reply or an API failure", async () => {
+    create.mockResolvedValue({ status: "completed", output_text: "" });
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: SERVICE_ERROR,
+    });
+
+    create.mockRejectedValue(new Error("429"));
+    await expect(generateDescription(INPUT)).resolves.toEqual({
+      success: false,
+      error: SERVICE_ERROR,
+    });
   });
 });

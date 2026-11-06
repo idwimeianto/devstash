@@ -76,6 +76,7 @@ export function ItemEditForm({ item, onCancel, onSaved }: ItemEditFormProps) {
           values={values}
           onChange={setField}
           fieldErrors={fieldErrors}
+          fileName={item.fileName ?? undefined}
         />
         <ItemMetaSections item={item} />
       </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import { GenerateDescriptionButton } from "@/components/ai/GenerateDescriptionButton";
 import { SuggestTags } from "@/components/ai/SuggestTags";
 import { FormField } from "@/components/auth/FormField";
 import { CodeEditorField } from "@/components/items/CodeEditorField";
@@ -23,6 +24,8 @@ interface ItemFormFieldsProps {
   autoFocusTitle?: boolean;
   // Shown after the content field, e.g. the upload for file and image items.
   fileField?: React.ReactNode;
+  // The file or image's name, for the AI description.
+  fileName?: string;
 }
 
 // The fields the New Item dialog and the drawer's edit form share; the type decides which
@@ -34,6 +37,7 @@ export function ItemFormFields({
   fieldErrors,
   autoFocusTitle = false,
   fileField,
+  fileName,
 }: ItemFormFieldsProps) {
   const fields = getEditableItemFields(typeName);
 
@@ -54,6 +58,20 @@ export function ItemFormFields({
         onChange={(event) => onChange("description", event.target.value)}
         errors={fieldErrors.description}
         rows={2}
+        labelAction={
+          <GenerateDescriptionButton
+            // Switching types keeps typed values, but only send what this type has.
+            source={{
+              typeName,
+              title: values.title,
+              content: fields.content ? values.content : undefined,
+              language: fields.language ? values.language : undefined,
+              url: fields.url ? values.url : undefined,
+              fileName,
+            }}
+            onGenerated={(description) => onChange("description", description)}
+          />
+        }
       />
       {fields.language && (
         <LanguageSelect

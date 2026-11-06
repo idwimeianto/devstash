@@ -175,6 +175,7 @@ function NewItemForm({
           onChange={setField}
           fieldErrors={fieldErrors}
           autoFocusTitle
+          fileName={uploadKind ? upload?.fileName : undefined}
           fileField={
             uploadKind &&
             (canUpload ? (

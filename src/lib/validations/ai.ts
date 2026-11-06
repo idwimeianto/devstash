@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { hasDescriptionSource } from "@/lib/ai-description";
 import { ITEM_LIMITS, tooLong } from "@/lib/validations/items";
 
 // Keeps each call cheap; the start of an item is enough to tag it.
@@ -16,3 +17,27 @@ export const generateAutoTagsSchema = z.object({
     .optional()
     .transform((content) => content?.slice(0, AI_CONTENT_LIMIT) ?? ""),
 });
+
+// Every field is optional, since the forms send what the item has so far. File names can reach
+// 255 characters (the upload route's limit).
+export const generateDescriptionSchema = z
+  .object({
+    typeName: z.string().trim().max(50).optional(),
+    title: z
+      .string()
+      .trim()
+      .max(ITEM_LIMITS.title, tooLong("Title", ITEM_LIMITS.title))
+      .optional(),
+    content: z
+      .string()
+      .optional()
+      .transform((content) => content?.slice(0, AI_CONTENT_LIMIT)),
+    language: z
+      .string()
+      .trim()
+      .max(ITEM_LIMITS.language, tooLong("Language", ITEM_LIMITS.language))
+      .optional(),
+    url: z.string().trim().max(ITEM_LIMITS.url, tooLong("URL", ITEM_LIMITS.url)).optional(),
+    fileName: z.string().trim().max(255, tooLong("File name", 255)).optional(),
+  })
+  .refine(hasDescriptionSource, { message: "Add a title or content first" });

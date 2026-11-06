@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, type ReactNode } from "react";
+import { createContext, Suspense, use, type ReactNode } from "react";
 
 const AiAccessContext = createContext<Promise<boolean> | null>(null);
 
@@ -18,4 +18,17 @@ export function AiAccessProvider({ canUseAiPromise, children }: AiAccessProvider
 export function useCanUseAi(): boolean {
   const promise = use(AiAccessContext);
   return promise ? use(promise) : false;
+}
+
+function AiOnlyForPlan({ children }: { children: ReactNode }) {
+  return useCanUseAi() ? children : null;
+}
+
+// Hidden until the plan is known, so free users never see an AI control appear and vanish.
+export function AiOnly({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AiOnlyForPlan>{children}</AiOnlyForPlan>
+    </Suspense>
+  );
 }

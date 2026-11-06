@@ -1,11 +1,11 @@
 "use client";
 
 import { Check, Loader2, Sparkles, X } from "lucide-react";
-import { Suspense, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { generateAutoTags } from "@/actions/ai";
-import { useCanUseAi } from "@/components/ai/AiAccessProvider";
+import { AiOnly } from "@/components/ai/AiAccessProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { addTag, getNewTags } from "@/lib/item-fields";
@@ -19,17 +19,12 @@ interface SuggestTagsProps {
   onTagsChange: (tags: string) => void;
 }
 
-// Hidden until the plan is known, so free users never see the button appear and vanish.
 export function SuggestTags(props: SuggestTagsProps) {
   return (
-    <Suspense fallback={null}>
-      <SuggestTagsForPlan {...props} />
-    </Suspense>
+    <AiOnly>
+      <SuggestTagsPanel {...props} />
+    </AiOnly>
   );
-}
-
-function SuggestTagsForPlan(props: SuggestTagsProps) {
-  return useCanUseAi() ? <SuggestTagsPanel {...props} /> : null;
 }
 
 function SuggestTagsPanel({ title, content, tags, onTagsChange }: SuggestTagsProps) {
