@@ -1,7 +1,8 @@
-import { Check, Layers } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { LogoMark } from "@/components/brand/LogoMark";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -49,9 +50,7 @@ export function Logo({ label }: { label?: string }) {
       aria-label={label}
       className="inline-flex items-center gap-2.5 rounded-lg text-[17px] font-bold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <span className="grid size-7.5 place-items-center rounded-lg bg-linear-to-r from-blue-500 to-blue-400 text-white">
-        <Layers className="size-4.5" />
-      </span>
+      <LogoMark className="size-7.5" />
       DevStash
     </Link>
   );

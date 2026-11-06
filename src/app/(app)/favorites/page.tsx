@@ -1,6 +1,8 @@
+import { Star } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { EmptyState } from "@/components/common/EmptyState";
 import { FavoritesList } from "@/components/favorites/FavoritesList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFavoriteCollections } from "@/lib/db/collections";
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
   title: "Favorites · DevStash",
 };
 
-const PAGE_CLASSES = "mx-auto flex w-full max-w-4xl flex-col gap-8";
+const PAGE_CLASSES = "flex flex-col gap-10";
 
 async function Favorites() {
   const userId = await getCurrentUserId();
@@ -22,9 +24,10 @@ async function Favorites() {
 
   if (items.length === 0 && collections.length === 0) {
     return (
-      <p className="font-mono text-sm text-muted-foreground">
-        No favorites yet. Star an item or a collection to see it here.
-      </p>
+      <EmptyState
+        icon={Star}
+        message="No favorites yet. Star an item or a collection to see it here."
+      />
     );
   }
 

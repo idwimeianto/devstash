@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { EmptyState } from "@/components/common/EmptyState";
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { NewItemButton } from "@/components/items/NewItemButton";
 import { ProTypeUpsell } from "@/components/items/ProTypeUpsell";
@@ -15,7 +16,7 @@ import { parsePage } from "@/lib/pagination";
 import { checkUploadAllowed } from "@/lib/usage-checks";
 import { cn } from "@/lib/utils";
 
-const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
+const PAGE_CLASSES = "flex flex-col gap-10";
 
 function getLayout(typeName: string): ItemGridLayout {
   if (typeName === "image") return "gallery";
@@ -59,6 +60,7 @@ async function ItemsByType({ params, searchParams }: PageProps<"/items/[type]">)
             <NewItemButton
               defaultType={type.name}
               label={`New ${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}`}
+              iconOnlyOnMobile
             />
           </div>
         )}
@@ -67,7 +69,12 @@ async function ItemsByType({ params, searchParams }: PageProps<"/items/[type]">)
       <ItemGrid
         items={items.rows}
         layout={getLayout(type.name)}
-        emptyMessage={`No ${label.toLowerCase()} yet. Add one to start building your stash.`}
+        empty={
+          <EmptyState
+            icon={Icon}
+            message={`No ${label.toLowerCase()} yet. Add one to start building your stash.`}
+          />
+        }
       />
       <PaginationBar
         page={items.page}

@@ -121,7 +121,7 @@
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --ring: oklch(0.708 0 0);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -134,7 +134,7 @@
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
 }
 
 @layer base {
@@ -147,6 +147,21 @@
   html {
     @apply font-sans;
     }
+  /* Tailwind v4 leaves buttons on the default cursor. Utilities still win, e.g. disabled:cursor-not-allowed. */
+  button:not(:disabled),
+  select:not(:disabled),
+  summary,
+  input:is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"], [type="reset"]):not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="radio"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  input:not([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"], [type="reset"], [type="range"], [type="color"]),
+  textarea {
+    cursor: text;
+  }
   /* Smooth anchor scrolling on the homepage only; the root layout's data-scroll-behavior keeps navigation instant. */
   @media (prefers-reduced-motion: no-preference) {
     html:has([data-home-page]) {

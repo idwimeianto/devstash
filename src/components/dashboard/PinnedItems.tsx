@@ -12,8 +12,8 @@ export async function PinnedItems() {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-muted-foreground">
-        <Pin className="size-4" />
+      <h2 className="flex items-center gap-2 text-xl font-semibold">
+        <Pin className="size-5 text-muted-foreground" />
         Pinned
       </h2>
       <div className="flex flex-col gap-3">

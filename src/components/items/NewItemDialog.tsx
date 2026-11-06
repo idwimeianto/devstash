@@ -67,7 +67,8 @@ export function NewItemDialog({
         <Plus />
         <span className={cn(iconOnlyOnMobile && "hidden sm:inline")}>{label}</span>
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
+      {/* Only the form scrolls, so the header and the Create button stay in view. */}
+      <DialogContent className="flex max-h-[calc(100svh-2rem)] flex-col overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New item</DialogTitle>
           <DialogDescription>
@@ -161,7 +162,8 @@ function NewItemForm({
         onSubmit={handleSubmit}
         // The server's Zod errors are shown inline instead of the browser's own bubbles.
         noValidate
-        className="flex flex-col gap-5"
+        // The negative margins and matching padding leave room for the fields' focus rings.
+        className="-mx-4 -my-1 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-1"
       >
         <ItemTypePicker
           value={typeName}

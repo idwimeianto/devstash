@@ -9,6 +9,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 
 const PRO_TOOLTIP = "AI features require Pro subscription";
+// The ::after makes the 24px button a 32px tap target without changing how it looks.
+const TAP_TARGET_CLASSES = "relative after:absolute after:-inset-y-1";
 
 interface AiActionButtonProps {
   label: string;
@@ -43,6 +45,7 @@ function AiActionButtonForPlan({
         type="button"
         variant="ghost"
         size="xs"
+        className={TAP_TARGET_CLASSES}
         aria-label={ariaLabel}
         aria-busy={pending}
         disabled={pending || disabled}
@@ -63,6 +66,7 @@ function AiActionButtonForPlan({
             type="button"
             variant="ghost"
             size="xs"
+            className={TAP_TARGET_CLASSES}
             aria-label={`${ariaLabel}. ${PRO_TOOLTIP}`}
             aria-busy={pending}
             disabled={pending || disabled}

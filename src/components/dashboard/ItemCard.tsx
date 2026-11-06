@@ -40,12 +40,13 @@ export function ItemCard({ item }: ItemCardProps) {
           <Icon className={cn("size-5", textColor)} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-medium">{item.title}</h3>
+          {/* Up to two lines each: narrow cards otherwise cut most of the text off. */}
+          <div className="flex items-start gap-2">
+            <h3 className="line-clamp-2 min-w-0 font-medium break-words">{item.title}</h3>
             <ItemMarkers item={item} />
           </div>
           {item.description && (
-            <p className="mt-1 truncate text-muted-foreground">
+            <p className="mt-1 line-clamp-2 break-words text-muted-foreground">
               {item.description}
             </p>
           )}

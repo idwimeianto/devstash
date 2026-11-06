@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const COPIED_RESET_MS = 2000;
 
@@ -42,7 +43,8 @@ export function CopyButton({ value, label, className }: CopyButtonProps) {
       onClick={handleCopy}
       disabled={!value}
       aria-label={copied ? "Copied" : label}
-      className={className}
+      // The ::after widens the tap target to 32px without changing how it looks.
+      className={cn("relative after:absolute after:-inset-1", className)}
     >
       {copied ? <Check className="text-emerald-500" /> : <Copy />}
     </Button>

@@ -37,7 +37,7 @@ export function ResetLinkError({ status }: ResetLinkErrorProps) {
       </Link>
       <Link
         href="/sign-in"
-        className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        className="inline-flex min-h-8 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
       >
         Back to sign in
       </Link>

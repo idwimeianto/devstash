@@ -1,15 +1,10 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { CollapsibleSidebarGroup } from "@/components/dashboard/CollapsibleSidebarGroup";
 import { ProBadge } from "@/components/dashboard/ProBadge";
 import { SidebarListSkeleton } from "@/components/dashboard/SidebarListSkeleton";
-import {
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarNavLink } from "@/components/dashboard/SidebarNavLink";
+import { SidebarMenu, SidebarMenuBadge, SidebarMenuItem } from "@/components/ui/sidebar";
 import { getItemTypesWithCounts } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
 import {
@@ -33,16 +28,13 @@ async function SidebarTypeList() {
 
         return (
           <SidebarMenuItem key={type.id}>
-            <SidebarMenuButton
-              tooltip={label}
-              render={<Link href={getItemTypeHref(type.name)} />}
-            >
+            <SidebarNavLink href={getItemTypeHref(type.name)} tooltip={label}>
               <Icon className={textColor} />
               <span>{label}</span>
               {isProItemType(type.name) && (
                 <ProBadge className="group-data-[collapsible=icon]:hidden" />
               )}
-            </SidebarMenuButton>
+            </SidebarNavLink>
             <SidebarMenuBadge>{type.itemCount}</SidebarMenuBadge>
           </SidebarMenuItem>
         );

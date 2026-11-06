@@ -9,7 +9,7 @@ interface AppErrorProps {
 
 export default function AppError({ retry }: AppErrorProps) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-4">
+    <div className="flex flex-col items-start gap-4">
       <div>
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="mt-1 text-muted-foreground">

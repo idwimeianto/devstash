@@ -1,6 +1,4 @@
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -51,14 +49,7 @@ function ProfileSkeleton() {
 
 export default function ProfilePage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to dashboard
-      </Link>
+    <div className="flex max-w-3xl flex-col gap-6">
       <header>
         <h1 className="text-3xl font-semibold">Profile</h1>
         <p className="mt-1 text-muted-foreground">Your profile and usage</p>
@@ -68,6 +59,6 @@ export default function ProfilePage() {
       <Suspense fallback={<ProfileSkeleton />}>
         <ProfileContent />
       </Suspense>
-    </main>
+    </div>
   );
 }

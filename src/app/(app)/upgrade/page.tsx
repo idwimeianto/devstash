@@ -29,7 +29,7 @@ function PlansSkeleton() {
 
 export default function UpgradePage() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <header>
         <h1 className="text-3xl font-semibold">Upgrade to Pro</h1>
         <p className="mt-1 text-muted-foreground">

@@ -16,7 +16,7 @@ import {
 
 export default function DashboardPage() {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
+    <div className="flex flex-col gap-10">
       <header>
         <h1 className="text-3xl font-semibold">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">Your developer knowledge hub</p>
@@ -47,8 +47,8 @@ export default function DashboardPage() {
       </Suspense>
 
       <section className="flex flex-col gap-4">
-        <h2 className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="size-4" />
+        <h2 className="flex items-center gap-2 text-xl font-semibold">
+          <Clock className="size-5 text-muted-foreground" />
           Recent Items
         </h2>
         <Suspense fallback={<RecentItemsSkeleton />}>

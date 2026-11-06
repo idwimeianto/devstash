@@ -1,4 +1,8 @@
+import { Inbox } from "lucide-react";
+
+import { EmptyState } from "@/components/common/EmptyState";
 import { ItemCard } from "@/components/dashboard/ItemCard";
+import { NewItemButton } from "@/components/items/NewItemButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRecentItems } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/users";
@@ -12,9 +16,11 @@ export async function RecentItems() {
 
   if (items.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No items yet. Add one to start building your stash.
-      </p>
+      <EmptyState
+        icon={Inbox}
+        message="No items yet. Add one to start building your stash."
+        action={<NewItemButton />}
+      />
     );
   }
 

@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import { FormField } from "@/components/auth/FormField";
+import { GitHubAuthButton } from "@/components/auth/GitHubAuthButton";
 import { Button } from "@/components/ui/button";
 import { GENERIC_ERROR } from "@/lib/messages";
 import { registerSchema } from "@/lib/validations/auth";
@@ -66,6 +67,8 @@ export function RegisterForm() {
         </p>
       )}
 
+      <GitHubAuthButton label="Sign up with GitHub" />
+
       <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
         <FormField
           name="name"
@@ -105,7 +108,10 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/sign-in" className="text-foreground underline-offset-4 hover:underline">
+        <Link
+          href="/sign-in"
+          className="inline-flex min-h-8 items-center text-foreground underline-offset-4 hover:underline"
+        >
           Sign in
         </Link>
       </p>

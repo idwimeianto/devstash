@@ -1,14 +1,13 @@
 import { Suspense } from "react";
 
 import { CollectionGrid, CollectionGridSkeleton } from "@/components/collections/CollectionGrid";
-import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
 import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCollectionsPage } from "@/lib/db/collections";
 import { getCurrentUserId } from "@/lib/db/users";
 import { parsePage } from "@/lib/pagination";
 
-const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
+const PAGE_CLASSES = "flex flex-col gap-10";
 
 async function Collections({ searchParams }: Pick<PageProps<"/collections">, "searchParams">) {
   const query = await searchParams;
@@ -17,16 +16,11 @@ async function Collections({ searchParams }: Pick<PageProps<"/collections">, "se
 
   return (
     <>
-      <header className="flex items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Collections</h1>
-          <p className="mt-1 text-muted-foreground">
-            {collections.total} {collections.total === 1 ? "collection" : "collections"}
-          </p>
-        </div>
-        <div className="ml-auto">
-          <NewCollectionDialog />
-        </div>
+      <header>
+        <h1 className="text-3xl font-semibold">Collections</h1>
+        <p className="mt-1 text-muted-foreground">
+          {collections.total} {collections.total === 1 ? "collection" : "collections"}
+        </p>
       </header>
 
       <CollectionGrid collections={collections.rows} />

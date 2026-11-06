@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 
-import { signInWithCredentials, signInWithGitHub } from "@/actions/auth";
+import { signInWithCredentials } from "@/actions/auth";
 import { FormField } from "@/components/auth/FormField";
-import { GitHubIcon } from "@/components/auth/GitHubIcon";
+import { GitHubAuthButton } from "@/components/auth/GitHubAuthButton";
 import { Button } from "@/components/ui/button";
 
 // Errors NextAuth adds to the sign-in URL, e.g. after a failed GitHub round trip.
@@ -51,19 +51,7 @@ export function SignInForm() {
         </p>
       )}
 
-      <form action={signInWithGitHub}>
-        <input type="hidden" name="callbackUrl" value={callbackUrl} />
-        <Button type="submit" variant="outline" className="w-full">
-          <GitHubIcon />
-          Sign in with GitHub
-        </Button>
-      </form>
-
-      <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase">
-        <span className="h-px flex-1 bg-border" />
-        or
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      <GitHubAuthButton label="Sign in with GitHub" callbackUrl={callbackUrl} />
 
       <form action={formAction} className="grid gap-4" noValidate>
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
@@ -87,7 +75,7 @@ export function SignInForm() {
           />
           <Link
             href="/forgot-password"
-            className="justify-self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="inline-flex min-h-8 items-center justify-self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             Forgot password?
           </Link>
@@ -99,7 +87,10 @@ export function SignInForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-foreground underline-offset-4 hover:underline">
+        <Link
+          href="/register"
+          className="inline-flex min-h-8 items-center text-foreground underline-offset-4 hover:underline"
+        >
           Register
         </Link>
       </p>

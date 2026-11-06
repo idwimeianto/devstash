@@ -1,8 +1,10 @@
-import { FolderOpen } from "lucide-react";
+import { ArrowLeft, FolderOpen } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { CollectionActions } from "@/components/collections/CollectionActions";
+import { EmptyState } from "@/components/common/EmptyState";
 import { ItemGrid, ItemGridSkeleton, type ItemGridLayout } from "@/components/items/ItemGrid";
 import { PaginationBar } from "@/components/pagination/PaginationBar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +14,7 @@ import { getCurrentUserId } from "@/lib/db/users";
 import { parsePage } from "@/lib/pagination";
 import type { CollectionSection } from "@/types/items";
 
-const PAGE_CLASSES = "mx-auto flex w-full max-w-6xl flex-col gap-10";
+const PAGE_CLASSES = "flex flex-col gap-10";
 
 // Files and images get their own list and gallery, apart from the regular cards,
 // and each section has its own page param.
@@ -45,6 +47,13 @@ async function CollectionItems({ params, searchParams }: PageProps<"/collections
   return (
     <>
       <header className="flex flex-col gap-3">
+        <Link
+          href="/collections"
+          className="-ml-2 flex min-h-8 items-center gap-1.5 self-start rounded-md px-2 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowLeft className="size-4" />
+          All collections
+        </Link>
         <div className="flex items-center gap-4">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
             <FolderOpen className="size-6 text-muted-foreground" />
@@ -63,9 +72,10 @@ async function CollectionItems({ params, searchParams }: PageProps<"/collections
       </header>
 
       {total === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No items in this collection yet. Add some from an item&apos;s edit form.
-        </p>
+        <EmptyState
+          icon={FolderOpen}
+          message="No items in this collection yet. Add some from an item's edit form."
+        />
       ) : (
         sections
           .filter(({ items }) => items.total > 0)
@@ -77,7 +87,7 @@ async function CollectionItems({ params, searchParams }: PageProps<"/collections
               className="flex scroll-mt-(--header-height) flex-col gap-4"
             >
               <h2 className="text-xl font-semibold">{title}</h2>
-              <ItemGrid items={items.rows} layout={layout} emptyMessage="" />
+              <ItemGrid items={items.rows} layout={layout} />
               <PaginationBar
                 page={items.page}
                 pageCount={items.pageCount}

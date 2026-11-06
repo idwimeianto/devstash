@@ -1,18 +1,28 @@
-# Current Feature
+# Current Feature: UI Layout Fixes
 
-<!-- Feature name and short description -->
+Fix the 13 findings from the `ui-reviewer` Playwright pass over the app's layout.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Sidebar marks the current page (`isActive`, `aria-current`); collection pages have a back link
+- New Item dialog keeps Create and Cancel visible with a scrolling body
+- `/items/commands` has no sideways scroll at 360px or 375px
+- `/register` has a GitHub button like `/sign-in`
+- `/settings` and `/profile` live in the `(app)` shell, and pages share one left edge
+- Item card titles aren't cut off so hard
+- The sidebar leaves more room at 768px, and the search box stays usable
+- Sidebar Dashboard link matches the other links; the collapsed sidebar keeps it, with tooltips and an aligned top bar divider
+- Auth pages share the homepage's logo color and don't shift between pages
+- Small controls reach at least 32px tap areas
+- Stronger focus rings, consistent dashboard headings, empty states with an icon and an action
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- From the `ui-reviewer` report; "fix all of them" from the user, using the report's suggested fixes
 
 ## History
 

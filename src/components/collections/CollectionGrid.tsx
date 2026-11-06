@@ -1,3 +1,7 @@
+import { FolderOpen } from "lucide-react";
+
+import { NewCollectionDialog } from "@/components/collections/NewCollectionDialog";
+import { EmptyState } from "@/components/common/EmptyState";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CollectionSummary } from "@/types/collections";
@@ -12,9 +16,11 @@ interface CollectionGridProps {
 export function CollectionGrid({ collections }: CollectionGridProps) {
   if (collections.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No collections yet. Create one to group related items.
-      </p>
+      <EmptyState
+        icon={FolderOpen}
+        message="No collections yet. Create one to group related items."
+        action={<NewCollectionDialog />}
+      />
     );
   }
 

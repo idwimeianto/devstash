@@ -37,7 +37,7 @@ export function FavoritesSortControl({ sort, onSelect }: FavoritesSortControlPro
             aria-pressed={active}
             onClick={() => onSelect(key)}
             className={cn(
-              "font-mono text-muted-foreground",
+              "h-8 font-mono text-muted-foreground",
               active && "bg-muted text-foreground dark:bg-muted"
             )}
           >

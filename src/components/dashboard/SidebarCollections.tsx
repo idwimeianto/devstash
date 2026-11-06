@@ -1,20 +1,15 @@
 import { ArrowRight, ChevronDown, Folder, Star } from "lucide-react";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { CollapsibleSidebarGroup } from "@/components/dashboard/CollapsibleSidebarGroup";
 import { SidebarListSkeleton } from "@/components/dashboard/SidebarListSkeleton";
+import { SidebarNavLink } from "@/components/dashboard/SidebarNavLink";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuBadge, SidebarMenuItem } from "@/components/ui/sidebar";
 import { getSidebarCollections } from "@/lib/db/collections";
 import { getCurrentUserId } from "@/lib/db/users";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
@@ -60,17 +55,15 @@ function CollectionList({
         <SidebarMenu>
           {collections.map((collection) => (
             <SidebarMenuItem key={collection.id}>
-              <SidebarMenuButton
-                tooltip={collection.name}
-                render={<Link href={`/collections/${collection.id}`} />}
-              >
+              <SidebarNavLink href={`/collections/${collection.id}`} tooltip={collection.name}>
                 {showFavorite ? (
-                  <Folder className="text-muted-foreground" />
+                  // Colored by type, so collections are told apart when only icons show.
+                  <Folder className={getItemTypeDisplay(collection.mainTypeName).textColor} />
                 ) : (
                   <TypeDot typeName={collection.mainTypeName} />
                 )}
                 <span>{collection.name}</span>
-              </SidebarMenuButton>
+              </SidebarNavLink>
               <SidebarMenuBadge>
                 {showFavorite ? (
                   <Star className="size-4 fill-yellow-400 text-yellow-400" />
@@ -106,14 +99,14 @@ export function SidebarCollections() {
       </Suspense>
       <SidebarMenu className="mt-2">
         <SidebarMenuItem>
-          <SidebarMenuButton
+          <SidebarNavLink
+            href="/collections"
             tooltip="View all collections"
             className="text-muted-foreground"
-            render={<Link href="/collections" />}
           >
             <ArrowRight />
             <span>View all collections</span>
-          </SidebarMenuButton>
+          </SidebarNavLink>
         </SidebarMenuItem>
       </SidebarMenu>
     </CollapsibleSidebarGroup>

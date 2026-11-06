@@ -1,10 +1,7 @@
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { EditorPreferencesProvider } from "@/components/code/EditorPreferencesProvider";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { MissingAccount } from "@/components/profile/MissingAccount";
@@ -22,7 +19,7 @@ import { getBillingSummary } from "@/lib/billing";
 import { getUserBilling } from "@/lib/db/billing";
 import { getCollectionStats } from "@/lib/db/collections";
 import { getItemStats } from "@/lib/db/items";
-import { getEditorPreferences, getSessionUserId, getUserProfile } from "@/lib/db/users";
+import { getSessionUserId, getUserProfile } from "@/lib/db/users";
 import type { BillingSummary } from "@/types/billing";
 
 export const metadata: Metadata = {
@@ -44,15 +41,13 @@ async function SettingsContent({ searchParams }: { searchParams: PageProps<"/set
   const userId = await getSessionUserId();
   if (!userId) redirect("/sign-in?callbackUrl=/settings");
 
-  const [profile, editorPreferences, billing, itemStats, collectionStats, params] =
-    await Promise.all([
-      getUserProfile(userId),
-      getEditorPreferences(userId),
-      loadBilling(userId),
-      getItemStats(userId),
-      getCollectionStats(userId),
-      searchParams,
-    ]);
+  const [profile, billing, itemStats, collectionStats, params] = await Promise.all([
+    getUserProfile(userId),
+    loadBilling(userId),
+    getItemStats(userId),
+    getCollectionStats(userId),
+    searchParams,
+  ]);
   if (!profile || !billing) return <MissingAccount />;
 
   return (
@@ -63,14 +58,13 @@ async function SettingsContent({ searchParams }: { searchParams: PageProps<"/set
           <CardDescription>Applies to every code editor. Changes save automatically.</CardDescription>
         </CardHeader>
         <CardContent>
-          <EditorPreferencesProvider preferencesPromise={Promise.resolve(editorPreferences)}>
-            <EditorPreferencesForm />
-          </EditorPreferencesProvider>
+          {/* Uses the layout's provider, so a change also reaches a drawer opened from this page. */}
+          <EditorPreferencesForm />
         </CardContent>
       </Card>
 
-      {/* Stripe's return URLs end in #billing, so the card needs room under the top of the page. */}
-      <Card id="billing" className="scroll-mt-6">
+      {/* Stripe's return URLs end in #billing, so the card needs room under the sticky top bar. */}
+      <Card id="billing" className="scroll-mt-[calc(var(--header-height)+1.5rem)]">
         <CardHeader>
           <CardTitle>Billing</CardTitle>
           <CardDescription>Your plan and payments. Payments are handled by Stripe.</CardDescription>
@@ -125,14 +119,7 @@ function SettingsSkeleton() {
 
 export default function SettingsPage({ searchParams }: PageProps<"/settings">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to dashboard
-      </Link>
+    <div className="flex max-w-3xl flex-col gap-6">
       <header>
         <h1 className="text-3xl font-semibold">Settings</h1>
         <p className="mt-1 text-muted-foreground">Manage your account</p>
@@ -142,6 +129,6 @@ export default function SettingsPage({ searchParams }: PageProps<"/settings">) {
       <Suspense fallback={<SettingsSkeleton />}>
         <SettingsContent searchParams={searchParams} />
       </Suspense>
-    </main>
+    </div>
   );
 }

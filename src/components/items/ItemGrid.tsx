@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { ItemCard } from "@/components/dashboard/ItemCard";
 import { FileRow } from "@/components/items/FileRow";
 import { ImageCard } from "@/components/items/ImageCard";
@@ -14,14 +16,13 @@ export type ItemGridLayout = "cards" | "gallery" | "list";
 
 interface ItemGridProps {
   items: ItemSummary[];
-  emptyMessage: string;
+  // Shown when there are no items.
+  empty?: ReactNode;
   layout?: ItemGridLayout;
 }
 
-export function ItemGrid({ items, emptyMessage, layout = "cards" }: ItemGridProps) {
-  if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
-  }
+export function ItemGrid({ items, empty = null, layout = "cards" }: ItemGridProps) {
+  if (items.length === 0) return empty;
 
   if (layout === "list") {
     // A minmax(0, 1fr) column so long, truncated names can't widen the page.
