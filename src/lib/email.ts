@@ -4,8 +4,9 @@ import type { EmailContent } from "@/emails/layout";
 import { renderResetPasswordEmail } from "@/emails/reset-password";
 import { renderVerifyEmail } from "@/emails/verify-email";
 
-// Used when RESEND_FROM is missing or empty. The domain must be verified in Resend.
-const DEFAULT_FROM = "DevStash <noreply@devstash.idwimeianto.com>";
+// Used when RESEND_FROM is missing or empty. Resend's shared sender only delivers to the Resend
+// account owner, so production must set RESEND_FROM to an address on a verified domain.
+const DEFAULT_FROM = "DevStash <onboarding@resend.dev>";
 
 let resend: Resend | undefined;
 

@@ -10,7 +10,7 @@ vi.mock("resend", () => ({
   },
 }));
 
-const DEFAULT_FROM = "DevStash <noreply@devstash.idwimeianto.com>";
+const DEFAULT_FROM = "DevStash <onboarding@resend.dev>";
 const TO = "user@example.com";
 const URL = "https://devstash.test/link";
 
