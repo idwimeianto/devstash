@@ -4,7 +4,7 @@ import type { EmailContent } from "@/emails/layout";
 import { renderResetPasswordEmail } from "@/emails/reset-password";
 import { renderVerifyEmail } from "@/emails/verify-email";
 
-// Resend's shared sender; it only delivers to the Resend account owner until a domain is verified.
+// Used when RESEND_FROM is missing or empty. The domain must be verified in Resend.
 const DEFAULT_FROM = "DevStash <noreply@devstash.idwimeianto.com>";
 
 let resend: Resend | undefined;
@@ -19,7 +19,7 @@ function getResend() {
 
 async function sendEmail(to: string, content: EmailContent, kind: string) {
   const { error } = await getResend().emails.send({
-    from: process.env.RESEND_FROM ?? DEFAULT_FROM,
+    from: process.env.RESEND_FROM || DEFAULT_FROM,
     to,
     ...content,
   });
