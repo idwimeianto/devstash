@@ -35,7 +35,8 @@ If the argument is `src` or contains several kinds of code, apply each section b
 
 ## Scope
 
-- Read **every** source file in the folder, including subfolders, before reporting. Duplicates are missed when files are only sampled.
+- Start with Glob to list the folder's files, then open **every** in-scope file with Read before reporting, including subfolders. Grep and partial reads don't count as reading a file. Duplicates are missed when files are only sampled, and large folders are no exception.
+- Report the exact number of in-scope files you read. If you couldn't read some, name them under a "Not Read" heading and say the scan is incomplete. Never describe a folder as checked if you only searched it.
 - Findings must have at least one copy inside the folder. You may read and Grep outside it to find an existing helper or a copy elsewhere.
 - Skip `*.test.ts` files, `src/generated/`, `src/components/ui/` (shadcn-generated, including its `cn` imports), `src/lib/mock-data.ts` and `src/lib/dashboard.ts`, unless the folder argument is exactly one of those.
 
@@ -184,7 +185,7 @@ Rank findings by value: copies removed and how likely the copies are to drift ap
 ```markdown
 # Refactor Scan: <folder>
 
-Scanned N files.
+Read N of N in-scope files.
 
 ## 🔴 High value
 
