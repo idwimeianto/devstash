@@ -1,21 +1,15 @@
 "use client";
 
-import { Crown, Loader2, Sparkles } from "lucide-react";
-import { Suspense, useId, useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 
 import { explainCode } from "@/actions/ai";
-import { useCanUseAi } from "@/components/ai/AiAccessProvider";
+import { AiActionButton, AiTabButton } from "@/components/ai/AiHeaderControls";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { MarkdownPreview } from "@/components/markdown/MarkdownEditor";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { runItemAction } from "@/lib/run-item-action";
 import { cn } from "@/lib/utils";
 
 type CodeTab = "code" | "explain";
-
-const TAB_LABELS: Record<CodeTab, string> = { code: "Code", explain: "Explain" };
-const PRO_TOOLTIP = "AI features require Pro subscription";
 
 interface ExplainableCodeEditorProps {
   title: string;
@@ -63,16 +57,30 @@ export function ExplainableCodeEditor({
       headerTabs={
         explanation !== null && (
           <div role="tablist" aria-label={`${ariaLabel} view`} className="flex shrink-0 gap-1">
-            <CodeTabButton id={id} tab="code" active={tab} onSelect={setTab} />
-            <CodeTabButton id={id} tab="explain" active={tab} onSelect={setTab} />
+            <AiTabButton
+              id={id}
+              tab="code"
+              label="Code"
+              selected={tab === "code"}
+              onSelect={() => setTab("code")}
+            />
+            <AiTabButton
+              id={id}
+              tab="explain"
+              label="Explain"
+              selected={tab === "explain"}
+              onSelect={() => setTab("explain")}
+            />
           </div>
         )
       }
       headerActions={
-        // Hidden until the plan is known, so free users never see the wrong icon first.
-        <Suspense fallback={null}>
-          <ExplainButton pending={pending} onClick={explain} />
-        </Suspense>
+        <AiActionButton
+          label="Explain"
+          ariaLabel="Explain with AI"
+          pending={pending}
+          onClick={explain}
+        />
       }
       renderBody={(editor) =>
         explanation === null ? (
@@ -89,82 +97,5 @@ export function ExplainableCodeEditor({
         )
       }
     />
-  );
-}
-
-interface CodeTabButtonProps {
-  id: string;
-  tab: CodeTab;
-  active: CodeTab;
-  onSelect: (tab: CodeTab) => void;
-}
-
-function CodeTabButton({ id, tab, active, onSelect }: CodeTabButtonProps) {
-  const selected = tab === active;
-
-  return (
-    <button
-      type="button"
-      role="tab"
-      id={`${id}-${tab}-tab`}
-      aria-selected={selected}
-      aria-controls={selected ? `${id}-${tab}-panel` : undefined}
-      onClick={() => onSelect(tab)}
-      className={cn(
-        "rounded-md px-2 py-0.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-        selected ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {TAB_LABELS[tab]}
-    </button>
-  );
-}
-
-interface ExplainButtonProps {
-  pending: boolean;
-  onClick: () => void;
-}
-
-function ExplainButton({ pending, onClick }: ExplainButtonProps) {
-  const canUseAi = useCanUseAi();
-
-  if (canUseAi) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        aria-label="Explain with AI"
-        aria-busy={pending}
-        disabled={pending}
-        onClick={onClick}
-      >
-        {pending ? <Loader2 className="animate-spin" /> : <Sparkles />}
-        Explain
-      </Button>
-    );
-  }
-
-  // Clicking still asks the server, which answers free users with the upgrade toast.
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            aria-label={`Explain with AI. ${PRO_TOOLTIP}`}
-            aria-busy={pending}
-            disabled={pending}
-            onClick={onClick}
-          />
-        }
-      >
-        {pending ? <Loader2 className="animate-spin" /> : <Crown />}
-        Explain
-      </TooltipTrigger>
-      <TooltipContent>{PRO_TOOLTIP}</TooltipContent>
-    </Tooltip>
   );
 }

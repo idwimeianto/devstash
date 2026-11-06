@@ -5,6 +5,8 @@ import { ITEM_LIMITS, tooLong } from "@/lib/validations/items";
 
 // Keeps each call cheap; the start of an item is enough to tag it.
 export const AI_CONTENT_LIMIT = 2_000;
+// The optimized prompt replaces the whole item, so the model must see all of it.
+export const OPTIMIZE_CONTENT_LIMIT = 8_000;
 
 export const generateAutoTagsSchema = z.object({
   title: z
@@ -57,4 +59,15 @@ export const explainCodeSchema = z.object({
     .string()
     .refine((content) => content.trim().length > 0, "There's no code to explain")
     .transform((content) => content.slice(0, AI_CONTENT_LIMIT)),
+});
+
+// Refused rather than cut: a shortened prompt must never replace the full one.
+export const optimizePromptSchema = z.object({
+  content: z
+    .string()
+    .refine((content) => content.trim().length > 0, "There's no prompt to optimize")
+    .refine(
+      (content) => content.length <= OPTIMIZE_CONTENT_LIMIT,
+      `This prompt is too long to optimize (at most ${OPTIMIZE_CONTENT_LIMIT.toLocaleString("en-US")} characters)`,
+    ),
 });

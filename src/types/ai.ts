@@ -29,3 +29,18 @@ export type ExplainCodeResult =
       fieldErrors?: Partial<Record<string, string[]>>;
       upgradeRequired?: boolean;
     };
+
+export interface OptimizedPrompt {
+  // null when the prompt is already good and the model kept it as it was.
+  optimized: string | null;
+  changes: string[];
+}
+
+export type OptimizePromptResult =
+  | { success: true; data: OptimizedPrompt }
+  | {
+      success: false;
+      error: string;
+      fieldErrors?: Partial<Record<string, string[]>>;
+      upgradeRequired?: boolean;
+    };

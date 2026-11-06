@@ -4,6 +4,7 @@ import { Copy, Download, FileText, Pencil, Pin, Star, Tag } from "lucide-react";
 
 import { setItemFavorite, setItemPinned } from "@/actions/items";
 import { ExplainableCodeEditor } from "@/components/ai/ExplainableCodeEditor";
+import { OptimizablePromptEditor } from "@/components/ai/OptimizablePromptEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import {
   DetailSection,
@@ -30,6 +31,7 @@ interface ItemDetailViewWithActionsProps extends ItemDetailViewProps {
   // Keep the drawer's copy of the item in step, so switching to edit and back shows it.
   onFavoriteSaved: (isFavorite: boolean) => void;
   onPinnedSaved: (isPinned: boolean) => void;
+  onContentSaved: (item: ItemDetailJson) => void;
 }
 
 export function ItemDetailView({
@@ -38,6 +40,7 @@ export function ItemDetailView({
   onDeleted,
   onFavoriteSaved,
   onPinnedSaved,
+  onContentSaved,
 }: ItemDetailViewWithActionsProps) {
   return (
     <>
@@ -57,7 +60,7 @@ export function ItemDetailView({
             <p className="text-sm">{item.description}</p>
           </DetailSection>
         )}
-        <ItemContent item={item} />
+        <ItemContent item={item} onContentSaved={onContentSaved} />
         {item.tags.length > 0 && (
           <DetailSection title="Tags" icon={Tag}>
             <div className="flex flex-wrap gap-1.5">
@@ -82,7 +85,7 @@ function ItemActionBar({
   onDeleted,
   onFavoriteSaved,
   onPinnedSaved,
-}: ItemDetailViewWithActionsProps) {
+}: Omit<ItemDetailViewWithActionsProps, "onContentSaved">) {
   const favorite = useOptimisticToggle(item.isFavorite, async (next) => {
     const result = await setItemFavorite(item.id, next);
     if (result.success) onFavoriteSaved(next);
@@ -183,7 +186,10 @@ function ItemFile({ item }: ItemDetailViewProps) {
   );
 }
 
-function ItemContent({ item }: ItemDetailViewProps) {
+function ItemContent({
+  item,
+  onContentSaved,
+}: Pick<ItemDetailViewWithActionsProps, "item" | "onContentSaved">) {
   if (item.contentType === "URL") {
     const href = item.url && getSafeHref(item.url);
     return (
@@ -216,6 +222,19 @@ function ItemContent({ item }: ItemDetailViewProps) {
           value={item.content}
           language={item.language}
           ariaLabel={`${item.title} content`}
+        />
+      </DetailSection>
+    );
+  }
+
+  if (item.content && item.typeName === "prompt") {
+    return (
+      <DetailSection title="Content">
+        <OptimizablePromptEditor
+          item={item}
+          value={item.content}
+          ariaLabel={`${item.title} content`}
+          onSaved={onContentSaved}
         />
       </DetailSection>
     );

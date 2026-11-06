@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -18,6 +18,13 @@ interface MarkdownEditorProps {
   invalid?: boolean;
   describedBy?: string;
   className?: string;
+  // Extras for a read-only header: tabs replacing the Preview label and actions before copy.
+  headerTabs?: ReactNode;
+  headerActions?: ReactNode;
+  // What the copy button copies, when the body shows something other than the value.
+  copy?: { value: string; label: string };
+  // Wraps or replaces the content below the header.
+  renderBody?: (content: ReactNode) => ReactNode;
 }
 
 export function MarkdownEditor({
@@ -28,6 +35,10 @@ export function MarkdownEditor({
   invalid = false,
   describedBy,
   className,
+  headerTabs,
+  headerActions,
+  copy = { value, label: "Copy content" },
+  renderBody = (content) => content,
 }: MarkdownEditorProps) {
   const id = useId();
   // Read-only editors only ever show the preview.
@@ -45,39 +56,44 @@ export function MarkdownEditor({
     >
       <div className="flex h-9 items-center gap-1 border-b bg-[#2d2d2d] px-2">
         {readOnly ? (
-          <span className="px-2 text-xs font-medium text-muted-foreground">Preview</span>
+          (headerTabs ?? (
+            <span className="px-2 text-xs font-medium text-muted-foreground">Preview</span>
+          ))
         ) : (
           <div role="tablist" aria-label={`${ariaLabel} mode`} className="flex gap-1">
             <MarkdownTabButton id={id} tab="write" active={activeTab} onSelect={setTab} />
             <MarkdownTabButton id={id} tab="preview" active={activeTab} onSelect={setTab} />
           </div>
         )}
-        <div className="ml-auto">
-          <CopyButton value={value} label="Copy content" />
+        <div className="ml-auto flex items-center gap-1">
+          {headerActions}
+          <CopyButton value={copy.value} label={copy.label} />
         </div>
       </div>
-      {activeTab === "write" ? (
-        <textarea
-          id={`${id}-write-panel`}
-          aria-label={ariaLabel}
-          aria-invalid={invalid || undefined}
-          aria-describedby={describedBy}
-          value={value}
-          onChange={(event) => onChange?.(event.target.value)}
-          placeholder="Write in Markdown…"
-          spellCheck={false}
-          className="block field-sizing-content max-h-[400px] min-h-[120px] w-full resize-none bg-transparent px-4 py-3 font-mono text-xs leading-relaxed outline-none placeholder:text-muted-foreground"
-        />
-      ) : (
-        <div
-          id={`${id}-preview-panel`}
-          role={readOnly ? undefined : "tabpanel"}
-          aria-labelledby={readOnly ? undefined : `${id}-preview-tab`}
-          aria-label={readOnly ? ariaLabel : undefined}
-          className={cn("max-h-[400px] overflow-auto px-4 py-3", !readOnly && "min-h-[120px]")}
-        >
-          <MarkdownPreview value={value} />
-        </div>
+      {renderBody(
+        activeTab === "write" ? (
+          <textarea
+            id={`${id}-write-panel`}
+            aria-label={ariaLabel}
+            aria-invalid={invalid || undefined}
+            aria-describedby={describedBy}
+            value={value}
+            onChange={(event) => onChange?.(event.target.value)}
+            placeholder="Write in Markdown…"
+            spellCheck={false}
+            className="block field-sizing-content max-h-[400px] min-h-[120px] w-full resize-none bg-transparent px-4 py-3 font-mono text-xs leading-relaxed outline-none placeholder:text-muted-foreground"
+          />
+        ) : (
+          <div
+            id={`${id}-preview-panel`}
+            role={readOnly ? undefined : "tabpanel"}
+            aria-labelledby={readOnly ? undefined : `${id}-preview-tab`}
+            aria-label={readOnly ? ariaLabel : undefined}
+            className={cn("max-h-[400px] overflow-auto px-4 py-3", !readOnly && "min-h-[120px]")}
+          >
+            <MarkdownPreview value={value} />
+          </div>
+        ),
       )}
     </div>
   );

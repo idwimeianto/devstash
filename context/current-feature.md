@@ -1,18 +1,27 @@
-# Current Feature
+# Current Feature: AI Prompt Optimizer
 
-<!-- Feature name and short description -->
+Refine a prompt item with AI from the item drawer, then let the user decide whether to use the result.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- An "Optimize" button in the header of prompt items' content, in the same place and style as the "Explain" button on snippets and commands (Pro only, spinner while pending)
+- A server action sends the current prompt to OpenAI and returns a refined version, or says when it is already good and needs no changes
+- The refined prompt is shown to the user with a clear choice: use the updated prompt or keep the current one
+- Nothing changes until the user accepts; accepting saves the new content to the item and updates the drawer
+- Free users can't run it: same Pro behavior as Explain (Crown button, tooltip, upgrade toast from the server, no OpenAI call)
+- Unit tests for the server action and new utilities; `npm test` and `npm run build` pass
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file: "Implement prompt optimization for the prompt item types. It should look at the current prompt and refine if needed, then ask if the user wants to use the updated prompt. Put the 'Optimize' button in the header, much like the 'Explain' button on snippets and commands."
+- Prompts render in `MarkdownEditor`, not `CodeEditor`, so the button goes in the Markdown editor's header; `ExplainableCodeEditor` (`src/components/ai/`) is the pattern to follow
+- Reuse `explainCode`'s setup in `src/actions/ai.ts`: `checkAiRequest()` (shared `ai` limit of 100 / hour, failing closed in production), `reasoning.effort: "minimal"`, `store: false`, `status: "incomplete"` treated as a failure
+- `docs/ai-integration-plan.md` section 5.4 suggests structured `{ optimized, changes }` output, keeping the author's intent and placeholders (`{{var}}`, `<context>`), not inventing facts, about 2,000 output tokens, and capping the result at `ITEM_LIMITS.content`; it also warns that the 2,000-character `AI_CONTENT_LIMIT` may be too short for long prompts
+- To decide at `start`: where the result and the choice appear (a tab in the header like Explain, or a confirmation dialog), whether to show what changed, and how to handle prompts over `AI_CONTENT_LIMIT` (a truncated prompt must not replace the full one)
 
 ## History
 
