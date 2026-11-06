@@ -1,18 +1,19 @@
-# Current Feature
+# Current Feature: Auth Back Link Alignment
 
-<!-- Feature name and short description -->
+Put the auth pages' "Back to homepage" link and the DevStash logo on one row above the form, lined up with its edges.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- The link's left edge lines up with the form on every auth page, at phone and desktop widths
+- The logo sits on the same row, at the form's right edge, instead of the link being in the page corner
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- The request said "back to dashboard"; the auth pages' link is "Back to homepage" to `/`, so its text and target stay as they are
 
 ## History
 
