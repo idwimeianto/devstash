@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 
 import { signInWithCredentials } from "@/actions/auth";
+import { AuthLink, AuthMutedLink } from "@/components/auth/AuthLinks";
 import { FormField } from "@/components/auth/FormField";
 import { GitHubAuthButton } from "@/components/auth/GitHubAuthButton";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { Button } from "@/components/ui/button";
 
 // Errors NextAuth adds to the sign-in URL, e.g. after a failed GitHub round trip.
@@ -35,21 +36,11 @@ export function SignInForm() {
   return (
     <div className="grid gap-6">
       {passwordReset && !state && (
-        <p
-          role="status"
-          className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
-        >
+        <StatusMessage tone="success">
           Password updated. Sign in with your new password.
-        </p>
+        </StatusMessage>
       )}
-      {error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
+      {error && <StatusMessage tone="error">{error}</StatusMessage>}
 
       <GitHubAuthButton label="Sign in with GitHub" callbackUrl={callbackUrl} />
 
@@ -73,12 +64,9 @@ export function SignInForm() {
             errors={state?.fieldErrors?.password}
             required
           />
-          <Link
-            href="/forgot-password"
-            className="inline-flex min-h-8 items-center justify-self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
+          <AuthMutedLink href="/forgot-password" className="justify-self-end">
             Forgot password?
-          </Link>
+          </AuthMutedLink>
         </div>
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Signing in..." : "Sign in"}
@@ -87,12 +75,7 @@ export function SignInForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="inline-flex min-h-8 items-center text-foreground underline-offset-4 hover:underline"
-        >
-          Register
-        </Link>
+        <AuthLink href="/register">Register</AuthLink>
       </p>
     </div>
   );

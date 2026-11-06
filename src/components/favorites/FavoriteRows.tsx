@@ -4,17 +4,11 @@ import { createElement, type ReactNode } from "react";
 
 import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { Badge } from "@/components/ui/badge";
+import { SHORT_DATE_WITH_YEAR } from "@/lib/format-date";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { FavoriteCollection } from "@/types/collections";
 import type { FavoriteItem } from "@/types/items";
-
-const FAVORITE_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 const ROW_CLASSES =
   "relative flex items-center gap-3 px-2 py-1.5 transition-colors hover:bg-muted/40 has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:ring-inset";
@@ -55,7 +49,7 @@ function FavoriteDate({ date }: { date: Date }) {
       dateTime={date.toISOString()}
       className="hidden w-24 shrink-0 text-right text-muted-foreground sm:block"
     >
-      {FAVORITE_DATE_FORMAT.format(date)}
+      {SHORT_DATE_WITH_YEAR.format(date)}
     </time>
   );
 }

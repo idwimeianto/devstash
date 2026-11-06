@@ -2,14 +2,8 @@ import { CalendarDays, Mail } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user/UserAvatar";
+import { LONG_DATE } from "@/lib/format-date";
 import type { UserProfile } from "@/types/profile";
-
-const JOINED_FORMAT = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  timeZone: "UTC",
-});
 
 interface ProfileInfoProps {
   profile: UserProfile;
@@ -31,7 +25,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
           </p>
           <p className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground sm:justify-start">
             <CalendarDays className="size-4 shrink-0" />
-            Joined {JOINED_FORMAT.format(createdAt)}
+            Joined {LONG_DATE.format(createdAt)}
           </p>
         </div>
       </CardContent>

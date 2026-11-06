@@ -3,13 +3,18 @@
 import { useId, useState, useTransition } from "react";
 
 import { explainCode } from "@/actions/ai";
-import { AiActionButton, AiTabButton } from "@/components/ai/AiHeaderControls";
+import { AiActionButton, AiTabList, AiTabPanel } from "@/components/ai/AiHeaderControls";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { MarkdownPreview } from "@/components/markdown/MarkdownEditor";
 import { runItemAction } from "@/lib/run-item-action";
 import { cn } from "@/lib/utils";
 
 type CodeTab = "code" | "explain";
+
+const TABS: readonly { key: CodeTab; label: string }[] = [
+  { key: "code", label: "Code" },
+  { key: "explain", label: "Explain" },
+];
 
 interface ExplainableCodeEditorProps {
   title: string;
@@ -56,22 +61,7 @@ export function ExplainableCodeEditor({
       }
       headerTabs={
         explanation !== null && (
-          <div role="tablist" aria-label={`${ariaLabel} view`} className="flex shrink-0 gap-1">
-            <AiTabButton
-              id={id}
-              tab="code"
-              label="Code"
-              selected={tab === "code"}
-              onSelect={() => setTab("code")}
-            />
-            <AiTabButton
-              id={id}
-              tab="explain"
-              label="Explain"
-              selected={tab === "explain"}
-              onSelect={() => setTab("explain")}
-            />
-          </div>
+          <AiTabList id={id} ariaLabel={ariaLabel} tabs={TABS} active={tab} onSelect={setTab} />
         )
       }
       headerActions={
@@ -86,14 +76,13 @@ export function ExplainableCodeEditor({
         explanation === null ? (
           editor
         ) : (
-          <div
-            role="tabpanel"
-            id={`${id}-${tab}-panel`}
-            aria-labelledby={`${id}-${tab}-tab`}
+          <AiTabPanel
+            id={id}
+            tab={tab}
             className={cn(showExplanation && "max-h-[400px] overflow-auto px-4 py-3")}
           >
             {showExplanation ? <MarkdownPreview value={explanation} /> : editor}
-          </div>
+          </AiTabPanel>
         )
       }
     />

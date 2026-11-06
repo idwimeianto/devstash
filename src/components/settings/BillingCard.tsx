@@ -1,15 +1,16 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 import { openBillingPortal, startCheckout } from "@/actions/billing";
 import { BillingOptionPicker } from "@/components/billing/BillingOptionPicker";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { ProBadge } from "@/components/dashboard/ProBadge";
 import { Button } from "@/components/ui/button";
 import { useBillingAction } from "@/hooks/use-billing-action";
+import { LONG_DATE } from "@/lib/format-date";
 import { FREE_COLLECTION_LIMIT, FREE_ITEM_LIMIT, type Billing } from "@/lib/usage-limits";
-import { cn } from "@/lib/utils";
 import type { BillingSummary } from "@/types/billing";
 
 export type CheckoutResult = "success" | "cancelled" | null;
@@ -20,39 +21,20 @@ interface BillingCardProps {
   checkout: CheckoutResult;
 }
 
-const RENEWAL_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-function Notice({ tone, children }: { tone: "success" | "muted" | "warning"; children: ReactNode }) {
-  return (
-    <p
-      role="status"
-      className={cn(
-        "rounded-md border px-3 py-2 text-sm",
-        tone === "success" && "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-        tone === "warning" && "border-amber-500/30 bg-amber-500/10 text-amber-400",
-        tone === "muted" && "border-border bg-muted/40 text-muted-foreground",
-      )}
-    >
-      {children}
-    </p>
-  );
-}
-
 function CheckoutNotice({ checkout, isPro }: { checkout: CheckoutResult; isPro: boolean }) {
   if (checkout === "cancelled") {
-    return <Notice tone="muted">Checkout cancelled. You haven&apos;t been charged.</Notice>;
+    return (
+      <StatusMessage tone="muted">Checkout cancelled. You haven&apos;t been charged.</StatusMessage>
+    );
   }
   if (checkout !== "success") return null;
   return isPro ? (
-    <Notice tone="success">Welcome to Pro!</Notice>
+    <StatusMessage tone="success">Welcome to Pro!</StatusMessage>
   ) : (
     // The webhook can land a moment after Stripe sends the user back.
-    <Notice tone="success">Payment received. Activating Pro… refresh in a moment.</Notice>
+    <StatusMessage tone="success">
+      Payment received. Activating Pro… refresh in a moment.
+    </StatusMessage>
   );
 }
 
@@ -86,7 +68,7 @@ function FreePlan({ usage }: { usage: BillingCardProps["usage"] }) {
 
 function ProPlan({ summary }: { summary: BillingSummary }) {
   const periodEnd = summary.currentPeriodEnd
-    ? RENEWAL_DATE_FORMAT.format(new Date(summary.currentPeriodEnd))
+    ? LONG_DATE.format(new Date(summary.currentPeriodEnd))
     : null;
 
   return (
@@ -109,7 +91,9 @@ function ProPlan({ summary }: { summary: BillingSummary }) {
       </div>
 
       {summary.status === "past_due" && (
-        <Notice tone="warning">Your last payment failed. Update your card to keep Pro.</Notice>
+        <StatusMessage tone="warning">
+          Your last payment failed. Update your card to keep Pro.
+        </StatusMessage>
       )}
 
       {summary.hasCustomer && <ManageBillingButton />}
@@ -139,10 +123,10 @@ function InactiveSubscription() {
   return (
     <div className="grid gap-4">
       <p className="font-medium">Free plan</p>
-      <Notice tone="warning">
+      <StatusMessage tone="warning">
         Your Pro subscription is inactive because a payment didn&apos;t go through. Update your
         payment method to restore Pro.
-      </Notice>
+      </StatusMessage>
       <ManageBillingButton />
     </div>
   );

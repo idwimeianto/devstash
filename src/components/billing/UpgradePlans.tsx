@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { startCheckout } from "@/actions/billing";
 import { BillingOptionPicker } from "@/components/billing/BillingOptionPicker";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useBillingAction } from "@/hooks/use-billing-action";
@@ -110,19 +111,11 @@ function ProPlanAction({
 
   return (
     <div className="grid gap-3">
-      <p
-        role="status"
-        className={cn(
-          "rounded-md border px-3 py-2 text-sm",
-          status === "pro"
-            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-            : "border-amber-500/30 bg-amber-500/10 text-amber-400",
-        )}
-      >
+      <StatusMessage tone={status === "pro" ? "success" : "warning"}>
         {status === "pro"
           ? "You're already on Pro."
           : "Your Pro subscription is inactive because a payment didn't go through. Update your payment method in Billing to restore Pro."}
-      </p>
+      </StatusMessage>
       <Link href={BILLING_HREF} className={buttonVariants({ variant: "outline", className: "w-full" })}>
         Manage billing
       </Link>

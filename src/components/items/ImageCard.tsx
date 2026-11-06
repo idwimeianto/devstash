@@ -1,10 +1,10 @@
 import { Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 
-import { DATE_FORMAT } from "@/components/dashboard/ItemCard";
 import { ItemMarkers } from "@/components/items/ItemMarkers";
 import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { Card, CardContent } from "@/components/ui/card";
+import { SHORT_DATE } from "@/lib/format-date";
 import { getSafeHref } from "@/lib/safe-url";
 import type { ItemSummary } from "@/types/items";
 
@@ -46,7 +46,7 @@ export function ImageCard({ item, eager = false }: ImageCardProps) {
           dateTime={item.date.toISOString()}
           className="ml-auto shrink-0 text-xs text-muted-foreground"
         >
-          {DATE_FORMAT.format(item.date)}
+          {SHORT_DATE.format(item.date)}
         </time>
       </CardContent>
     </Card>

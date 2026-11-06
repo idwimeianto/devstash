@@ -1,4 +1,5 @@
 import { CodeEditor } from "@/components/code/CodeEditor";
+import { EditorField } from "@/components/items/EditorField";
 
 interface CodeEditorFieldProps {
   label: string;
@@ -8,22 +9,21 @@ interface CodeEditorFieldProps {
   errors?: string[];
 }
 
-// CodeEditor counterpart of TextareaField: label above, error text below.
 export function CodeEditorField({ label, value, language, onChange, errors }: CodeEditorFieldProps) {
   const error = errors?.[0];
 
   return (
-    <div className="grid gap-2">
-      {/* Monaco's own textarea takes the label through ariaLabel, so this one is visual only. */}
-      <span className="text-sm leading-none font-medium select-none">{label}</span>
-      <CodeEditor
-        value={value}
-        language={language}
-        ariaLabel={label}
-        onChange={onChange}
-        invalid={Boolean(error)}
-      />
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
+    <EditorField label={label} error={error}>
+      {() => (
+        <CodeEditor
+          value={value}
+          language={language}
+          // Monaco has no aria-describedby option, so screen readers get the error from the label.
+          ariaLabel={error ? `${label}: ${error}` : label}
+          onChange={onChange}
+          invalid={Boolean(error)}
+        />
+      )}
+    </EditorField>
   );
 }

@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useActionState } from "react";
 
 import { requestPasswordReset } from "@/actions/auth";
+import { AuthLink } from "@/components/auth/AuthLinks";
 import { FormField } from "@/components/auth/FormField";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -35,14 +37,7 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="grid gap-6">
-      {state?.error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {state.error}
-        </p>
-      )}
+      {state?.error && <StatusMessage tone="error">{state.error}</StatusMessage>}
 
       <form action={formAction} className="grid gap-4" noValidate>
         <FormField
@@ -61,12 +56,7 @@ export function ForgotPasswordForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Remembered it?{" "}
-        <Link
-          href="/sign-in"
-          className="inline-flex min-h-8 items-center text-foreground underline-offset-4 hover:underline"
-        >
-          Sign in
-        </Link>
+        <AuthLink href="/sign-in">Sign in</AuthLink>
       </p>
     </div>
   );

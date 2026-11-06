@@ -6,16 +6,10 @@ import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { buttonVariants } from "@/components/ui/button";
 import { getFileIcon } from "@/lib/file-icons";
 import { formatFileSize } from "@/lib/file-upload";
+import { SHORT_DATE_WITH_YEAR } from "@/lib/format-date";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/types/items";
-
-const UPLOAD_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 interface FileRowProps {
   item: ItemSummary;
@@ -26,7 +20,7 @@ export function FileRow({ item }: FileRowProps) {
   const size = item.fileSize !== null ? formatFileSize(item.fileSize) : null;
   const uploaded = (
     <time dateTime={item.createdAt.toISOString()}>
-      {UPLOAD_DATE_FORMAT.format(item.createdAt)}
+      {SHORT_DATE_WITH_YEAR.format(item.createdAt)}
     </time>
   );
 

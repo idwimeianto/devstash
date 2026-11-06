@@ -1,7 +1,7 @@
 "use client";
 
 import { Crown, Loader2, Sparkles } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { useCanUseAi } from "@/components/ai/AiAccessProvider";
 import { Button } from "@/components/ui/button";
@@ -91,7 +91,7 @@ interface AiTabButtonProps {
   onSelect: () => void;
 }
 
-export function AiTabButton({ id, tab, label, selected, onSelect }: AiTabButtonProps) {
+function AiTabButton({ id, tab, label, selected, onSelect }: AiTabButtonProps) {
   return (
     <button
       type="button"
@@ -107,5 +107,57 @@ export function AiTabButton({ id, tab, label, selected, onSelect }: AiTabButtonP
     >
       {label}
     </button>
+  );
+}
+
+interface AiTabListProps<T extends string> {
+  // Shared with AiTabPanel, so each tab and its panel point at each other.
+  id: string;
+  ariaLabel: string;
+  tabs: readonly { key: T; label: string }[];
+  active: T;
+  onSelect: (tab: T) => void;
+}
+
+export function AiTabList<T extends string>({
+  id,
+  ariaLabel,
+  tabs,
+  active,
+  onSelect,
+}: AiTabListProps<T>) {
+  return (
+    <div role="tablist" aria-label={`${ariaLabel} view`} className="flex shrink-0 gap-1">
+      {tabs.map(({ key, label }) => (
+        <AiTabButton
+          key={key}
+          id={id}
+          tab={key}
+          label={label}
+          selected={active === key}
+          onSelect={() => onSelect(key)}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface AiTabPanelProps {
+  id: string;
+  tab: string;
+  className?: string;
+  children: ReactNode;
+}
+
+export function AiTabPanel({ id, tab, className, children }: AiTabPanelProps) {
+  return (
+    <div
+      role="tabpanel"
+      id={`${id}-${tab}-panel`}
+      aria-labelledby={`${id}-${tab}-tab`}
+      className={className}
+    >
+      {children}
+    </div>
   );
 }

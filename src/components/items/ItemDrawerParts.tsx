@@ -2,18 +2,12 @@ import { CalendarDays, FolderOpen, type LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { LONG_DATE } from "@/lib/format-date";
 import { getItemTypeDisplay, getItemTypeLabel } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { ItemDetailJson } from "@/types/items";
 
 // Building blocks the item drawer's view mode and edit form share.
-
-const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 interface ItemProps {
   item: ItemDetailJson;
@@ -102,7 +96,7 @@ function DetailDate({ label, value }: DetailDateProps) {
     <>
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="text-right">
-        <time dateTime={value}>{DATE_FORMAT.format(new Date(value))}</time>
+        <time dateTime={value}>{LONG_DATE.format(new Date(value))}</time>
       </dd>
     </>
   );

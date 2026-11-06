@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
+import { AuthLink } from "@/components/auth/AuthLinks";
 import { FormField } from "@/components/auth/FormField";
 import { GitHubAuthButton } from "@/components/auth/GitHubAuthButton";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { Button } from "@/components/ui/button";
 import { GENERIC_ERROR } from "@/lib/messages";
 import { registerSchema } from "@/lib/validations/auth";
@@ -58,14 +59,7 @@ export function RegisterForm() {
 
   return (
     <div className="grid gap-6">
-      {error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
+      {error && <StatusMessage tone="error">{error}</StatusMessage>}
 
       <GitHubAuthButton label="Sign up with GitHub" />
 
@@ -108,12 +102,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link
-          href="/sign-in"
-          className="inline-flex min-h-8 items-center text-foreground underline-offset-4 hover:underline"
-        >
-          Sign in
-        </Link>
+        <AuthLink href="/sign-in">Sign in</AuthLink>
       </p>
     </div>
   );

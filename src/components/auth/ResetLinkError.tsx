@@ -1,6 +1,7 @@
 import { CircleAlert } from "lucide-react";
 import Link from "next/link";
 
+import { AuthMutedLink } from "@/components/auth/AuthLinks";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ResetLinkStatus } from "@/types/auth";
@@ -35,12 +36,7 @@ export function ResetLinkError({ status }: ResetLinkErrorProps) {
       <Link href="/forgot-password" className={cn(buttonVariants(), "mt-2 w-full")}>
         Request a new link
       </Link>
-      <Link
-        href="/sign-in"
-        className="inline-flex min-h-8 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-      >
-        Back to sign in
-      </Link>
+      <AuthMutedLink href="/sign-in">Back to sign in</AuthMutedLink>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { changePassword } from "@/actions/profile";
 import { FormField } from "@/components/auth/FormField";
+import { StatusMessage } from "@/components/common/StatusMessage";
 import { Button } from "@/components/ui/button";
 
 export function ChangePasswordForm() {
@@ -11,22 +12,8 @@ export function ChangePasswordForm() {
 
   return (
     <form action={formAction} className="grid gap-4" noValidate>
-      {state?.success && (
-        <p
-          role="status"
-          className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
-        >
-          {state.data?.message}
-        </p>
-      )}
-      {state?.error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {state.error}
-        </p>
-      )}
+      {state?.success && <StatusMessage tone="success">{state.data?.message}</StatusMessage>}
+      {state?.error && <StatusMessage tone="error">{state.error}</StatusMessage>}
 
       <FormField
         name="currentPassword"

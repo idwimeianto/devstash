@@ -1,18 +1,26 @@
-# Current Feature
+# Current Feature: Components Duplicates Refactor
 
-<!-- Feature name and short description -->
+Removes the duplication the `refactor-scanner` found in `src/components`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `StatusMessage` (`src/components/common/`) replacing the inline status boxes and `BillingCard`'s `Notice`
+- `ConfirmDeleteDialog` (`src/components/common/`) shared by the item and collection delete dialogs
+- `AiTabList` and `AiTabPanel` in `AiHeaderControls.tsx`, used by both AI editors
+- `src/lib/format-date.ts` replacing the per-file date formats
+- `EditorField` shared by `CodeEditorField` and `MarkdownEditorField`, with the code editor's error reaching screen readers
+- Shared auth link components
+- Tighten the scanner's read-every-file rule, and rescan `home`, `code`, `search` and `markdown`
+- No other change to what users see
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Monaco has no `aria-describedby` option, so the code editor's error goes in its accessible label.
+- `DeleteAccountDialog` stays separate: it uses a form action with `useActionState`.
 
 ## History
 

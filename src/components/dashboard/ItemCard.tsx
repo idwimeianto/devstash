@@ -3,15 +3,10 @@ import { ItemMarkers } from "@/components/items/ItemMarkers";
 import { OpenItemButton } from "@/components/items/OpenItemButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SHORT_DATE } from "@/lib/format-date";
 import { getItemTypeDisplay } from "@/lib/item-type-display";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/types/items";
-
-export const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
 
 interface ItemCardProps {
   item: ItemSummary;
@@ -65,7 +60,7 @@ export function ItemCard({ item }: ItemCardProps) {
             dateTime={item.date.toISOString()}
             className="text-xs text-muted-foreground"
           >
-            {DATE_FORMAT.format(item.date)}
+            {SHORT_DATE.format(item.date)}
           </time>
           {item.copyValue && (
             // Above the card's open button, so a click copies instead of opening the drawer;

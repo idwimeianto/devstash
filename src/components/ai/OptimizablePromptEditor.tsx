@@ -7,13 +7,18 @@ import { toast } from "sonner";
 
 import { optimizePrompt } from "@/actions/ai";
 import { updateItem } from "@/actions/items";
-import { AiActionButton, AiTabButton } from "@/components/ai/AiHeaderControls";
+import { AiActionButton, AiTabList, AiTabPanel } from "@/components/ai/AiHeaderControls";
 import { MarkdownEditor, MarkdownPreview } from "@/components/markdown/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { runItemAction } from "@/lib/run-item-action";
 import type { ItemDetailJson } from "@/types/items";
 
 type PromptTab = "current" | "optimized";
+
+const TABS: readonly { key: PromptTab; label: string }[] = [
+  { key: "current", label: "Current" },
+  { key: "optimized", label: "Optimized" },
+];
 
 interface Suggestion {
   optimized: string;
@@ -86,22 +91,7 @@ export function OptimizablePromptEditor({
       }
       headerTabs={
         suggestion ? (
-          <div role="tablist" aria-label={`${ariaLabel} view`} className="flex shrink-0 gap-1">
-            <AiTabButton
-              id={id}
-              tab="current"
-              label="Current"
-              selected={tab === "current"}
-              onSelect={() => setTab("current")}
-            />
-            <AiTabButton
-              id={id}
-              tab="optimized"
-              label="Optimized"
-              selected={tab === "optimized"}
-              onSelect={() => setTab("optimized")}
-            />
-          </div>
+          <AiTabList id={id} ariaLabel={ariaLabel} tabs={TABS} active={tab} onSelect={setTab} />
         ) : undefined
       }
       headerActions={
@@ -118,7 +108,7 @@ export function OptimizablePromptEditor({
           current
         ) : (
           <>
-            <div role="tabpanel" id={`${id}-${tab}-panel`} aria-labelledby={`${id}-${tab}-tab`}>
+            <AiTabPanel id={id} tab={tab}>
               {showOptimized ? (
                 <div className="max-h-[400px] overflow-auto px-4 py-3">
                   <MarkdownPreview value={suggestion.optimized} />
@@ -126,7 +116,7 @@ export function OptimizablePromptEditor({
               ) : (
                 current
               )}
-            </div>
+            </AiTabPanel>
             <SuggestionChoice
               changes={suggestion.changes}
               saving={saving}
