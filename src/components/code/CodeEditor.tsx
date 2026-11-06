@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useState } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 
 import { CopyButton } from "@/components/code/CopyButton";
 import { useEditorPreferences } from "@/components/code/EditorPreferencesProvider";
@@ -25,6 +25,13 @@ interface CodeEditorProps {
   onChange?: (value: string) => void;
   invalid?: boolean;
   className?: string;
+  // Extras for the header: tabs after the dots and actions before the copy button.
+  headerTabs?: ReactNode;
+  headerActions?: ReactNode;
+  // What the copy button copies, when the body shows something other than the code.
+  copy?: { value: string; label: string };
+  // Wraps or replaces the editor below the header.
+  renderBody?: (editor: ReactNode) => ReactNode;
 }
 
 export function CodeEditor({
@@ -35,6 +42,10 @@ export function CodeEditor({
   onChange,
   invalid = false,
   className,
+  headerTabs,
+  headerActions,
+  copy = { value, label: "Copy code" },
+  renderBody = (editor) => editor,
 }: CodeEditorProps) {
   return (
     <div
@@ -44,25 +55,32 @@ export function CodeEditor({
         className,
       )}
     >
-      <CodeEditorHeader value={value} language={language?.trim()} />
-      {/* The preferences have almost always arrived by the time an editor opens. */}
-      <Suspense
-        fallback={
-          <CodeFallback
+      <CodeEditorHeader
+        copy={copy}
+        language={language?.trim()}
+        tabs={headerTabs}
+        actions={headerActions}
+      />
+      {renderBody(
+        // The preferences have almost always arrived by the time an editor opens.
+        <Suspense
+          fallback={
+            <CodeFallback
+              value={value}
+              editable={!readOnly}
+              preferences={DEFAULT_EDITOR_PREFERENCES}
+            />
+          }
+        >
+          <CodeEditorBody
             value={value}
-            editable={!readOnly}
-            preferences={DEFAULT_EDITOR_PREFERENCES}
+            language={language}
+            readOnly={readOnly}
+            ariaLabel={ariaLabel}
+            onChange={onChange}
           />
-        }
-      >
-        <CodeEditorBody
-          value={value}
-          language={language}
-          readOnly={readOnly}
-          ariaLabel={ariaLabel}
-          onChange={onChange}
-        />
-      </Suspense>
+        </Suspense>,
+      )}
     </div>
   );
 }
@@ -96,24 +114,29 @@ function CodeEditorBody({ value, language, readOnly, ariaLabel, onChange }: Code
 }
 
 interface CodeEditorHeaderProps {
-  value: string;
+  copy: { value: string; label: string };
   language?: string;
+  tabs?: ReactNode;
+  actions?: ReactNode;
 }
 
 // macOS-style window bar: traffic-light dots, the language and a copy button.
-function CodeEditorHeader({ value, language }: CodeEditorHeaderProps) {
+function CodeEditorHeader({ copy, language, tabs, actions }: CodeEditorHeaderProps) {
   return (
     <div className="flex h-9 items-center gap-3 border-b bg-muted/40 px-3">
-      <div className="flex gap-1.5" aria-hidden="true">
+      {/* Tabs leave no room for the dots on phones. */}
+      <div className={cn("flex gap-1.5", tabs && "max-sm:hidden")} aria-hidden="true">
         <span className="size-3 rounded-full bg-[#ff5f57]" />
         <span className="size-3 rounded-full bg-[#febc2e]" />
         <span className="size-3 rounded-full bg-[#28c840]" />
       </div>
+      {tabs}
       <div className="ml-auto flex min-w-0 items-center gap-1">
         {language && (
           <span className="truncate font-mono text-xs text-muted-foreground">{language}</span>
         )}
-        <CopyButton value={value} label="Copy code" />
+        {actions}
+        <CopyButton value={copy.value} label={copy.label} />
       </div>
     </div>
   );

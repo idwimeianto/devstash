@@ -41,3 +41,20 @@ export const generateDescriptionSchema = z
     fileName: z.string().trim().max(255, tooLong("File name", 255)).optional(),
   })
   .refine(hasDescriptionSource, { message: "Add a title or content first" });
+
+export const explainCodeSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .max(ITEM_LIMITS.title, tooLong("Title", ITEM_LIMITS.title))
+    .optional(),
+  language: z
+    .string()
+    .trim()
+    .max(ITEM_LIMITS.language, tooLong("Language", ITEM_LIMITS.language))
+    .optional(),
+  content: z
+    .string()
+    .refine((content) => content.trim().length > 0, "There's no code to explain")
+    .transform((content) => content.slice(0, AI_CONTENT_LIMIT)),
+});

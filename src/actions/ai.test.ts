@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { generateAutoTags, generateDescription } from "@/actions/ai";
+import { explainCode, generateAutoTags, generateDescription } from "@/actions/ai";
 import { getSessionUserId } from "@/lib/db/users";
 import { NOT_SIGNED_IN } from "@/lib/messages";
 import { getOpenAI } from "@/lib/openai";
@@ -256,5 +256,95 @@ describe("generateDescription", () => {
       success: false,
       error: SERVICE_ERROR,
     });
+  });
+});
+
+describe("explainCode", () => {
+  const SERVICE_ERROR = "The AI service couldn't explain this right now. Please try again.";
+  const CODE = { title: "useDebounce", language: "typescript", content: "const a = 1;\n" };
+
+  beforeEach(() => {
+    create.mockResolvedValue({ status: "completed", output_text: "\nDeclares `a`.\n\n- A const\n" });
+  });
+
+  it("returns the trimmed Markdown from plain text, without JSON mode", async () => {
+    await expect(explainCode(CODE)).resolves.toEqual({
+      success: true,
+      data: { explanation: "Declares `a`.\n\n- A const" },
+    });
+
+    const request = create.mock.calls[0][0];
+    expect(request.model).toBe("gpt-5-nano");
+    expect(request.text.format).toBeUndefined();
+    expect(request.store).toBe(false);
+    expect(request.input).toContain("<language>typescript</language>");
+    expect(request.input).toContain(`<content>${CODE.content}</content>`);
+  });
+
+  it("truncates content to 2000 characters before the call", async () => {
+    await explainCode({ content: `${"a".repeat(2000)}OVERFLOW` });
+
+    expect(create.mock.calls[0][0].input).toContain("a".repeat(2000));
+    expect(create.mock.calls[0][0].input).not.toContain("OVERFLOW");
+  });
+
+  it("rejects blank content or a too long title without calling the API", async () => {
+    await expect(explainCode({ content: " \n" })).resolves.toMatchObject({
+      success: false,
+      error: "There's no code to explain",
+    });
+    await expect(explainCode({ ...CODE, title: "a".repeat(201) })).resolves.toMatchObject({
+      success: false,
+      error: "Title must be at most 200 characters",
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refuses when signed out", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null as never);
+
+    await expect(explainCode(CODE)).resolves.toEqual({ success: false, error: NOT_SIGNED_IN });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("asks free users to upgrade, without using up the rate limit or the API", async () => {
+    vi.mocked(checkAiAllowed).mockResolvedValue(AI_PRO_REQUIRED);
+
+    await expect(explainCode(CODE)).resolves.toEqual({
+      success: false,
+      error: AI_PRO_REQUIRED,
+      upgradeRequired: true,
+    });
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("shares the AI rate limit and reports the wait", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValue({
+      success: false,
+      remaining: 0,
+      reset: Date.now() + 10 * 60_000,
+    });
+
+    await expect(explainCode(CODE)).resolves.toEqual({
+      success: false,
+      error: "Too many attempts. Please try again in 10 minutes.",
+    });
+    expect(checkRateLimit).toHaveBeenCalledWith("ai", "user_1", { failClosed: false });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("never returns a reply that was cut off", async () => {
+    create.mockResolvedValue({ status: "incomplete", output_text: "Declares" });
+
+    await expect(explainCode(CODE)).resolves.toEqual({ success: false, error: SERVICE_ERROR });
+  });
+
+  it("reports an AI service error on an empty reply or an API failure", async () => {
+    create.mockResolvedValue({ status: "completed", output_text: "  " });
+    await expect(explainCode(CODE)).resolves.toEqual({ success: false, error: SERVICE_ERROR });
+
+    create.mockRejectedValue(new Error("429"));
+    await expect(explainCode(CODE)).resolves.toEqual({ success: false, error: SERVICE_ERROR });
   });
 });

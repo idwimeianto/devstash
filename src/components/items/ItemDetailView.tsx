@@ -3,7 +3,7 @@
 import { Copy, Download, FileText, Pencil, Pin, Star, Tag } from "lucide-react";
 
 import { setItemFavorite, setItemPinned } from "@/actions/items";
-import { CodeEditor } from "@/components/code/CodeEditor";
+import { ExplainableCodeEditor } from "@/components/ai/ExplainableCodeEditor";
 import { DeleteItemDialog } from "@/components/items/DeleteItemDialog";
 import {
   DetailSection,
@@ -211,10 +211,10 @@ function ItemContent({ item }: ItemDetailViewProps) {
   if (item.content && isCodeItemType(item.typeName)) {
     return (
       <DetailSection title="Content">
-        <CodeEditor
+        <ExplainableCodeEditor
+          title={item.title}
           value={item.content}
           language={item.language}
-          readOnly
           ariaLabel={`${item.title} content`}
         />
       </DetailSection>

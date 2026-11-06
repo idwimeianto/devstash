@@ -20,3 +20,12 @@ export type GenerateDescriptionResult =
       fieldErrors?: Partial<Record<string, string[]>>;
       upgradeRequired?: boolean;
     };
+
+export type ExplainCodeResult =
+  | { success: true; data: { explanation: string } }
+  | {
+      success: false;
+      error: string;
+      fieldErrors?: Partial<Record<string, string[]>>;
+      upgradeRequired?: boolean;
+    };

@@ -134,7 +134,7 @@ const MARKDOWN_COMPONENTS: Components = {
   },
 };
 
-function MarkdownPreview({ value }: { value: string }) {
+export function MarkdownPreview({ value }: { value: string }) {
   if (!value.trim()) {
     return <p className="text-sm text-muted-foreground">Nothing to preview</p>;
   }
