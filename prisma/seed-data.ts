@@ -1,9 +1,11 @@
 // Sample data for prisma/seed.ts. See context/features/seed-spec.md.
 
+import { DEMO_ACCOUNT } from "../src/lib/demo-account";
+
 export const DEMO_USER = {
-  email: "demo@devstash.io",
+  email: DEMO_ACCOUNT.email,
   name: "Demo User",
-  password: "12345678",
+  password: DEMO_ACCOUNT.password,
 };
 
 export { BCRYPT_ROUNDS } from "../src/lib/password";

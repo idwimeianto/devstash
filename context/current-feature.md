@@ -1,18 +1,20 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+Env Example & Demo Sign-In — a committed `.env.example` and a "Use demo account" checkbox on `/sign-in`.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- `.env.example` lists every variable in `.env` with empty values and short comments, and is committed (`!.env.example` in `.gitignore`).
+- A "Use demo account" checkbox on the sign-in form fills the email and password with the seeded demo account; unchecking clears them.
+- The demo credentials live in one place shared by the seed and the form.
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file.
 
 ## History
 
