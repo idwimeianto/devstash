@@ -1,18 +1,20 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+Homepage Session Loading State — while the homepage reads the session, its session-dependent buttons show a loading state instead of the signed-out version.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed -->
+In Progress
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Nav Sign In / Get Started, hero "Start for free", bottom "Get started for free" and the pricing "Get started" / "Upgrade to Pro" buttons show a spinner placeholder until the session is known, then the signed-in or signed-out version.
+- The placeholder keeps the signed-out button's size, so nothing shifts when the real button streams in.
+- `/` stays partially prerendered.
 
 ## Notes
 
-<!-- Any Extra Notes -->
+- Inline description, no spec file.
 
 ## History
 

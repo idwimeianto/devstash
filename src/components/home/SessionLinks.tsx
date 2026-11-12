@@ -1,12 +1,51 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LoaderCircle, Menu } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { HomeMobileMenu } from "@/components/home/HomeMobileMenu";
 import { homeButton } from "@/components/home/HomeShared";
 import { getUserPlan } from "@/lib/db/billing";
 import { getSessionUserId } from "@/lib/db/users";
 import { UPGRADE_HREF } from "@/lib/usage-limits";
+import { cn } from "@/lib/utils";
+
+type HomeButtonArgs = Parameters<typeof homeButton>;
+
+interface LoadingButtonProps {
+  label: string;
+  variant: HomeButtonArgs[0];
+  size?: HomeButtonArgs[1];
+  className?: string;
+  arrow?: boolean;
+}
+
+// Shown while the session streams in: the signed-out button's shape and width (its label kept
+// invisible) with a spinner on top, so the real button replaces it without a layout shift.
+function LoadingButton({ label, variant, size = "default", className, arrow }: LoadingButtonProps) {
+  return (
+    <span
+      role="status"
+      aria-label="Loading"
+      className={homeButton(variant, size, cn("pointer-events-none relative opacity-70", className))}
+    >
+      <span aria-hidden="true" className="invisible inline-flex items-center gap-2">
+        {label}
+        {arrow && <ArrowRight />}
+      </span>
+      <LoaderCircle aria-hidden="true" className="absolute animate-spin" />
+    </span>
+  );
+}
+
+// Streamed content is swapped in by a script, so without JavaScript the signed-out version stays.
+function SessionFallback({ loading, noScript }: { loading: ReactNode; noScript: ReactNode }) {
+  return (
+    <>
+      <span className="hidden scripting:contents">{loading}</span>
+      <span className="contents scripting:hidden">{noScript}</span>
+    </>
+  );
+}
 
 async function isSignedIn(): Promise<boolean> {
   return (await getSessionUserId()) !== null;
@@ -40,10 +79,26 @@ async function SessionNavActions() {
   return <NavActionLinks signedIn={await isSignedIn()} />;
 }
 
-// The session is request-time data, so the signed-out links render first and stream in their place.
+function NavActionsLoading() {
+  return (
+    <>
+      <LoadingButton label="Dashboard" variant="primary" />
+      <span
+        aria-hidden="true"
+        className={homeButton("ghost", "default", "pointer-events-none size-9 px-0 opacity-50 sm:hidden")}
+      >
+        <Menu />
+      </span>
+    </>
+  );
+}
+
+// The session is request-time data, so loading buttons render first and the real ones stream in.
 export function NavActions() {
   return (
-    <Suspense fallback={<NavActionLinks signedIn={false} />}>
+    <Suspense
+      fallback={<SessionFallback loading={<NavActionsLoading />} noScript={<NavActionLinks signedIn={false} />} />}
+    >
       <SessionNavActions />
     </Suspense>
   );
@@ -104,7 +159,14 @@ async function SessionFreePlanCta() {
 // The Free plan card's button: "Get started" when signed out, a label when signed in.
 export function FreePlanCta() {
   return (
-    <Suspense fallback={<FreePlanCtaContent visitor="signedOut" />}>
+    <Suspense
+      fallback={
+        <SessionFallback
+          loading={<LoadingButton label="Get started" variant="outline" className="w-full" />}
+          noScript={<FreePlanCtaContent visitor="signedOut" />}
+        />
+      }
+    >
       <SessionFreePlanCta />
     </Suspense>
   );
@@ -130,7 +192,14 @@ async function SessionProPlanCta() {
 // and a "Current plan" label for Pro users.
 export function ProPlanCta() {
   return (
-    <Suspense fallback={<ProPlanCtaContent visitor="signedOut" />}>
+    <Suspense
+      fallback={
+        <SessionFallback
+          loading={<LoadingButton label="Upgrade to Pro" variant="primary" className="w-full" />}
+          noScript={<ProPlanCtaContent visitor="signedOut" />}
+        />
+      }
+    >
       <SessionProPlanCta />
     </Suspense>
   );
@@ -139,7 +208,16 @@ export function ProPlanCta() {
 // A main call to action: `/register` when signed out, `/dashboard` when signed in.
 export function CtaLink(props: CtaLinkProps) {
   return (
-    <Suspense fallback={<CtaLinkContent {...props} signedIn={false} />}>
+    <Suspense
+      fallback={
+        <SessionFallback
+          loading={
+            <LoadingButton label={props.label} variant="primary" size="lg" className={props.className} arrow />
+          }
+          noScript={<CtaLinkContent {...props} signedIn={false} />}
+        />
+      }
+    >
       <SessionCtaLink {...props} />
     </Suspense>
   );
